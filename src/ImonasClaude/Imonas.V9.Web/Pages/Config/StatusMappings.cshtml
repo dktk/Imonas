@@ -1,0 +1,108 @@
+@page
+@model Imonas.V9.Web.Pages.Config.StatusMappingsModel
+@{
+    ViewData["Title"] = "Status Mappings";
+}
+
+<div class="flex-between mb-4">
+    <div>
+        <div class="page-title">Status Mappings</div>
+        <div class="page-subtitle">Map PSP-specific statuses to canonical statuses</div>
+    </div>
+    <div>
+        <a asp-page="/Config/StatusMappings/Create" class="btn btn-primary">➕ Add Mapping</a>
+    </div>
+</div>
+
+@if (!string.IsNullOrEmpty((string?)TempData["SuccessMessage"]))
+{
+    <div class="alert alert-success">
+        @TempData["SuccessMessage"]
+    </div>
+}
+
+<div class="grid grid-3 mb-4">
+    <div class="card">
+        <div class="card-body" style="text-align: center;">
+            <div style="font-size: 2rem; color: var(--accent-secondary); margin-bottom: 0.5rem;">✓</div>
+            <strong>Completed</strong>
+            <div style="color: var(--text-muted); font-size: 0.875rem; margin-top: 0.25rem;">Success states</div>
+        </div>
+    </div>
+    <div class="card">
+        <div class="card-body" style="text-align: center;">
+            <div style="font-size: 2rem; color: var(--accent-warning); margin-bottom: 0.5rem;">⏳</div>
+            <strong>Pending</strong>
+            <div style="color: var(--text-muted); font-size: 0.875rem; margin-top: 0.25rem;">In-progress states</div>
+        </div>
+    </div>
+    <div class="card">
+        <div class="card-body" style="text-align: center;">
+            <div style="font-size: 2rem; color: var(--accent-danger); margin-bottom: 0.5rem;">✗</div>
+            <strong>Failed</strong>
+            <div style="color: var(--text-muted); font-size: 0.875rem; margin-top: 0.25rem;">Error states</div>
+        </div>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-body">
+        <div class="table-container">
+            <table>
+                <thead>
+                    <tr>
+                        <th>PSP</th>
+                        <th>PSP Status</th>
+                        <th>→</th>
+                        <th>Canonical Status</th>
+                        <th>Description</th>
+                        <th>Version</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var mapping in Model.StatusMappings)
+                    {
+                        <tr>
+                            <td>
+                                @if (Model.PspProfileNames.ContainsKey(mapping.PspProfileId))
+                                {
+                                    <span class="badge badge-secondary">@Model.PspProfileNames[mapping.PspProfileId]</span>
+                                }
+                                else
+                                {
+                                    <span class="badge badge-secondary">Unknown</span>
+                                }
+                            </td>
+                            <td><code>@mapping.PspStatus</code></td>
+                            <td style="text-align: center;">→</td>
+                            <td>
+                                @if (mapping.CanonicalStatus == "Completed" || mapping.CanonicalStatus == "Settled" || mapping.CanonicalStatus == "Refunded")
+                                {
+                                    <span class="badge badge-success">@mapping.CanonicalStatus</span>
+                                }
+                                else if (mapping.CanonicalStatus == "Pending" || mapping.CanonicalStatus == "Processing" || mapping.CanonicalStatus == "Authorized" || mapping.CanonicalStatus == "RequiresAction" || mapping.CanonicalStatus == "RequiresCapture")
+                                {
+                                    <span class="badge badge-warning">@mapping.CanonicalStatus</span>
+                                }
+                                else if (mapping.CanonicalStatus == "Failed" || mapping.CanonicalStatus == "Declined" || mapping.CanonicalStatus == "Cancelled" || mapping.CanonicalStatus == "Expired")
+                                {
+                                    <span class="badge badge-danger">@mapping.CanonicalStatus</span>
+                                }
+                                else
+                                {
+                                    <span class="badge badge-info">@mapping.CanonicalStatus</span>
+                                }
+                            </td>
+                            <td>@mapping.Description</td>
+                            <td>@mapping.Version</td>
+                            <td>
+                                <button class="btn btn-secondary" style="padding: 0.5rem 1rem;">Edit</button>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>

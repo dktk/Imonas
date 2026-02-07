@@ -1,0 +1,204 @@
+@page
+@using Microsoft.AspNetCore.Mvc.Localization
+@model SmartAdmin.WebUI.Pages.Users.RolesModel
+@inject IStringLocalizer<RolesModel> _localizer
+
+@{
+    ViewData["Title"] = "Role Management";
+    ViewData["PageName"] = "users_roles";
+}
+
+@section HeadBlock {
+    <link rel="stylesheet" media="screen, print" href="~/css/fa-solid.css">
+}
+
+<div class="row mb-3">
+    <div class="col-12 d-flex justify-content-between align-items-center">
+        <div>
+            <h1 class="subheader-title">
+                <i class="subheader-icon @(Settings.Theme.IconPrefix) fa-user-tag"></i> @_localizer["Role Management"]
+            </h1>
+            <small class="text-muted">@_localizer["Manage roles and their permissions"]</small>
+        </div>
+        <div>
+            <form method="post" asp-page-handler="SeedRoles" style="display: inline;">
+                <button type="submit" class="btn btn-outline-info waves-effect waves-themed mr-2">
+                    <i class="@(Settings.Theme.IconPrefix) fa-seedling mr-1"></i>
+                    @_localizer["Seed Default Roles"]
+                </button>
+            </form>
+            <a asp-page="Index" class="btn btn-secondary waves-effect waves-themed">
+                <i class="@(Settings.Theme.IconPrefix) fa-arrow-left mr-1"></i>
+                @_localizer["Back to Users"]
+            </a>
+        </div>
+    </div>
+</div>
+
+@if (TempData["SuccessMessage"] != null)
+{
+    <div class="alert alert-success alert-dismissible fade show" role="alert">
+        <i class="@(Settings.Theme.IconPrefix) fa-check-circle mr-2"></i>
+        @TempData["SuccessMessage"]
+        <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+            <span aria-hidden="true">&times;</span>
+        </button>
+    </div>
+}
+
+@if (TempData["ErrorMessage"] != null || !string.IsNullOrEmpty(Model.ErrorMessage))
+{
+    <div class="alert alert-danger alert-dismissible fade show" role="alert">
+        <i class="@(Settings.Theme.IconPrefix) fa-exclamation-circle mr-2"></i>
+        @(TempData["ErrorMessage"] ?? Model.ErrorMessage)
+        <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+            <span aria-hidden="true">&times;</span>
+        </button>
+    </div>
+}
+
+<div class="row">
+    <div class="col-xl-8">
+        <div id="panel-roles" class="panel">
+            <div class="panel-hdr">
+                <h2>
+                    <i class="@(Settings.Theme.IconPrefix) fa-list mr-2"></i>
+                    @_localizer["Roles"]
+                    <span class="fw-300"><i>(@Model.Roles.Count() @_localizer["total"])</i></span>
+                </h2>
+                <div class="panel-toolbar">
+                    <a asp-page="Permissions" class="btn btn-sm btn-outline-info waves-effect waves-themed">
+                        <i class="@(Settings.Theme.IconPrefix) fa-key mr-1"></i>
+                        @_localizer["Permission Matrix"]
+                    </a>
+                </div>
+            </div>
+            <div class="panel-container show">
+                <div class="panel-content">
+                    <div class="table-responsive">
+                        <table class="table table-bordered table-hover table-striped w-100">
+                            <thead class="bg-primary-600">
+                                <tr>
+                                    <th>@_localizer["Role"]</th>
+                                    <th>@_localizer["Description"]</th>
+                                    <th class="text-center">@_localizer["Users"]</th>
+                                    <th class="text-center">@_localizer["Actions"]</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var role in Model.Roles)
+                                {
+                                    var badgeClass = role.Name switch
+                                    {
+                                        "System Admin" => "badge-danger",
+                                        "Admin" => "badge-warning",
+                                        "Analyst" => "badge-info",
+                                        "Viewer" => "badge-secondary",
+                                        "Finance Admin" => "badge-success",
+                                        "Config Manager" => "badge-primary",
+                                        _ => "badge-light"
+                                    };
+                                    var iconClass = role.Name switch
+                                    {
+                                        "System Admin" => "fa-crown",
+                                        "Admin" => "fa-user-shield",
+                                        "Analyst" => "fa-chart-bar",
+                                        "Viewer" => "fa-eye",
+                                        "Finance Admin" => "fa-dollar-sign",
+                                        "Config Manager" => "fa-cogs",
+                                        _ => "fa-user-tag"
+                                    };
+                                    <tr>
+                                        <td>
+                                            <div class="d-flex align-items-center">
+                                                <span class="mr-2 @badgeClass rounded-circle d-flex align-items-center justify-content-center" style="width: 32px; height: 32px;">
+                                                    <i class="@(Settings.Theme.IconPrefix) @iconClass text-white"></i>
+                                                </span>
+                                                <span class="badge @badgeClass">@role.Name</span>
+                                            </div>
+                                        </td>
+                                        <td>@(role.Description ?? "-")</td>
+                                        <td class="text-center">
+                                            <span class="badge badge-pill badge-primary">@role.UserCount</span>
+                                        </td>
+                                        <td class="text-center">
+                                            <a asp-page="Permissions" asp-fragment="role_@role.Name.Replace(" ", "_")" class="btn btn-sm btn-outline-info waves-effect waves-themed" title="@_localizer["Edit Permissions"]">
+                                                <i class="@(Settings.Theme.IconPrefix) fa-key"></i>
+                                            </a>
+                                        </td>
+                                    </tr>
+                                }
+                                @if (!Model.Roles.Any())
+                                {
+                                    <tr>
+                                        <td colspan="4" class="text-center text-muted py-4">
+                                            <i class="@(Settings.Theme.IconPrefix) fa-user-tag fa-3x mb-3 d-block opacity-50"></i>
+                                            @_localizer["No roles found. Click 'Seed Default Roles' to create the standard roles."]
+                                        </td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-xl-4">
+        <!-- Create Role Form -->
+        <div class="panel">
+            <div class="panel-hdr">
+                <h2>
+                    <i class="@(Settings.Theme.IconPrefix) fa-plus-circle mr-2"></i>
+                    @_localizer["Create New Role"]
+                </h2>
+            </div>
+            <div class="panel-container show">
+                <div class="panel-content">
+                    <form method="post" asp-page-handler="CreateRole">
+                        <div asp-validation-summary="ModelOnly" class="alert alert-danger" role="alert"></div>
+
+                        <div class="form-group">
+                            <label asp-for="CreateInput.Name">@_localizer["Role Name"]</label>
+                            <input asp-for="CreateInput.Name" class="form-control" placeholder="@_localizer["Enter role name"]" />
+                            <span asp-validation-for="CreateInput.Name" class="text-danger"></span>
+                        </div>
+
+                        <div class="form-group">
+                            <label asp-for="CreateInput.Description">@_localizer["Description"]</label>
+                            <textarea asp-for="CreateInput.Description" class="form-control" rows="3" placeholder="@_localizer["Enter role description"]"></textarea>
+                            <span asp-validation-for="CreateInput.Description" class="text-danger"></span>
+                        </div>
+
+                        <button type="submit" class="btn btn-primary waves-effect waves-themed btn-block">
+                            <i class="@(Settings.Theme.IconPrefix) fa-plus mr-1"></i>
+                            @_localizer["Create Role"]
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <!-- Role Descriptions -->
+        <div class="alert alert-info">
+            <h5 class="alert-heading">
+                <i class="@(Settings.Theme.IconPrefix) fa-info-circle mr-1"></i>
+                @_localizer["Default Roles"]
+            </h5>
+            <hr>
+            <ul class="mb-0 pl-3">
+                <li><strong>@_localizer["System Admin"]</strong> - @_localizer["Full access to all platform features"]</li>
+                <li><strong>@_localizer["Admin"]</strong> - @_localizer["Manages users and coordinates operations"]</li>
+                <li><strong>@_localizer["Analyst"]</strong> - @_localizer["Performs reconciliation and case management"]</li>
+                <li><strong>@_localizer["Viewer"]</strong> - @_localizer["Read-only access to dashboards and reports"]</li>
+                <li><strong>@_localizer["Finance Admin"]</strong> - @_localizer["Manages financial configurations"]</li>
+                <li><strong>@_localizer["Config Manager"]</strong> - @_localizer["Manages system configurations"]</li>
+            </ul>
+        </div>
+    </div>
+</div>
+
+@section ScriptsBlock {
+    <partial name="_ValidationScriptsPartial" />
+}

@@ -1,0 +1,396 @@
+﻿@page
+@using Microsoft.AspNetCore.Mvc.Localization
+@using Domain.Enums
+@model SmartAdmin.WebUI.Pages.Rules.IndexModel
+@inject IStringLocalizer<IndexModel> _localizer
+
+@{
+    ViewData["Title"] = "Matching Rules";
+    ViewData["PageName"] = "rules_index";
+
+    var equalityCount = Model.Rules.Count(r => r.RuleType == RuleType.Equality);
+    var compositeCount = Model.Rules.Count(r => r.RuleType == RuleType.Composite);
+    var toleranceCount = Model.Rules.Count(r => r.RuleType == RuleType.ToleranceWindow);
+    var fuzzyCount = Model.Rules.Count(r => r.RuleType == RuleType.Fuzzy);
+
+    var toggleActiveUrl = Url.Page("/Rules/Index", "ToggleActive");
+    var deleteUrl = Url.Page("/Rules/Index", "Delete");
+}
+
+@section HeadBlock {
+    <link rel="stylesheet" media="screen, print" href="~/css/fa-solid.css">
+}
+
+<div class="row mb-3">
+    <div class="col-12 d-flex justify-content-between align-items-center">
+        <div>
+            <h1 class="subheader-title">
+                <i class="subheader-icon @(Settings.Theme.IconPrefix) fa-code-branch"></i> @_localizer["Matching Rules"]
+            </h1>
+            <small class="text-muted">@_localizer["Configure transaction matching rules"]</small>
+        </div>
+        <a asp-page="Create" class="btn btn-primary waves-effect waves-themed">
+            <i class="@(Settings.Theme.IconPrefix) fa-plus mr-1"></i>
+            @_localizer["Create Rule"]
+        </a>
+    </div>
+</div>
+
+<!-- Stats Cards -->
+<div class="row mb-4">
+    <div class="col-sm-6 col-xl-3">
+        <div class="p-3 bg-primary-300 rounded overflow-hidden position-relative text-white mb-g">
+            <div>
+                <h3 class="display-4 d-block l-h-n m-0 fw-500">
+                    @Model.ActiveRulesCount
+                </h3>
+                <span class="opacity-70">@_localizer["Active Rules"]</span>
+            </div>
+            <i class="@(Settings.Theme.IconPrefix) fa-check-double position-absolute pos-right pos-bottom opacity-15 mb-n1 mr-n1" style="font-size:6rem"></i>
+        </div>
+    </div>
+    <div class="col-sm-6 col-xl-3">
+        <div class="p-3 bg-success-500 rounded overflow-hidden position-relative text-white mb-g">
+            <div>
+                <h3 class="display-4 d-block l-h-n m-0 fw-500">
+                    @Model.CurrentVersion
+                </h3>
+                <span class="opacity-70">@_localizer["Current Version"]</span>
+            </div>
+            <i class="@(Settings.Theme.IconPrefix) fa-code-branch position-absolute pos-right pos-bottom opacity-15 mb-n1 mr-n1" style="font-size:6rem"></i>
+        </div>
+    </div>
+    <div class="col-sm-6 col-xl-3">
+        <div class="p-3 bg-info-500 rounded overflow-hidden position-relative text-white mb-g">
+            <div>
+                <h3 class="display-4 d-block l-h-n m-0 fw-500">
+                    @Model.Rules.Count()
+                </h3>
+                <span class="opacity-70">@_localizer["Total Rules"]</span>
+            </div>
+            <i class="@(Settings.Theme.IconPrefix) fa-list position-absolute pos-right pos-bottom opacity-15 mb-n1 mr-n1" style="font-size:6rem"></i>
+        </div>
+    </div>
+    <div class="col-sm-6 col-xl-3">
+        <div class="p-3 bg-secondary-500 rounded overflow-hidden position-relative text-white mb-g">
+            <div>
+                <h3 class="display-4 d-block l-h-n m-0 fw-500">
+                    @(Model.Rules.Count() - Model.ActiveRulesCount)
+                </h3>
+                <span class="opacity-70">@_localizer["Inactive Rules"]</span>
+            </div>
+            <i class="@(Settings.Theme.IconPrefix) fa-pause-circle position-absolute pos-right pos-bottom opacity-15 mb-n1 mr-n1" style="font-size:6rem"></i>
+        </div>
+    </div>
+</div>
+
+<!-- Rule Type Breakdown -->
+<div class="row mb-4">
+    <div class="col-xl-12">
+        <div id="panel-rule-types" class="panel">
+            <div class="panel-hdr">
+                <h2>
+                    <i class="@(Settings.Theme.IconPrefix) fa-layer-group mr-2"></i>
+                    @_localizer["Rule Types"]
+                </h2>
+            </div>
+            <div class="panel-container show">
+                <div class="panel-content">
+                    <div class="row">
+                        <div class="col-sm-6 col-xl-3">
+                            <div class="card border mb-3">
+                                <div class="card-body text-center">
+                                    <div class="d-inline-flex align-items-center justify-content-center width-5 height-5 rounded-circle bg-info-100 mb-3">
+                                        <i class="@(Settings.Theme.IconPrefix) fa-equals text-info fa-2x"></i>
+                                    </div>
+                                    <h5 class="card-title text-info">@_localizer["Equality"]</h5>
+                                    <h2 class="mb-2">@equalityCount</h2>
+                                    <p class="card-text small text-muted mb-0">@_localizer["Exact field matching"]</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-sm-6 col-xl-3">
+                            <div class="card border mb-3">
+                                <div class="card-body text-center">
+                                    <div class="d-inline-flex align-items-center justify-content-center width-5 height-5 rounded-circle bg-success-100 mb-3">
+                                        <i class="@(Settings.Theme.IconPrefix) fa-layer-group text-success fa-2x"></i>
+                                    </div>
+                                    <h5 class="card-title text-success">@_localizer["Composite"]</h5>
+                                    <h2 class="mb-2">@compositeCount</h2>
+                                    <p class="card-text small text-muted mb-0">@_localizer["Multi-field matching"]</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-sm-6 col-xl-3">
+                            <div class="card border mb-3">
+                                <div class="card-body text-center">
+                                    <div class="d-inline-flex align-items-center justify-content-center width-5 height-5 rounded-circle bg-warning-100 mb-3">
+                                        <i class="@(Settings.Theme.IconPrefix) fa-arrows-alt-h text-warning fa-2x"></i>
+                                    </div>
+                                    <h5 class="card-title text-warning">@_localizer["Tolerance"]</h5>
+                                    <h2 class="mb-2">@toleranceCount</h2>
+                                    <p class="card-text small text-muted mb-0">@_localizer["Amount/date ranges"]</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-sm-6 col-xl-3">
+                            <div class="card border mb-3">
+                                <div class="card-body text-center">
+                                    <div class="d-inline-flex align-items-center justify-content-center width-5 height-5 rounded-circle bg-secondary-100 mb-3">
+                                        <i class="@(Settings.Theme.IconPrefix) fa-wave-square text-secondary fa-2x"></i>
+                                    </div>
+                                    <h5 class="card-title text-secondary">@_localizer["Fuzzy"]</h5>
+                                    <h2 class="mb-2">@fuzzyCount</h2>
+                                    <p class="card-text small text-muted mb-0">@_localizer["Similarity scoring"]</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-xl-12">
+        <div id="panel-rules" class="panel">
+            <div class="panel-hdr">
+                <h2>
+                    @_localizer["Matching Rules"]
+                </h2>
+            </div>
+            <div class="panel-container show">
+                <div class="panel-content">
+                    @Html.AntiForgeryToken()
+                    <div class="table-responsive">
+                        <table class="table table-bordered table-hover table-striped w-100">
+                            <thead class="bg-primary-600">
+                                <tr>
+                                    <th class="text-center" style="width: 60px;">@_localizer["Priority"]</th>
+                                    <th>@_localizer["Rule Name"]</th>
+                                    <th>@_localizer["Type"]</th>
+                                    <th>@_localizer["Description"]</th>
+                                    <th>@_localizer["Tolerance"]</th>
+                                    <th>@_localizer["Effective From"]</th>
+                                    <th class="text-center">@_localizer["Active"]</th>
+                                    <th class="text-center" style="width: 140px;">@_localizer["Actions"]</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var rule in Model.Rules.OrderBy(r => r.Priority))
+                                {
+                                    <tr class="@(rule.IsActive ? "" : "table-secondary")" id="rule-row-@rule.Id">
+                                        <td class="text-center">
+                                            <span class="badge badge-primary" style="font-size: 1rem;">@rule.Priority</span>
+                                        </td>
+                                        <td class="fw-500">@rule.RuleName</td>
+                                        <td>
+                                            @if (rule.RuleType == RuleType.Equality)
+                                            {
+                                                <span class="badge badge-info">@_localizer["Equality"]</span>
+                                            }
+                                            else if (rule.RuleType == RuleType.Composite)
+                                            {
+                                                <span class="badge badge-success">@_localizer["Composite"]</span>
+                                            }
+                                            else if (rule.RuleType == RuleType.ToleranceWindow)
+                                            {
+                                                <span class="badge badge-warning">@_localizer["Tolerance"]</span>
+                                            }
+                                            else if (rule.RuleType == RuleType.Fuzzy)
+                                            {
+                                                <span class="badge badge-secondary">@_localizer["Fuzzy"]</span>
+                                            }
+                                        </td>
+                                        <td>@rule.Description</td>
+                                        <td>
+                                            @if (rule.ToleranceAmount.HasValue)
+                                            {
+                                                <span>@rule.ToleranceAmount.Value.ToString("C")</span>
+                                            }
+                                            @if (rule.ToleranceWindowDays.HasValue)
+                                            {
+                                                <span class="ml-2">@rule.ToleranceWindowDays days</span>
+                                            }
+                                            @if (!rule.ToleranceAmount.HasValue && !rule.ToleranceWindowDays.HasValue)
+                                            {
+                                                <span class="text-muted">-</span>
+                                            }
+                                        </td>
+                                        <td>@rule.EffectiveFrom.ToString("yyyy-MM-dd")</td>
+                                        <td class="text-center" id="status-@rule.Id">
+                                            @if (rule.IsActive)
+                                            {
+                                                <span class="badge badge-success">@_localizer["Active"]</span>
+                                            }
+                                            else
+                                            {
+                                                <span class="badge badge-secondary">@_localizer["Inactive"]</span>
+                                            }
+                                        </td>
+                                        <td class="text-center">
+                                            <div class="btn-group" role="group">
+                                                <a asp-page="Edit" asp-route-id="@rule.Id" class="btn btn-sm btn-outline-primary waves-effect waves-themed" title="@_localizer["Edit"]">
+                                                    <i class="@(Settings.Theme.IconPrefix) fa-edit"></i>
+                                                </a>
+                                                <button type="button" class="btn btn-sm @(rule.IsActive ? "btn-outline-warning" : "btn-outline-success") waves-effect waves-themed toggle-btn"
+                                                        data-id="@rule.Id"
+                                                        data-active="@rule.IsActive.ToString().ToLower()"
+                                                        title="@(rule.IsActive ? _localizer["Deactivate"] : _localizer["Activate"])">
+                                                    <i class="@(Settings.Theme.IconPrefix) @(rule.IsActive ? "fa-toggle-on" : "fa-toggle-off")"></i>
+                                                </button>
+                                                <button type="button" class="btn btn-sm btn-outline-danger waves-effect waves-themed delete-btn"
+                                                        data-id="@rule.Id"
+                                                        data-name="@rule.RuleName"
+                                                        title="@_localizer["Delete"]">
+                                                    <i class="@(Settings.Theme.IconPrefix) fa-trash"></i>
+                                                </button>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                }
+                                @if (!Model.Rules.Any())
+                                {
+                                    <tr>
+                                        <td colspan="8" class="text-center text-muted py-4">
+                                            <i class="@(Settings.Theme.IconPrefix) fa-inbox fa-3x mb-3 d-block"></i>
+                                            @_localizer["No matching rules found. Create a rule to get started."]
+                                            <div class="mt-3">
+                                                <a asp-page="Create" class="btn btn-primary">
+                                                    <i class="@(Settings.Theme.IconPrefix) fa-plus mr-1"></i>
+                                                    @_localizer["Create First Rule"]
+                                                </a>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Delete Confirmation Modal -->
+<div class="modal fade" id="deleteModal" tabindex="-1" role="dialog" aria-labelledby="deleteModalLabel" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header bg-danger-600">
+                <h5 class="modal-title text-white" id="deleteModalLabel">
+                    <i class="@(Settings.Theme.IconPrefix) fa-exclamation-triangle mr-2"></i>
+                    @_localizer["Confirm Delete"]
+                </h5>
+                <button type="button" class="close text-white" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <p>@_localizer["Are you sure you want to delete the rule"] <strong id="deleteRuleName"></strong>?</p>
+                <p class="text-danger mb-0">
+                    <i class="@(Settings.Theme.IconPrefix) fa-exclamation-circle mr-1"></i>
+                    @_localizer["This action cannot be undone. The rule will be permanently removed."]
+                </p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">@_localizer["Cancel"]</button>
+                <button type="button" class="btn btn-danger" id="confirmDeleteBtn">
+                    <i class="@(Settings.Theme.IconPrefix) fa-trash mr-1"></i>
+                    @_localizer["Delete"]
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section ScriptsBlock {
+    <script src="~/lib/axios/dist/axios.js"></script>
+    <script>
+        $(function () {
+            'use strict';
+
+            var deleteRuleId = null;
+
+            // Toggle active button click
+            $('.toggle-btn').on('click', function () {
+                var btn = $(this);
+                var id = btn.data('id');
+                var isActive = btn.data('active') === true || btn.data('active') === 'true';
+
+                btn.prop('disabled', true).html('<i class="fal fa-spinner fa-spin"></i>');
+
+                axios.post('@toggleActiveUrl', 'id=' + id + '&__RequestVerificationToken=' + $('input[name="__RequestVerificationToken"]').val(), {
+                    headers: { 'Content-Type': 'application/x-www-form-urlencoded' }
+                }).then(function (res) {
+                    if (res.data.succeeded) {
+                        toastr.success(res.data.message);
+                        location.reload();
+                    } else {
+                        toastr.error(res.data.message);
+                        btn.prop('disabled', false);
+                        // Restore button
+                        if (isActive) {
+                            btn.html('<i class="fal fa-toggle-on"></i>');
+                        } else {
+                            btn.html('<i class="fal fa-toggle-off"></i>');
+                        }
+                    }
+                }).catch(function (err) {
+                    toastr.error('@_localizer["An error occurred while toggling rule status."]');
+                    btn.prop('disabled', false);
+                    if (isActive) {
+                        btn.html('<i class="fal fa-toggle-on"></i>');
+                    } else {
+                        btn.html('<i class="fal fa-toggle-off"></i>');
+                    }
+                });
+            });
+
+            // Delete button click
+            $('.delete-btn').on('click', function () {
+                deleteRuleId = $(this).data('id');
+                var name = $(this).data('name');
+                $('#deleteRuleName').text(name);
+                $('#deleteModal').modal('show');
+            });
+
+            // Confirm delete
+            $('#confirmDeleteBtn').on('click', function () {
+                if (!deleteRuleId) return;
+
+                $(this).prop('disabled', true).html('<i class="fal fa-spinner fa-spin mr-1"></i> @_localizer["Deleting..."]');
+
+                axios.post('@deleteUrl', 'id=' + deleteRuleId + '&__RequestVerificationToken=' + $('input[name="__RequestVerificationToken"]').val(), {
+                    headers: { 'Content-Type': 'application/x-www-form-urlencoded' }
+                }).then(function (res) {
+                    if (res.data.succeeded) {
+                        toastr.success(res.data.message);
+                        // Remove the row from the table
+                        $('#rule-row-' + deleteRuleId).fadeOut(300, function () {
+                            $(this).remove();
+                            // Check if table is empty
+                            if ($('tbody tr').length === 0) {
+                                location.reload();
+                            }
+                        });
+                        $('#deleteModal').modal('hide');
+                    } else {
+                        toastr.error(res.data.message);
+                        $('#confirmDeleteBtn').prop('disabled', false).html('<i class="fal fa-trash mr-1"></i> @_localizer["Delete"]');
+                    }
+                }).catch(function (err) {
+                    toastr.error('@_localizer["An error occurred while deleting the rule."]');
+                    $('#confirmDeleteBtn').prop('disabled', false).html('<i class="fal fa-trash mr-1"></i> @_localizer["Delete"]');
+                });
+            });
+
+            // Reset delete modal on close
+            $('#deleteModal').on('hidden.bs.modal', function () {
+                deleteRuleId = null;
+                $('#confirmDeleteBtn').prop('disabled', false).html('<i class="fal fa-trash mr-1"></i> @_localizer["Delete"]');
+            });
+        });
+    </script>
+}

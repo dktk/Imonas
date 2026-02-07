@@ -1,0 +1,12 @@
+{
+  "profiles": {
+    "PspQueue.Producer.Api": {
+      "commandName": "Project",
+      "launchBrowser": true,
+      "environmentVariables": {
+        "ASPNETCORE_ENVIRONMENT": "Development"
+      },
+      "applicationUrl": "https://localhost:60317;http://localhost:60318"
+    }
+  }
+}

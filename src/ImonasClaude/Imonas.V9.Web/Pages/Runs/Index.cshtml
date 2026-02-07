@@ -1,0 +1,78 @@
+@page
+@model Imonas.V9.Web.Pages.Runs.IndexModel
+@{
+    ViewData["Title"] = "Reconciliation Runs";
+}
+
+<div class="flex-between mb-4">
+    <div>
+        <div class="page-title">Reconciliation Runs</div>
+        <div class="page-subtitle">View and manage reconciliation runs</div>
+    </div>
+    <div>
+        <a asp-page="Create" class="btn btn-primary">🚀 Start New Run</a>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-body">
+        <div class="table-container">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Run Name</th>
+                        <th>Status</th>
+                        <th>Started</th>
+                        <th>Completed</th>
+                        <th>Total Records</th>
+                        <th>Matched</th>
+                        <th>Match %</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var run in Model.Runs)
+                    {
+                        <tr>
+                            <td>
+                                <a asp-page="Details" asp-route-id="@run.Id" style="color: var(--accent-primary); text-decoration: none; font-weight: 600;">
+                                    @run.RunName
+                                </a>
+                            </td>
+                            <td>
+                                @if (run.Status == Imonas.V9.Domain.Enums.RunStatus.Completed)
+                                {
+                                    <span class="badge badge-success">✓ Completed</span>
+                                }
+                                else if (run.Status == Imonas.V9.Domain.Enums.RunStatus.Running)
+                                {
+                                    <span class="badge badge-info">⟳ Running</span>
+                                }
+                                else if (run.Status == Imonas.V9.Domain.Enums.RunStatus.Failed)
+                                {
+                                    <span class="badge badge-danger">✗ Failed</span>
+                                }
+                                else
+                                {
+                                    <span class="badge badge-secondary">@run.Status</span>
+                                }
+                            </td>
+                            <td>@run.StartedAt.ToString("yyyy-MM-dd HH:mm")</td>
+                            <td>@(run.CompletedAt?.ToString("yyyy-MM-dd HH:mm") ?? "-")</td>
+                            <td>@run.TotalRecords.ToString("N0")</td>
+                            <td>@run.MatchedRecords.ToString("N0")</td>
+                            <td>
+                                <span class="badge @(run.MatchPercentage >= 95 ? "badge-success" : run.MatchPercentage >= 80 ? "badge-info" : "badge-warning")">
+                                    @run.MatchPercentage.ToString("F1")%
+                                </span>
+                            </td>
+                            <td>
+                                <a asp-page="Details" asp-route-id="@run.Id" class="btn btn-secondary" style="padding: 0.5rem 1rem;">View</a>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>

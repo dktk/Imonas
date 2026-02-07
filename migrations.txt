@@ -1,0 +1,2 @@
+add-migration "Add System to Source and Target Data" -v
+update-database -connection "Host=localhost;Database=imonasdb21;Username=main-admin;Password=some-pass-123"

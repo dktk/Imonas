@@ -1,0 +1,222 @@
+﻿@page
+@using Microsoft.AspNetCore.Mvc.Localization
+@using Domain.Enums
+@model SmartAdmin.WebUI.Pages.Schedules.CreateModel
+@inject IStringLocalizer<CreateModel> _localizer
+
+@{
+    ViewData["Title"] = "Create Schedule";
+    ViewData["PageName"] = "schedules_create";
+}
+
+@section HeadBlock {
+    <link rel="stylesheet" media="screen, print" href="~/css/fa-solid.css">
+}
+
+<div class="row mb-3">
+    <div class="col-12 d-flex justify-content-between align-items-center">
+        <div>
+            <h1 class="subheader-title">
+                <i class="subheader-icon @(Settings.Theme.IconPrefix) fa-plus-circle"></i> @_localizer["Create Schedule"]
+            </h1>
+            <small class="text-muted">@_localizer["Set up a new automated reconciliation schedule"]</small>
+        </div>
+        <a asp-page="Index" class="btn btn-secondary waves-effect waves-themed">
+            <i class="@(Settings.Theme.IconPrefix) fa-arrow-left mr-1"></i>
+            @_localizer["Back"]
+        </a>
+    </div>
+</div>
+
+<div class="alert alert-info border-0 mb-4">
+    <i class="@(Settings.Theme.IconPrefix) fa-info-circle mr-2"></i>
+    @_localizer["Configure when reconciliation runs should be automatically executed. The schedule will trigger runs based on the recurrence pattern you define."]
+</div>
+
+<form method="post" class="needs-validation" novalidate>
+    @Html.AntiForgeryToken()
+
+    <div class="row">
+        <div class="col-xl-12">
+            <div id="panel-basic" class="panel">
+                <div class="panel-hdr">
+                    <h2>
+                        <i class="@(Settings.Theme.IconPrefix) fa-info-circle mr-2"></i>
+                        @_localizer["Basic Information"]
+                    </h2>
+                </div>
+                <div class="panel-container show">
+                    <div class="panel-content">
+                        <div class="form-row">
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label" asp-for="Input.Name">@_localizer["Schedule Name"] <span class="text-danger">*</span></label>
+                                <input asp-for="Input.Name" class="form-control" placeholder="@_localizer["e.g., Daily Stripe Reconciliation"]" />
+                                <span asp-validation-for="Input.Name" class="invalid-feedback"></span>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label" asp-for="Input.PspId">@_localizer["PSP"] <span class="text-danger">*</span></label>
+                                <select asp-for="Input.PspId" asp-items="Model.PspOptions" class="form-control select2"></select>
+                                <span asp-validation-for="Input.PspId" class="invalid-feedback"></span>
+                            </div>
+                        </div>
+
+                        <div class="form-row">
+                            <div class="col-12 mb-3">
+                                <label class="form-label" asp-for="Input.Description">@_localizer["Description"] (@_localizer["Optional"])</label>
+                                <textarea asp-for="Input.Description" class="form-control" rows="3" placeholder="@_localizer["Describe the purpose of this schedule..."]"></textarea>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-xl-6">
+            <div id="panel-recurrence" class="panel">
+                <div class="panel-hdr">
+                    <h2>
+                        <i class="@(Settings.Theme.IconPrefix) fa-redo mr-2"></i>
+                        @_localizer["Recurrence Pattern"]
+                    </h2>
+                </div>
+                <div class="panel-container show">
+                    <div class="panel-content">
+                        <div class="form-row">
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label" asp-for="Input.RecurrenceType">@_localizer["Recurrence Type"] <span class="text-danger">*</span></label>
+                                <select asp-for="Input.RecurrenceType" asp-items="Model.RecurrenceTypeOptions" class="form-control select2" id="recurrenceType"></select>
+                                <span asp-validation-for="Input.RecurrenceType" class="invalid-feedback"></span>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label" asp-for="Input.ScheduledTime">@_localizer["Scheduled Time"] <span class="text-danger">*</span></label>
+                                <input type="time" asp-for="Input.ScheduledTime" class="form-control" />
+                                <span asp-validation-for="Input.ScheduledTime" class="invalid-feedback"></span>
+                            </div>
+                        </div>
+
+                        <div class="form-row" id="dayOfWeekRow" style="display:none;">
+                            <div class="col-12 mb-3">
+                                <label class="form-label" asp-for="Input.DayOfWeek">@_localizer["Day of Week"] <span class="text-danger">*</span></label>
+                                <select asp-for="Input.DayOfWeek" asp-items="Model.DayOfWeekOptions" class="form-control select2">
+                                    <option value="">@_localizer["-- Select Day --"]</option>
+                                </select>
+                                <span asp-validation-for="Input.DayOfWeek" class="invalid-feedback"></span>
+                            </div>
+                        </div>
+
+                        <div class="form-row" id="dayOfMonthRow" style="display:none;">
+                            <div class="col-12 mb-3">
+                                <label class="form-label" asp-for="Input.DayOfMonth">@_localizer["Day of Month"] <span class="text-danger">*</span></label>
+                                <input type="number" asp-for="Input.DayOfMonth" class="form-control" min="1" max="31" placeholder="@_localizer["1-31"]" />
+                                <small class="form-text text-muted">@_localizer["If the month has fewer days, the last day of the month will be used."]</small>
+                                <span asp-validation-for="Input.DayOfMonth" class="invalid-feedback"></span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xl-6">
+            <div id="panel-daterange" class="panel">
+                <div class="panel-hdr">
+                    <h2>
+                        <i class="@(Settings.Theme.IconPrefix) fa-calendar-alt mr-2"></i>
+                        @_localizer["Schedule Period"]
+                    </h2>
+                </div>
+                <div class="panel-container show">
+                    <div class="panel-content">
+                        <div class="form-row">
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label" asp-for="Input.StartDate">@_localizer["Start Date"]</label>
+                                <input type="date" asp-for="Input.StartDate" class="form-control" />
+                                <small class="form-text text-muted">@_localizer["When should this schedule become active?"]</small>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label" asp-for="Input.EndDate">@_localizer["End Date"] (@_localizer["Optional"])</label>
+                                <input type="date" asp-for="Input.EndDate" class="form-control" />
+                                <small class="form-text text-muted">@_localizer["Leave empty for no end date."]</small>
+                            </div>
+                        </div>
+
+                        <div class="form-row">
+                            <div class="col-12 mb-3">
+                                <div class="custom-control custom-switch">
+                                    <input type="checkbox" asp-for="Input.IsActive" class="custom-control-input" id="isActive">
+                                    <label class="custom-control-label" for="isActive">@_localizer["Schedule is Active"]</label>
+                                </div>
+                                <small class="form-text text-muted">@_localizer["Active schedules will automatically trigger reconciliation runs."]</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    @if (!string.IsNullOrEmpty(Model.ErrorMessage))
+    {
+        <div class="alert alert-danger">
+            <i class="@(Settings.Theme.IconPrefix) fa-exclamation-triangle mr-2"></i>
+            @Model.ErrorMessage
+        </div>
+    }
+
+    <div class="row">
+        <div class="col-12">
+            <div class="btn-group float-right" role="group">
+                <button type="submit" class="btn btn-primary btn-lg waves-effect waves-themed">
+                    <i class="@(Settings.Theme.IconPrefix) fa-save mr-1"></i>
+                    @_localizer["Create Schedule"]
+                </button>
+                <a asp-page="Index" class="btn btn-secondary waves-effect waves-themed">
+                    <i class="@(Settings.Theme.IconPrefix) fa-times mr-1"></i>
+                    @_localizer["Cancel"]
+                </a>
+            </div>
+        </div>
+    </div>
+</form>
+
+@section ScriptsBlock {
+    <partial name="_ValidationScriptsPartial" />
+    <script>
+        $(function () {
+            'use strict';
+
+            function updateRecurrenceFields() {
+                var recurrenceType = parseInt($('#recurrenceType').val());
+
+                // Daily = 1, Weekly = 2, BiWeekly = 3, Monthly = 4, Quarterly = 5
+                if (recurrenceType === 2 || recurrenceType === 3) { // Weekly or BiWeekly
+                    $('#dayOfWeekRow').show();
+                    $('#dayOfMonthRow').hide();
+                } else if (recurrenceType === 4 || recurrenceType === 5) { // Monthly or Quarterly
+                    $('#dayOfWeekRow').hide();
+                    $('#dayOfMonthRow').show();
+                } else { // Daily
+                    $('#dayOfWeekRow').hide();
+                    $('#dayOfMonthRow').hide();
+                }
+            }
+
+            $('#recurrenceType').on('change', updateRecurrenceFields);
+            updateRecurrenceFields();
+
+            // Form validation
+            var forms = document.querySelectorAll('.needs-validation');
+            Array.prototype.slice.call(forms).forEach(function (form) {
+                form.addEventListener('submit', function (event) {
+                    if (!form.checkValidity()) {
+                        event.preventDefault();
+                        event.stopPropagation();
+                    }
+                    form.classList.add('was-validated');
+                }, false);
+            });
+        });
+    </script>
+}

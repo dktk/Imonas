@@ -1,0 +1,43 @@
+Nginx SETUP
+    - sudo vi /etc/nginx/sites-available/test.imonas.com
+
+            server {
+            listen 80;
+            server_name test.imonas.com;
+
+            location / {
+                proxy_pass         http://127.0.0.1:5000;
+                proxy_http_version 1.1;
+
+                proxy_set_header   Host              $host;
+                proxy_set_header   X-Real-IP         $remote_addr;
+                proxy_set_header   X-Forwarded-For   $proxy_add_x_forwarded_for;
+                proxy_set_header   X-Forwarded-Proto $scheme;
+
+                proxy_set_header   Upgrade           $http_upgrade;
+                proxy_set_header   Connection        $connection_upgrade;
+            }
+        }
+
+    - sudo ln -s /etc/nginx/sites-available/test.imonas.com /etc/nginx/sites-enabled/test.imonas.com
+    - Websocket helper
+        Check if you already have it: grep -n "map \$http_upgrade \$connection_upgrade" /etc/nginx/nginx.conf
+        Add content to: /etc/nginx/nginx.conf (if not there)
+            map $http_upgrade $connection_upgrade {
+                default upgrade;
+                ''      close;
+            }
+
+
+
+Deployment
+    On local machine
+    cd /mnt/c/git/Imonas/Imonas.V4/src/SmartAdmin.WebUI/bin/Release/net9.0
+    mkdir _
+    tar -czf ./_/imonas.tar.gz -C publish .
+
+    Using WinScp
+    copy to _machine_/root/imonas/imonas.tar.gz
+
+    On _machine_
+    sudo ./imonas/deploy_dotnet9_app.sh imonas 5000 ./imonas/imonas.tar.gz SmartAdmin.WebUI.dll

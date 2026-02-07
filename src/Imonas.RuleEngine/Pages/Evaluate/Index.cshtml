@@ -1,0 +1,61 @@
+@page
+@model Imonas.RuleEngine.Pages.Evaluate.IndexModel
+@{
+    ViewData["Title"] = "Evaluate Rules";
+}
+<h2 class="mb-3">Evaluate</h2>
+
+<form method="post" class="row g-2 align-items-end mb-4">
+  <div class="col-md-6">
+    <label class="form-label">Rule Group</label>
+    <select asp-for="SelectedGroupId" class="form-select">
+      <option value="">-- select --</option>
+      @foreach (var g in Model.Groups)
+      {
+        <option value="@g.Id">@g.Name (@g.GroupOperator)</option>
+      }
+    </select>
+  </div>
+  <div class="col-md-3">
+    <button type="submit" class="btn btn-primary w-100">Run</button>
+  </div>
+</form>
+
+@if (!ViewData.ModelState.IsValid)
+{
+  <div class="alert alert-danger">
+    @foreach (var kv in ViewData.ModelState)
+    {
+        foreach (var err in kv.Value!.Errors)
+        {
+            <div>@err.ErrorMessage</div>
+        }
+    }
+  </div>
+}
+
+@if (Model.SelectedGroupId is not null)
+{
+  <h5>Results (@Model.Results.Count)</h5>
+  <table class="table table-dark table-striped">
+    <thead>
+      <tr>
+        <th>Id</th>
+        <th>Status</th>
+        <th>Amount</th>
+        <th>Date (UTC)</th>
+      </tr>
+    </thead>
+    <tbody>
+    @foreach (var t in Model.Results)
+    {
+      <tr>
+        <td>@t.Id</td>
+        <td>@t.Status</td>
+        <td>@t.Amount</td>
+        <td>@t.Date.ToString("u")</td>
+      </tr>
+    }
+    </tbody>
+  </table>
+}

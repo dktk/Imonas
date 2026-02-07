@@ -1,0 +1,101 @@
+@page
+@model Imonas.V9.Web.Pages.Config.FeeContractsModel
+@{
+    ViewData["Title"] = "Fee Contracts";
+}
+
+<div class="flex-between mb-4">
+    <div>
+        <div class="page-title">Fee Contracts</div>
+        <div class="page-subtitle">Configure PSP fee structures and pricing</div>
+    </div>
+    <div>
+        <a asp-page="/Config/FeeContracts/Create" class="btn btn-primary">➕ Add Contract</a>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-body">
+        <div class="table-container">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Contract Name</th>
+                        <th>PSP</th>
+                        <th>Payment Method</th>
+                        <th>Brand</th>
+                        <th>Fee Structure</th>
+                        <th>Status</th>
+                        <th>Effective From</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var contract in Model.Contracts)
+                    {
+                        <tr>
+                            <td>
+                                <a asp-page="/Config/FeeContracts/Details" asp-route-id="@contract.Id" style="color: var(--text-primary); text-decoration: none;">
+                                    <strong>@contract.ContractName</strong>
+                                </a>
+                            </td>
+                            <td><span class="badge badge-secondary">PSP</span></td>
+                            <td>@contract.PaymentMethod</td>
+                            <td>@contract.Brand</td>
+                            <td>
+                                @if (contract.FeeStructure == "hybrid")
+                                {
+                                    <span>@contract.FixedFee?.ToString("C") + @contract.PercentageFee?.ToString("P2")</span>
+                                }
+                                else if (contract.FeeStructure == "fixed")
+                                {
+                                    <span>@contract.FixedFee?.ToString("C")</span>
+                                }
+                                else if (contract.FeeStructure == "percentage")
+                                {
+                                    <span>@contract.PercentageFee?.ToString("P2")</span>
+                                }
+                                else
+                                {
+                                    <span>@contract.FeeStructure</span>
+                                }
+                            </td>
+                            <td>
+                                @if (contract.Status == "Active")
+                                {
+                                    <span class="badge badge-success">@contract.Status</span>
+                                }
+                                else if (contract.Status == "Draft")
+                                {
+                                    <span class="badge badge-warning">@contract.Status</span>
+                                }
+                                else if (contract.Status == "PendingApproval")
+                                {
+                                    <span class="badge badge-warning">Pending Approval</span>
+                                }
+                                else if (contract.Status == "Rejected")
+                                {
+                                    <span class="badge badge-danger">@contract.Status</span>
+                                }
+                                else
+                                {
+                                    <span class="badge badge-secondary">@contract.Status</span>
+                                }
+                            </td>
+                            <td>@contract.EffectiveFrom.ToString("yyyy-MM-dd")</td>
+                            <td>
+                                <div style="display: flex; gap: 0.5rem;">
+                                    <a asp-page="/Config/FeeContracts/Details" asp-route-id="@contract.Id" class="btn btn-secondary" style="padding: 0.5rem 1rem;">View</a>
+                                    @if (contract.Status == "Draft")
+                                    {
+                                        <a asp-page="/Config/FeeContracts/Edit" asp-route-id="@contract.Id" class="btn btn-primary" style="padding: 0.5rem 1rem;">Edit</a>
+                                    }
+                                </div>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>

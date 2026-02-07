@@ -1,0 +1,81 @@
+@page
+@model Imonas.V9.Web.Pages.Rules.IndexModel
+@{
+    ViewData["Title"] = "Matching Rules";
+}
+
+<div class="flex-between mb-4">
+    <div>
+        <div class="page-title">Matching Rules</div>
+        <div class="page-subtitle">Configure reconciliation rules and strategies</div>
+    </div>
+    <div>
+        <a asp-page="Create" class="btn btn-primary">➕ Create Rule</a>
+    </div>
+</div>
+
+<div class="grid grid-3 mb-4">
+    <div class="card">
+        <div class="card-header">Rule Types</div>
+        <div class="card-body">
+            <ul style="list-style: none; padding: 0;">
+                <li style="padding: 0.5rem 0; border-bottom: 1px solid var(--border-color);">
+                    <strong>Equality:</strong> Exact field matching
+                </li>
+                <li style="padding: 0.5rem 0; border-bottom: 1px solid var(--border-color);">
+                    <strong>Composite:</strong> Multi-field matching
+                </li>
+                <li style="padding: 0.5rem 0; border-bottom: 1px solid var(--border-color);">
+                    <strong>Tolerance:</strong> Amount/date windows
+                </li>
+                <li style="padding: 0.5rem 0;">
+                    <strong>Fuzzy:</strong> Similarity scoring
+                </li>
+            </ul>
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="card-header">Active Rules</div>
+        <div class="card-body">
+            <div class="stat-value" style="color: var(--accent-secondary);">@Model.ActiveRules</div>
+            <div class="stat-label">Currently enabled</div>
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="card-header">Rule Versions</div>
+        <div class="card-body">
+            <div class="stat-value" style="color: var(--accent-primary);">@Model.CurrentVersion</div>
+            <div class="stat-label">Current version</div>
+        </div>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-header">All Rules</div>
+    <div class="card-body">
+        <div class="table-container">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Rule Name</th>
+                        <th>Type</th>
+                        <th>Priority</th>
+                        <th>Version</th>
+                        <th>Status</th>
+                        <th>Effective From</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td colspan="7" class="text-center" style="padding: 2rem; color: var(--text-muted);">
+                            No rules configured yet. Create your first matching rule to get started.
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>

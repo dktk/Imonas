@@ -1,0 +1,281 @@
+@page
+@model LoginModel
+@inject Microsoft.Extensions.Localization.IStringLocalizer<LoginModel> _localizer
+@{
+    ViewData["PageName"] = "login";
+    ViewData["Title"] = _localizer["Login"].Value;
+}
+
+@section Header {
+    <link rel="stylesheet" media="screen, print" href="~/css/fa-solid.css">
+    <link rel="stylesheet" media="screen, print" href="~/css/fa-brands.css">
+    <style>
+        .login-card {
+            backdrop-filter: blur(10px);
+            background: rgba(255, 255, 255, 0.95);
+            border: none;
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.2), 0 5px 15px rgba(0, 0, 0, 0.1);
+        }
+        .login-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            margin: -1.5rem -1.5rem 1.5rem -1.5rem;
+            padding: 2rem 1.5rem;
+            border-radius: 0.5rem 0.5rem 0 0;
+        }
+        .login-header h4 {
+            margin-bottom: 0;
+        }
+        .form-control-modern {
+            border: 2px solid #e9ecef;
+            border-radius: 0.5rem;
+            padding: 0.75rem 1rem;
+            font-size: 1rem;
+            transition: all 0.2s ease;
+        }
+        .form-control-modern:focus {
+            border-color: #667eea;
+            box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.15);
+        }
+        .input-group-modern {
+            position: relative;
+        }
+        .input-group-modern .input-icon {
+            position: absolute;
+            left: 1rem;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #adb5bd;
+            z-index: 10;
+        }
+        .input-group-modern .form-control-modern {
+            padding-left: 2.75rem;
+        }
+        .btn-login {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border: none;
+            border-radius: 0.5rem;
+            padding: 0.875rem 2rem;
+            font-weight: 600;
+            font-size: 1rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            transition: all 0.3s ease;
+        }
+        .btn-login:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 7px 14px rgba(102, 126, 234, 0.4);
+        }
+        .feature-item {
+            display: flex;
+            align-items: center;
+            margin-bottom: 1.5rem;
+        }
+        .feature-icon {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.2);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-right: 1rem;
+            flex-shrink: 0;
+        }
+        .feature-icon i {
+            font-size: 1.25rem;
+            color: white;
+        }
+        .brand-section h1 {
+            font-size: 2.5rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+        }
+        .brand-section .tagline {
+            font-size: 1.125rem;
+            opacity: 0.9;
+            margin-bottom: 2rem;
+        }
+        .custom-control-modern .custom-control-label {
+            cursor: pointer;
+            user-select: none;
+        }
+        .custom-control-modern .custom-control-label::before {
+            border-radius: 0.25rem;
+            border: 2px solid #dee2e6;
+        }
+        .custom-control-modern .custom-control-input:checked ~ .custom-control-label::before {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-color: #667eea;
+        }
+        .forgot-link {
+            color: #667eea;
+            font-weight: 500;
+            text-decoration: none;
+            transition: color 0.2s ease;
+        }
+        .forgot-link:hover {
+            color: #764ba2;
+            text-decoration: underline;
+        }
+        .alert-modern {
+            border: none;
+            border-radius: 0.5rem;
+            border-left: 4px solid;
+        }
+        .alert-modern.alert-danger {
+            background-color: #fef2f2;
+            border-left-color: #ef4444;
+            color: #991b1b;
+        }
+        .password-toggle {
+            position: absolute;
+            right: 1rem;
+            top: 50%;
+            transform: translateY(-50%);
+            cursor: pointer;
+            color: #adb5bd;
+            z-index: 10;
+        }
+        .password-toggle:hover {
+            color: #667eea;
+        }
+    </style>
+}
+
+@section PageHeading {
+    <div class="col col-md-6 col-lg-7 hidden-sm-down">
+        <div class="brand-section text-white">
+            <h1>Imonas</h1>
+            <p class="tagline">@_localizer["Reconciliation Management Platform"]</p>
+
+            <div class="feature-item">
+                <div class="feature-icon">
+                    <i class="fal fa-shield-check"></i>
+                </div>
+                <div>
+                    <h5 class="text-white mb-1">@_localizer["Secure Access"]</h5>
+                    <p class="text-white opacity-70 mb-0 fs-sm">@_localizer["Enterprise-grade security for your data"]</p>
+                </div>
+            </div>
+
+            <div class="feature-item">
+                <div class="feature-icon">
+                    <i class="fal fa-bolt"></i>
+                </div>
+                <div>
+                    <h5 class="text-white mb-1">@_localizer["Real-time Reconciliation"]</h5>
+                    <p class="text-white opacity-70 mb-0 fs-sm">@_localizer["Automated matching across all PSPs"]</p>
+                </div>
+            </div>
+
+            <div class="feature-item">
+                <div class="feature-icon">
+                    <i class="fal fa-chart-line"></i>
+                </div>
+                <div>
+                    <h5 class="text-white mb-1">@_localizer["Insights & Analytics"]</h5>
+                    <p class="text-white opacity-70 mb-0 fs-sm">@_localizer["Comprehensive reporting and dashboards"]</p>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
+<div class="col-sm-12 col-md-6 col-lg-5 col-xl-4 ml-auto">
+    <h1 class="text-white fw-300 mb-3 d-sm-block d-md-none">
+        @_localizer["Welcome Back"]
+    </h1>
+    <div class="card login-card rounded-plus">
+        <div class="login-header text-center text-white">
+            <i class="fal fa-user-circle fa-3x mb-2 opacity-80"></i>
+            <h4 class="fw-500">@_localizer["Sign In"]</h4>
+            <p class="mb-0 opacity-80 fs-sm">@_localizer["Enter your credentials to continue"]</p>
+        </div>
+        <div class="card-body p-4">
+            <form id="js-login" method="post" class="needs-validation" novalidate>
+                @if (!ViewData.ModelState.IsValid)
+                {
+                    <div class="alert alert-modern alert-danger mb-4" role="alert">
+                        <div class="d-flex align-items-center">
+                            <i class="fal fa-exclamation-circle mr-2"></i>
+                            <div asp-validation-summary="All"></div>
+                        </div>
+                    </div>
+                }
+
+                <div class="form-group mb-4">
+                    <label class="form-label fw-500" asp-for="Input.UserName">@_localizer["Username"]</label>
+                    <div class="input-group-modern">
+                        <i class="fal fa-user input-icon"></i>
+                        <input type="text" asp-for="Input.UserName" class="form-control form-control-modern" placeholder="@_localizer["Enter your username"]" required="required" autocomplete="username" />
+                    </div>
+                    <span class="text-danger fs-sm" asp-validation-for="Input.UserName"></span>
+                </div>
+
+                <div class="form-group mb-4">
+                    <label class="form-label fw-500" asp-for="Input.Password">@_localizer["Password"]</label>
+                    <div class="input-group-modern">
+                        <i class="fal fa-lock input-icon"></i>
+                        <input type="password" asp-for="Input.Password" id="passwordInput" class="form-control form-control-modern" placeholder="@_localizer["Enter your password"]" required="required" autocomplete="current-password" />
+                        <i class="fal fa-eye password-toggle" id="togglePassword" title="@_localizer["Show password"]"></i>
+                    </div>
+                    <span class="text-danger fs-sm" asp-validation-for="Input.Password"></span>
+                </div>
+
+                <div class="form-group mb-4">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div class="custom-control custom-checkbox custom-control-modern">
+                            <input type="checkbox" class="custom-control-input" asp-for="Input.RememberMe" />
+                            <label class="custom-control-label" asp-for="Input.RememberMe">@_localizer["Remember me"]</label>
+                        </div>
+                        <a asp-page="ForgotPassword" class="forgot-link fs-sm">@_localizer["Forgot password?"]</a>
+                    </div>
+                </div>
+
+                <button id="js-login-btn" type="submit" class="btn btn-login btn-block text-white">
+                    <i class="fal fa-sign-in-alt mr-2"></i>@_localizer["Sign In"]
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <div class="text-center mt-4">
+        <p class="text-white opacity-70 fs-sm mb-0">
+            @_localizer["Protected by enterprise security"] <i class="fal fa-shield-check ml-1"></i>
+        </p>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+    <script>
+        $(function () {
+            // Password visibility toggle
+            $('#togglePassword').on('click', function () {
+                var input = $('#passwordInput');
+                var icon = $(this);
+
+                if (input.attr('type') === 'password') {
+                    input.attr('type', 'text');
+                    icon.removeClass('fa-eye').addClass('fa-eye-slash');
+                } else {
+                    input.attr('type', 'password');
+                    icon.removeClass('fa-eye-slash').addClass('fa-eye');
+                }
+            });
+
+            // Form validation
+            var form = document.getElementById('js-login');
+            form.addEventListener('submit', function (event) {
+                if (!form.checkValidity()) {
+                    event.preventDefault();
+                    event.stopPropagation();
+                }
+                form.classList.add('was-validated');
+            }, false);
+
+            // Auto-focus on username field
+            $('input[name="Input.UserName"]').focus();
+        });
+    </script>
+}

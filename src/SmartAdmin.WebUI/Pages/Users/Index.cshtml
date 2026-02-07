@@ -1,0 +1,297 @@
+﻿@page
+@using Microsoft.AspNetCore.Mvc.Localization
+@model SmartAdmin.WebUI.Pages.Users.IndexModel
+@inject IStringLocalizer<IndexModel> _localizer
+
+@{
+    ViewData["Title"] = "User Management";
+    ViewData["PageName"] = "users_index";
+}
+
+@section HeadBlock {
+    <link rel="stylesheet" media="screen, print" href="~/css/fa-solid.css">
+}
+
+<div class="row mb-3">
+    <div class="col-12 d-flex justify-content-between align-items-center">
+        <div>
+            <h1 class="subheader-title">
+                <i class="subheader-icon @(Settings.Theme.IconPrefix) fa-users-cog"></i> @_localizer["User Management"]
+            </h1>
+            <small class="text-muted">@_localizer["Manage users, roles, and permissions"]</small>
+        </div>
+        <div>
+            <form method="post" asp-page-handler="SeedRoles" style="display: inline;">
+                <button type="submit" class="btn btn-outline-info waves-effect waves-themed mr-2">
+                    <i class="@(Settings.Theme.IconPrefix) fa-seedling mr-1"></i>
+                    @_localizer["Seed Roles"]
+                </button>
+            </form>
+            <a asp-page="Create" class="btn btn-primary waves-effect waves-themed">
+                <i class="@(Settings.Theme.IconPrefix) fa-user-plus mr-1"></i>
+                @_localizer["Add User"]
+            </a>
+        </div>
+    </div>
+</div>
+
+@if (TempData["SuccessMessage"] != null)
+{
+    <div class="alert alert-success alert-dismissible fade show" role="alert">
+        <i class="@(Settings.Theme.IconPrefix) fa-check-circle mr-2"></i>
+        @TempData["SuccessMessage"]
+        <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+            <span aria-hidden="true">&times;</span>
+        </button>
+    </div>
+}
+
+<!-- Stats Cards -->
+<div class="row mb-4">
+    <div class="col-sm-6 col-xl-3">
+        <div class="p-3 bg-primary-300 rounded overflow-hidden position-relative text-white mb-g">
+            <div>
+                <h3 class="display-4 d-block l-h-n m-0 fw-500">
+                    @Model.Stats.TotalUsers
+                </h3>
+                <span class="opacity-70">@_localizer["Total Users"]</span>
+            </div>
+            <i class="@(Settings.Theme.IconPrefix) fa-users position-absolute pos-right pos-bottom opacity-15 mb-n1 mr-n1" style="font-size:6rem"></i>
+        </div>
+    </div>
+    <div class="col-sm-6 col-xl-3">
+        <div class="p-3 bg-success-500 rounded overflow-hidden position-relative text-white mb-g">
+            <div>
+                <h3 class="display-4 d-block l-h-n m-0 fw-500">
+                    @Model.Stats.ActiveUsers
+                </h3>
+                <span class="opacity-70">@_localizer["Active Users"]</span>
+            </div>
+            <i class="@(Settings.Theme.IconPrefix) fa-user-check position-absolute pos-right pos-bottom opacity-15 mb-n1 mr-n1" style="font-size:6rem"></i>
+        </div>
+    </div>
+    <div class="col-sm-6 col-xl-3">
+        <div class="p-3 bg-secondary-500 rounded overflow-hidden position-relative text-white mb-g">
+            <div>
+                <h3 class="display-4 d-block l-h-n m-0 fw-500">
+                    @Model.Stats.InactiveUsers
+                </h3>
+                <span class="opacity-70">@_localizer["Inactive Users"]</span>
+            </div>
+            <i class="@(Settings.Theme.IconPrefix) fa-user-slash position-absolute pos-right pos-bottom opacity-15 mb-n1 mr-n1" style="font-size:6rem"></i>
+        </div>
+    </div>
+    <div class="col-sm-6 col-xl-3">
+        <div class="p-3 bg-danger-400 rounded overflow-hidden position-relative text-white mb-g">
+            <div>
+                <h3 class="display-4 d-block l-h-n m-0 fw-500">
+                    @Model.Stats.LockedOutUsers
+                </h3>
+                <span class="opacity-70">@_localizer["Locked Out"]</span>
+            </div>
+            <i class="@(Settings.Theme.IconPrefix) fa-user-lock position-absolute pos-right pos-bottom opacity-15 mb-n1 mr-n1" style="font-size:6rem"></i>
+        </div>
+    </div>
+</div>
+
+<!-- Users by Role Summary -->
+@if (Model.Stats.UsersByRole.Any())
+{
+    <div class="row mb-4">
+        <div class="col-xl-12">
+            <div id="panel-roles-summary" class="panel">
+                <div class="panel-hdr">
+                    <h2>
+                        <i class="@(Settings.Theme.IconPrefix) fa-user-tag mr-2"></i>
+                        @_localizer["Users by Role"]
+                    </h2>
+                </div>
+                <div class="panel-container show">
+                    <div class="panel-content">
+                        <div class="row">
+                            @foreach (var role in Model.Stats.UsersByRole)
+                            {
+                                <div class="col-sm-6 col-md-4 col-xl-2">
+                                    <div class="card border mb-3">
+                                        <div class="card-body text-center py-3">
+                                            <h2 class="mb-1 text-primary">@role.Value</h2>
+                                            <small class="text-muted">@role.Key</small>
+                                        </div>
+                                    </div>
+                                </div>
+                            }
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
+<!-- Filters -->
+<div class="row mb-4">
+    <div class="col-xl-12">
+        <form method="get" class="d-flex align-items-end flex-wrap gap-3">
+            <div class="form-group mb-0">
+                <label class="form-label">@_localizer["Search"]</label>
+                <input type="text" asp-for="SearchTerm" class="form-control" placeholder="@_localizer["Name or email..."]" />
+            </div>
+            <div class="form-group mb-0">
+                <label class="form-label">@_localizer["Role"]</label>
+                <select asp-for="RoleFilter" class="form-control select2">
+                    <option value="">@_localizer["All Roles"]</option>
+                    @foreach (var role in Model.Roles)
+                    {
+                        <option value="@role.Name">@role.Name (@role.UserCount)</option>
+                    }
+                </select>
+            </div>
+            <div class="form-group mb-0">
+                <label class="form-label">@_localizer["Status"]</label>
+                <select asp-for="StatusFilter" class="form-control select2">
+                    <option value="">@_localizer["All Statuses"]</option>
+                    <option value="active">@_localizer["Active"]</option>
+                    <option value="inactive">@_localizer["Inactive"]</option>
+                </select>
+            </div>
+            <button type="submit" class="btn btn-primary waves-effect waves-themed">
+                <i class="@(Settings.Theme.IconPrefix) fa-search mr-1"></i>
+                @_localizer["Search"]
+            </button>
+            @if (!string.IsNullOrEmpty(Model.RoleFilter) || !string.IsNullOrEmpty(Model.StatusFilter) || !string.IsNullOrEmpty(Model.SearchTerm))
+            {
+                <a asp-page="Index" class="btn btn-secondary waves-effect waves-themed">
+                    <i class="@(Settings.Theme.IconPrefix) fa-times mr-1"></i>
+                    @_localizer["Clear"]
+                </a>
+            }
+        </form>
+    </div>
+</div>
+
+<!-- Users Table -->
+<div class="row">
+    <div class="col-xl-12">
+        <div id="panel-users" class="panel">
+            <div class="panel-hdr">
+                <h2>
+                    <i class="@(Settings.Theme.IconPrefix) fa-list mr-2"></i>
+                    @_localizer["Users"]
+                    <span class="fw-300"><i>(@Model.Users.Count() @_localizer["shown"])</i></span>
+                </h2>
+                <div class="panel-toolbar">
+                    <a asp-page="Roles" class="btn btn-sm btn-outline-primary waves-effect waves-themed mr-2">
+                        <i class="@(Settings.Theme.IconPrefix) fa-user-tag mr-1"></i>
+                        @_localizer["Manage Roles"]
+                    </a>
+                    <a asp-page="Permissions" class="btn btn-sm btn-outline-info waves-effect waves-themed">
+                        <i class="@(Settings.Theme.IconPrefix) fa-key mr-1"></i>
+                        @_localizer["Permission Matrix"]
+                    </a>
+                </div>
+            </div>
+            <div class="panel-container show">
+                <div class="panel-content">
+                    <div class="table-responsive">
+                        <table class="table table-bordered table-hover table-striped w-100">
+                            <thead class="bg-primary-600">
+                                <tr>
+                                    <th>@_localizer["User"]</th>
+                                    <th>@_localizer["Email"]</th>
+                                    <th>@_localizer["Roles"]</th>
+                                    <th class="text-center">@_localizer["Status"]</th>
+                                    <th class="text-center">@_localizer["Email Verified"]</th>
+                                    <th class="text-center">@_localizer["Actions"]</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var user in Model.Users)
+                                {
+                                    <tr>
+                                        <td>
+                                            <div class="d-flex align-items-center">
+                                                <div class="d-inline-block position-relative">
+                                                    <span class="profile-image profile-image-md rounded-circle d-block" style="background-color: #886ab5; color: white; display: flex !important; align-items: center; justify-content: center; width: 40px; height: 40px; font-weight: 600;">
+                                                        @(string.IsNullOrEmpty(user.DisplayName) ? "?" : user.DisplayName.Substring(0, 1).ToUpper())
+                                                    </span>
+                                                </div>
+                                                <div class="ml-2">
+                                                    <a asp-page="Edit" asp-route-id="@user.Id" class="fw-500 text-primary">
+                                                        @user.DisplayName
+                                                    </a>
+                                                    <div class="small text-muted">@user.UserName</div>
+                                                </div>
+                                            </div>
+                                        </td>
+                                        <td>@user.Email</td>
+                                        <td>
+                                            @foreach (var role in user.Roles)
+                                            {
+                                                var badgeClass = role switch
+                                                {
+                                                    "System Admin" => "badge-danger",
+                                                    "Admin" => "badge-warning",
+                                                    "Analyst" => "badge-info",
+                                                    "Viewer" => "badge-secondary",
+                                                    "Finance Admin" => "badge-success",
+                                                    "Config Manager" => "badge-primary",
+                                                    _ => "badge-light"
+                                                };
+                                                <span class="badge @badgeClass mr-1">@role</span>
+                                            }
+                                            @if (!user.Roles.Any())
+                                            {
+                                                <span class="text-muted">@_localizer["No roles"]</span>
+                                            }
+                                        </td>
+                                        <td class="text-center">
+                                            @if (user.IsActive)
+                                            {
+                                                <span class="badge badge-success">@_localizer["Active"]</span>
+                                            }
+                                            else
+                                            {
+                                                <span class="badge badge-secondary">@_localizer["Inactive"]</span>
+                                            }
+                                        </td>
+                                        <td class="text-center">
+                                            @if (user.EmailConfirmed)
+                                            {
+                                                <i class="@(Settings.Theme.IconPrefix) fa-check-circle text-success"></i>
+                                            }
+                                            else
+                                            {
+                                                <i class="@(Settings.Theme.IconPrefix) fa-times-circle text-danger"></i>
+                                            }
+                                        </td>
+                                        <td class="text-center">
+                                            <div class="btn-group">
+                                                <a asp-page="Edit" asp-route-id="@user.Id" class="btn btn-sm btn-outline-primary waves-effect waves-themed" title="@_localizer["Edit"]">
+                                                    <i class="@(Settings.Theme.IconPrefix) fa-edit"></i>
+                                                </a>
+                                                <form method="post" asp-page-handler="ToggleStatus" asp-route-userId="@user.Id" style="display: inline;">
+                                                    <button type="submit" class="btn btn-sm @(user.IsActive ? "btn-outline-warning" : "btn-outline-success") waves-effect waves-themed" title="@(user.IsActive ? _localizer["Deactivate"] : _localizer["Activate"])">
+                                                        <i class="@(Settings.Theme.IconPrefix) @(user.IsActive ? "fa-user-slash" : "fa-user-check")"></i>
+                                                    </button>
+                                                </form>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                }
+                                @if (!Model.Users.Any())
+                                {
+                                    <tr>
+                                        <td colspan="6" class="text-center text-muted py-4">
+                                            <i class="@(Settings.Theme.IconPrefix) fa-users fa-3x mb-3 d-block opacity-50"></i>
+                                            @_localizer["No users found."]
+                                        </td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

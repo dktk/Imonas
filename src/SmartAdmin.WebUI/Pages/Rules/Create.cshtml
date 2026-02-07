@@ -1,0 +1,699 @@
+﻿@page
+@using Microsoft.AspNetCore.Mvc.Localization
+@using Domain.Enums
+@model SmartAdmin.WebUI.Pages.Rules.CreateModel
+@inject IStringLocalizer<CreateModel> _localizer
+
+@{
+    ViewData["Title"] = "Create Rule";
+    ViewData["PageName"] = "rules_create";
+
+    var matchableFields = new[] {
+        new { Value = "TxId", Text = "Transaction ID", Group = "Common" },
+        new { Value = "ExternalPaymentId", Text = "External Payment ID", Group = "External" },
+        new { Value = "PlayerId", Text = "Player ID", Group = "Common" },
+        new { Value = "Amount", Text = "Amount", Group = "Common" },
+        new { Value = "CurrencyCode", Text = "Currency Code", Group = "Common" },
+        new { Value = "TxDate", Text = "Transaction Date", Group = "Common" },
+        new { Value = "Status", Text = "Status", Group = "Common" },
+        new { Value = "BrandId", Text = "Brand ID", Group = "External" },
+        new { Value = "ProviderTxId", Text = "Provider Transaction ID", Group = "Internal" },
+        new { Value = "RefNumber", Text = "Reference Number", Group = "Internal" },
+        new { Value = "UserEmail", Text = "User Email", Group = "Internal" },
+        new { Value = "UserId", Text = "User ID", Group = "Internal" },
+        new { Value = "Description", Text = "Description", Group = "Internal" }
+    };
+}
+
+@section HeadBlock {
+    <link rel="stylesheet" media="screen, print" href="~/css/fa-solid.css">
+    <style>
+        .field-tag {
+            display: inline-flex;
+            align-items: center;
+            border-radius: 4px;
+            padding: 4px 8px;
+            margin: 2px;
+            font-size: 0.85rem;
+        }
+        .field-tag .remove-field {
+            margin-left: 6px;
+            cursor: pointer;
+            color: #dc3545;
+        }
+        .field-tag .remove-field:hover {
+            color: #a71d2a;
+        }
+        .rule-builder-section {
+            border: 1px solid #dee2e6;
+            border-radius: 8px;
+            padding: 20px;
+            transition: all 0.3s ease;
+        }        
+        .operator-btn {
+            min-width: 80px;
+        }
+        .operator-btn.active {
+            font-weight: bold;
+        }
+        .threshold-display {
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: #007bff;
+        }
+        .field-checkbox-group {
+            max-height: 200px;
+            overflow-y: auto;
+            border: 1px solid #dee2e6;
+            border-radius: 4px;
+            padding: 10px;
+        }
+        .json-preview {
+            font-family: 'Courier New', monospace;
+            font-size: 0.85rem;
+            background: #1e1e1e;
+            color: #d4d4d4;
+            border-radius: 4px;
+            padding: 10px;
+            max-height: 150px;
+            overflow-y: auto;
+        }
+        .json-preview .json-key { color: #9cdcfe; }
+        .json-preview .json-string { color: #ce9178; }
+        .json-preview .json-number { color: #b5cea8; }
+    </style>
+}
+
+<div class="row mb-3">
+    <div class="col-12 d-flex justify-content-between align-items-center">
+        <div>
+            <h1 class="subheader-title">
+                <i class="subheader-icon @(Settings.Theme.IconPrefix) fa-plus-circle"></i> @_localizer["Create Matching Rule"]
+            </h1>
+            <small class="text-muted">@_localizer["Define a new reconciliation matching strategy"]</small>
+        </div>
+        <a asp-page="Index" class="btn btn-secondary waves-effect waves-themed">
+            <i class="@(Settings.Theme.IconPrefix) fa-arrow-left mr-1"></i>
+            @_localizer["Back"]
+        </a>
+    </div>
+</div>
+
+<form method="post" class="needs-validation" novalidate id="ruleForm">
+    @Html.AntiForgeryToken()
+    <input type="hidden" asp-for="Input.RuleDefinition" id="ruleDefinitionInput" />
+
+    <div class="row">
+        <div class="col-xl-8">
+            <div id="panel-rule" class="panel">
+                <div class="panel-hdr">
+                    <h2>
+                        <i class="@(Settings.Theme.IconPrefix) fa-edit mr-2"></i>
+                        @_localizer["Rule Configuration"]
+                    </h2>
+                </div>
+                <div class="panel-container show">
+                    <div class="panel-content">
+                        <div class="form-row">
+                            <div class="col-md-8 mb-3">
+                                <label class="form-label" asp-for="Input.RuleName">@_localizer["Rule Name"] <span class="text-danger">*</span></label>
+                                <input asp-for="Input.RuleName" class="form-control" placeholder="@_localizer["e.g., Exact Transaction ID Match"]" />
+                                <span asp-validation-for="Input.RuleName" class="invalid-feedback"></span>
+                            </div>
+                            <div class="col-md-4 mb-3">
+                                <label class="form-label" asp-for="Input.Priority">@_localizer["Priority"] <span class="text-danger">*</span></label>
+                                <input asp-for="Input.Priority" type="number" class="form-control" min="1" />
+                                <small class="form-text text-muted">@_localizer["Lower number = Higher priority"]</small>
+                            </div>
+                        </div>
+
+                        <div class="form-row">
+                            <div class="col-12 mb-3">
+                                <label class="form-label" asp-for="Input.Description">@_localizer["Description"] <span class="text-danger">*</span></label>
+                                <textarea asp-for="Input.Description" class="form-control" rows="2" placeholder="@_localizer["Describe how this rule matches transactions..."]"></textarea>
+                                <span asp-validation-for="Input.Description" class="invalid-feedback"></span>
+                            </div>
+                        </div>
+
+                        <div class="form-row">
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label" asp-for="Input.RuleType">@_localizer["Rule Type"] <span class="text-danger">*</span></label>
+                                <select asp-for="Input.RuleType" class="form-control select2" id="ruleTypeSelect">
+                                    <option value="@RuleType.Equality">@_localizer["Equality"] - @_localizer["Exact field matching"]</option>
+                                    <option value="@RuleType.Composite">@_localizer["Composite"] - @_localizer["Multi-field matching"]</option>
+                                    <option value="@RuleType.ToleranceWindow">@_localizer["Tolerance Window"] - @_localizer["Amount/date ranges"]</option>
+                                    <option value="@RuleType.Fuzzy">@_localizer["Fuzzy"] - @_localizer["Similarity scoring"]</option>
+                                </select>
+                            </div>
+                            <div class="col-md-3 mb-3">
+                                <label class="form-label" asp-for="Input.Version">@_localizer["Version"] <span class="text-danger">*</span></label>
+                                <input asp-for="Input.Version" class="form-control" placeholder="1.0.0" />
+                            </div>
+                            <div class="col-md-3 mb-3">
+                                <label class="form-label" asp-for="Input.EffectiveFrom">@_localizer["Effective From"] <span class="text-danger">*</span></label>
+                                <input asp-for="Input.EffectiveFrom" type="date" class="form-control" />
+                            </div>
+                        </div>
+
+                        <!-- Rule Definition Builder -->
+                        <div class="mb-4">
+                            <label class="form-label">
+                                <i class="@(Settings.Theme.IconPrefix) fa-cogs mr-1"></i>
+                                @_localizer["Rule Definition"] <span class="text-danger">*</span>
+                            </label>
+
+                            <!-- Equality Rule Builder -->
+                            <div class="rule-builder-section" id="builderEquality">
+                                <h5 class="text-info mb-3">
+                                    <i class="@(Settings.Theme.IconPrefix) fa-equals mr-2"></i>@_localizer["Equality Matching"]
+                                </h5>
+                                <div class="form-row">
+                                    <div class="col-md-6 mb-3">
+                                        <label class="form-label">@_localizer["Field to Match"]</label>
+                                        <select class="form-control select2" id="equalityField">
+                                            @foreach (var field in matchableFields)
+                                            {
+                                                <option value="@field.Value">@field.Text (@field.Group)</option>
+                                            }
+                                        </select>
+                                    </div>
+                                    <div class="col-md-6 mb-3">
+                                        <label class="form-label">@_localizer["Operator"]</label>
+                                        <select class="form-control select2" id="equalityOperator">
+                                            <option value="equals">@_localizer["Equals"] (=)</option>
+                                            <option value="not_equals">@_localizer["Not Equals"] (!=)</option>
+                                            <option value="contains">@_localizer["Contains"]</option>
+                                            <option value="starts_with">@_localizer["Starts With"]</option>
+                                            <option value="ends_with">@_localizer["Ends With"]</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                <small class="text-muted">
+                                    <i class="@(Settings.Theme.IconPrefix) fa-info-circle mr-1"></i>
+                                    @_localizer["This rule will match when the selected field values are equal between external and internal transactions."]
+                                </small>
+                            </div>
+
+                            <!-- Composite Rule Builder -->
+                            <div class="rule-builder-section" id="builderComposite" style="display: none;">
+                                <h5 class="text-success mb-3">
+                                    <i class="@(Settings.Theme.IconPrefix) fa-layer-group mr-2"></i>@_localizer["Composite Matching"]
+                                </h5>
+                                <div class="form-row mb-3">
+                                    <div class="col-12">
+                                        <label class="form-label">@_localizer["Matching Logic"]</label>
+                                        <div class="btn-group btn-group-toggle" data-toggle="buttons">
+                                            <label class="btn btn-outline-success operator-btn active">
+                                                <input type="radio" name="compositeOperator" value="all_equal" checked> @_localizer["ALL Fields"]
+                                            </label>
+                                            <label class="btn btn-outline-warning operator-btn">
+                                                <input type="radio" name="compositeOperator" value="any_equal"> @_localizer["ANY Field"]
+                                            </label>
+                                        </div>
+                                        <small class="d-block text-muted mt-1">
+                                            <strong>ALL:</strong> @_localizer["All selected fields must match"] |
+                                            <strong>ANY:</strong> @_localizer["At least one field must match"]
+                                        </small>
+                                    </div>
+                                </div>
+                                <div class="form-row">
+                                    <div class="col-md-6 mb-3">
+                                        <label class="form-label">@_localizer["Select Fields to Match"]</label>
+                                        <div class="field-checkbox-group" id="compositeFieldsContainer">
+                                            @foreach (var group in matchableFields.GroupBy(f => f.Group))
+                                            {
+                                                <div class="mb-2">
+                                                    <strong class="text-muted small">@group.Key</strong>
+                                                    @foreach (var field in group)
+                                                    {
+                                                        <div class="custom-control custom-checkbox">
+                                                            <input type="checkbox" class="custom-control-input composite-field-cb"
+                                                                   id="cf_@field.Value" value="@field.Value">
+                                                            <label class="custom-control-label" for="cf_@field.Value">@field.Text</label>
+                                                        </div>
+                                                    }
+                                                </div>
+                                            }
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6 mb-3">
+                                        <label class="form-label">@_localizer["Selected Fields"]</label>
+                                        <div id="compositeSelectedFields" class="border rounded p-2 bg-white" style="min-height: 100px;">
+                                            <span class="text-muted small">@_localizer["Select fields from the list..."]</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Tolerance Window Rule Builder -->
+                            <div class="rule-builder-section" id="builderTolerance" style="display: none;">
+                                <h5 class="text-warning mb-3">
+                                    <i class="@(Settings.Theme.IconPrefix) fa-arrows-alt-h mr-2"></i>@_localizer["Tolerance Window Matching"]
+                                </h5>
+                                <div class="form-row">
+                                    <div class="col-md-4 mb-3">
+                                        <label class="form-label">@_localizer["Primary Field"]</label>
+                                        <select class="form-control select2" id="toleranceField">
+                                            <option value="Amount">@_localizer["Amount"]</option>
+                                            <option value="TxDate">@_localizer["Transaction Date"]</option>
+                                        </select>
+                                    </div>
+                                    <div class="col-md-4 mb-3">
+                                        <label class="form-label" asp-for="Input.ToleranceAmount">@_localizer["Amount Tolerance"]</label>
+                                        <div class="input-group">
+                                            <div class="input-group-prepend">
+                                                <span class="input-group-text">±</span>
+                                            </div>
+                                            <input asp-for="Input.ToleranceAmount" type="number" step="0.01" class="form-control" id="toleranceAmountInput" placeholder="0.00" />
+                                        </div>
+                                        <small class="form-text text-muted">@_localizer["Allow variance within this amount"]</small>
+                                    </div>
+                                    <div class="col-md-4 mb-3">
+                                        <label class="form-label" asp-for="Input.ToleranceWindowDays">@_localizer["Time Window (Days)"]</label>
+                                        <div class="input-group">
+                                            <div class="input-group-prepend">
+                                                <span class="input-group-text">±</span>
+                                            </div>
+                                            <input asp-for="Input.ToleranceWindowDays" type="number" class="form-control" id="toleranceWindowInput" placeholder="0" />
+                                            <div class="input-group-append">
+                                                <span class="input-group-text">@_localizer["days"]</span>
+                                            </div>
+                                        </div>
+                                        <small class="form-text text-muted">@_localizer["Allow date variance within this window"]</small>
+                                    </div>
+                                </div>
+                                <div class="alert alert-warning mb-0">
+                                    <i class="@(Settings.Theme.IconPrefix) fa-lightbulb mr-2"></i>
+                                    <strong>@_localizer["Example:"]</strong> @_localizer["With tolerance of 0.01 and 1 day window, amounts 100.00 and 100.01 on adjacent days will match."]
+                                </div>
+                            </div>
+
+                            <!-- Fuzzy Rule Builder -->
+                            <div class="rule-builder-section" id="builderFuzzy" style="display: none;">
+                                <h5 class="text-secondary mb-3">
+                                    <i class="@(Settings.Theme.IconPrefix) fa-wave-square mr-2"></i>@_localizer["Fuzzy Matching"]
+                                </h5>
+                                <div class="form-row">
+                                    <div class="col-md-6 mb-3">
+                                        <label class="form-label">@_localizer["Fields for Fuzzy Matching"]</label>
+                                        <div class="field-checkbox-group" id="fuzzyFieldsContainer">
+                                            @foreach (var group in matchableFields.GroupBy(f => f.Group))
+                                            {
+                                                <div class="mb-2">
+                                                    <strong class="text-muted small">@group.Key</strong>
+                                                    @foreach (var field in group)
+                                                    {
+                                                        <div class="custom-control custom-checkbox">
+                                                            <input type="checkbox" class="custom-control-input fuzzy-field-cb"
+                                                                   id="ff_@field.Value" value="@field.Value">
+                                                            <label class="custom-control-label" for="ff_@field.Value">@field.Text</label>
+                                                        </div>
+                                                    }
+                                                </div>
+                                            }
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="mb-3">
+                                            <label class="form-label">@_localizer["Algorithm"]</label>
+                                            <select class="form-control select2" id="fuzzyAlgorithm">
+                                                <option value="levenshtein">@_localizer["Levenshtein Distance"] (@_localizer["Best for typos"])</option>
+                                                <option value="jaro_winkler">@_localizer["Jaro-Winkler"] (@_localizer["Best for names"])</option>
+                                                <option value="soundex">@_localizer["Soundex"] (@_localizer["Phonetic matching"])</option>
+                                            </select>
+                                        </div>
+                                        <div class="mb-3">
+                                            <label class="form-label">
+                                                @_localizer["Match Threshold"]: <span class="threshold-display" id="thresholdDisplay">85%</span>
+                                            </label>
+                                            <input type="range" class="custom-range" id="fuzzyThreshold" min="50" max="100" value="85" step="1">
+                                            <div class="d-flex justify-content-between small text-muted">
+                                                <span>50% (@_localizer["Loose"])</span>
+                                                <span>100% (@_localizer["Exact"])</span>
+                                            </div>
+                                            <input type="hidden" asp-for="Input.MinimumScore" id="minimumScoreInput" value="85" />
+                                        </div>
+                                        <div id="fuzzySelectedFields" class="border rounded p-2 bg-white" style="min-height: 60px;">
+                                            <span class="text-muted small">@_localizer["Select fields from the list..."]</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="form-row">
+                            <div class="col-md-6">
+                                <div class="custom-control custom-switch mb-3">
+                                    <input type="checkbox" asp-for="Input.IsActive" class="custom-control-input" id="chkActive">
+                                    <label class="custom-control-label" for="chkActive">
+                                        <strong>@_localizer["Active"]</strong>
+                                        <small class="d-block text-muted">@_localizer["Enable this rule immediately"]</small>
+                                    </label>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="custom-control custom-switch mb-3">
+                                    <input type="checkbox" asp-for="Input.StopAtFirstMatch" class="custom-control-input" id="chkStop">
+                                    <label class="custom-control-label" for="chkStop">
+                                        <strong>@_localizer["Stop at First Match"]</strong>
+                                        <small class="d-block text-muted">@_localizer["Don't check other rules after this one matches"]</small>
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xl-4">
+            <div id="panel-preview" class="panel">
+                <div class="panel-hdr">
+                    <h2>
+                        <i class="@(Settings.Theme.IconPrefix) fa-eye mr-2"></i>
+                        @_localizer["Rule Preview"]
+                    </h2>
+                </div>
+                <div class="panel-container show">
+                    <div class="panel-content">
+                        <label class="form-label text-muted small">@_localizer["Generated JSON Definition"]</label>
+                        <div class="json-preview" id="jsonPreview">
+                            <pre id="jsonPreviewContent">{}</pre>
+                        </div>
+                        <div class="mt-3">
+                            <button type="button" class="btn btn-sm btn-outline-secondary" onclick="copyJsonToClipboard()">
+                                <i class="@(Settings.Theme.IconPrefix) fa-copy mr-1"></i>
+                                @_localizer["Copy JSON"]
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div id="panel-types" class="panel">
+                <div class="panel-hdr">
+                    <h2>
+                        <i class="@(Settings.Theme.IconPrefix) fa-info-circle mr-2"></i>
+                        @_localizer["Rule Types"]
+                    </h2>
+                </div>
+                <div class="panel-container show">
+                    <div class="panel-content">
+                        <div class="mb-3">
+                            <h5 class="text-info"><i class="@(Settings.Theme.IconPrefix) fa-equals mr-2"></i>@_localizer["Equality"]</h5>
+                            <p class="small text-muted mb-0">@_localizer["Matches transactions with exactly equal field values."]</p>
+                        </div>
+                        <div class="mb-3">
+                            <h5 class="text-success"><i class="@(Settings.Theme.IconPrefix) fa-layer-group mr-2"></i>@_localizer["Composite"]</h5>
+                            <p class="small text-muted mb-0">@_localizer["Combines multiple conditions (AND/OR) for complex matching."]</p>
+                        </div>
+                        <div class="mb-3">
+                            <h5 class="text-warning"><i class="@(Settings.Theme.IconPrefix) fa-arrows-alt-h mr-2"></i>@_localizer["Tolerance Window"]</h5>
+                            <p class="small text-muted mb-0">@_localizer["Allows small differences in amounts or dates within specified tolerance."]</p>
+                        </div>
+                        <div>
+                            <h5 class="text-secondary"><i class="@(Settings.Theme.IconPrefix) fa-wave-square mr-2"></i>@_localizer["Fuzzy"]</h5>
+                            <p class="small text-muted mb-0">@_localizer["Uses similarity scoring for approximate matches."]</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    @if (!string.IsNullOrEmpty(Model.ErrorMessage))
+    {
+        <div class="alert alert-danger">
+            <i class="@(Settings.Theme.IconPrefix) fa-exclamation-triangle mr-2"></i>
+            @Model.ErrorMessage
+        </div>
+    }
+
+    <div class="row">
+        <div class="col-8">
+            <div class="btn-group float-right" role="group">
+                <button type="submit" class="btn btn-primary waves-effect waves-themed">
+                    <i class="@(Settings.Theme.IconPrefix) fa-check mr-1"></i>
+                    @_localizer["Create Rule"]
+                </button>
+                <button type="button" class="btn btn-success waves-effect waves-themed" onclick="testRule()">
+                    <i class="@(Settings.Theme.IconPrefix) fa-flask mr-1"></i>
+                    @_localizer["Test Rule"]
+                </button>
+                <a asp-page="Index" class="btn btn-secondary waves-effect waves-themed">
+                    <i class="@(Settings.Theme.IconPrefix) fa-times mr-1"></i>
+                    @_localizer["Cancel"]
+                </a>
+            </div>
+        </div>
+    </div>
+</form>
+
+@section ScriptsBlock {
+    <partial name="_ValidationScriptsPartial" />
+    <script>
+        (function () {
+            'use strict';
+
+            // Elements
+            const ruleTypeSelect = document.getElementById('ruleTypeSelect');
+            const ruleDefinitionInput = document.getElementById('ruleDefinitionInput');
+            const jsonPreviewContent = document.getElementById('jsonPreviewContent');
+
+            // Builder sections
+            const builderEquality = document.getElementById('builderEquality');
+            const builderComposite = document.getElementById('builderComposite');
+            const builderTolerance = document.getElementById('builderTolerance');
+            const builderFuzzy = document.getElementById('builderFuzzy');
+
+            // Equality elements
+            const equalityField = document.getElementById('equalityField');
+            const equalityOperator = document.getElementById('equalityOperator');
+
+            // Composite elements
+            const compositeFieldCheckboxes = document.querySelectorAll('.composite-field-cb');
+            const compositeSelectedFieldsDiv = document.getElementById('compositeSelectedFields');
+
+            // Tolerance elements
+            const toleranceField = document.getElementById('toleranceField');
+            const toleranceAmountInput = document.getElementById('toleranceAmountInput');
+            const toleranceWindowInput = document.getElementById('toleranceWindowInput');
+
+            // Fuzzy elements
+            const fuzzyFieldCheckboxes = document.querySelectorAll('.fuzzy-field-cb');
+            const fuzzySelectedFieldsDiv = document.getElementById('fuzzySelectedFields');
+            const fuzzyAlgorithm = document.getElementById('fuzzyAlgorithm');
+            const fuzzyThreshold = document.getElementById('fuzzyThreshold');
+            const thresholdDisplay = document.getElementById('thresholdDisplay');
+            const minimumScoreInput = document.getElementById('minimumScoreInput');
+
+            // Field labels map
+            const fieldLabels = {
+                'TxId': 'Transaction ID',
+                'ExternalPaymentId': 'External Payment ID',
+                'PlayerId': 'Player ID',
+                'Amount': 'Amount',
+                'CurrencyCode': 'Currency Code',
+                'TxDate': 'Transaction Date',
+                'Status': 'Status',
+                'BrandId': 'Brand ID',
+                'ProviderTxId': 'Provider TX ID',
+                'RefNumber': 'Reference Number',
+                'UserEmail': 'User Email',
+                'UserId': 'User ID',
+                'Description': 'Description'
+            };
+
+            // Update UI based on rule type
+            function updateBuilderVisibility() {
+                const ruleType = ruleTypeSelect.value;
+
+                // Hide all builders
+                builderEquality.style.display = 'none';
+                builderComposite.style.display = 'none';
+                builderTolerance.style.display = 'none';
+                builderFuzzy.style.display = 'none';
+
+                // Show relevant builder
+                switch (ruleType) {
+                    case 'Equality':
+                        builderEquality.style.display = 'block';
+                        break;
+                    case 'Composite':
+                        builderComposite.style.display = 'block';
+                        break;
+                    case 'ToleranceWindow':
+                        builderTolerance.style.display = 'block';
+                        break;
+                    case 'Fuzzy':
+                        builderFuzzy.style.display = 'block';
+                        break;
+                }
+
+                updateRuleDefinition();
+            }
+
+            // Generate JSON based on current UI state
+            function generateRuleDefinitionJson() {
+                const ruleType = ruleTypeSelect.value;
+                let definition = {};
+
+                switch (ruleType) {
+                    case 'Equality':
+                        definition = {
+                            field: equalityField.value,
+                            operator: equalityOperator.value
+                        };
+                        break;
+
+                    case 'Composite':
+                        const compositeFields = Array.from(compositeFieldCheckboxes)
+                            .filter(cb => cb.checked)
+                            .map(cb => cb.value);
+                        const compositeOp = document.querySelector('input[name="compositeOperator"]:checked');
+                        definition = {
+                            fields: compositeFields.length > 0 ? compositeFields : ['TxId'],
+                            operator: compositeOp ? compositeOp.value : 'all_equal'
+                        };
+                        break;
+
+                    case 'ToleranceWindow':
+                        definition = {
+                            field: toleranceField.value,
+                            tolerance: parseFloat(toleranceAmountInput.value) || 0,
+                            time_window_days: parseInt(toleranceWindowInput.value) || 0
+                        };
+                        break;
+
+                    case 'Fuzzy':
+                        const fuzzyFields = Array.from(fuzzyFieldCheckboxes)
+                            .filter(cb => cb.checked)
+                            .map(cb => cb.value);
+                        definition = {
+                            fields: fuzzyFields.length > 0 ? fuzzyFields : ['TxId'],
+                            algorithm: fuzzyAlgorithm.value,
+                            threshold: parseFloat(fuzzyThreshold.value) / 100
+                        };
+                        break;
+                }
+
+                return definition;
+            }
+
+            // Update the hidden input and preview
+            function updateRuleDefinition() {
+                const definition = generateRuleDefinitionJson();
+                const jsonStr = JSON.stringify(definition, null, 2);
+
+                ruleDefinitionInput.value = jsonStr;
+
+                // Syntax highlight for preview
+                const highlighted = jsonStr
+                    .replace(/"([^"]+)":/g, '<span class="json-key">"$1"</span>:')
+                    .replace(/: "([^"]+)"/g, ': <span class="json-string">"$1"</span>')
+                    .replace(/: (\d+\.?\d*)/g, ': <span class="json-number">$1</span>');
+
+                jsonPreviewContent.innerHTML = highlighted;
+            }
+
+            // Update selected fields display for composite
+            function updateCompositeSelectedFields() {
+                const selected = Array.from(compositeFieldCheckboxes)
+                    .filter(cb => cb.checked)
+                    .map(cb => cb.value);
+
+                if (selected.length === 0) {
+                    compositeSelectedFieldsDiv.innerHTML = '<span class="text-muted small">@_localizer["Select fields from the list..."]</span>';
+                } else {
+                    compositeSelectedFieldsDiv.innerHTML = selected.map(field =>
+                        `<span class="field-tag">
+                            <i class="fal fa-check-circle text-success mr-1"></i>
+                            ${fieldLabels[field] || field}
+                        </span>`
+                    ).join('');
+                }
+                updateRuleDefinition();
+            }
+
+            // Update selected fields display for fuzzy
+            function updateFuzzySelectedFields() {
+                const selected = Array.from(fuzzyFieldCheckboxes)
+                    .filter(cb => cb.checked)
+                    .map(cb => cb.value);
+
+                if (selected.length === 0) {
+                    fuzzySelectedFieldsDiv.innerHTML = '<span class="text-muted small">@_localizer["Select fields from the list..."]</span>';
+                } else {
+                    fuzzySelectedFieldsDiv.innerHTML = selected.map(field =>
+                        `<span class="field-tag">
+                            <i class="fal fa-wave-square text-secondary mr-1"></i>
+                            ${fieldLabels[field] || field}
+                        </span>`
+                    ).join('');
+                }
+                updateRuleDefinition();
+            }
+
+            // Event listeners
+            $('#ruleTypeSelect').on('select2:select', function (e) {
+              e.preventDefault();
+
+              updateBuilderVisibility();
+            });
+
+            // Equality listeners
+            equalityField.addEventListener('change', updateRuleDefinition);
+            equalityOperator.addEventListener('change', updateRuleDefinition);
+
+            // Composite listeners
+            compositeFieldCheckboxes.forEach(cb => {
+                cb.addEventListener('change', updateCompositeSelectedFields);
+            });
+            document.querySelectorAll('input[name="compositeOperator"]').forEach(radio => {
+                radio.addEventListener('change', updateRuleDefinition);
+            });
+
+            // Tolerance listeners
+            toleranceField.addEventListener('change', updateRuleDefinition);
+            toleranceAmountInput.addEventListener('input', updateRuleDefinition);
+            toleranceWindowInput.addEventListener('input', updateRuleDefinition);
+
+            // Fuzzy listeners
+            fuzzyFieldCheckboxes.forEach(cb => {
+                cb.addEventListener('change', updateFuzzySelectedFields);
+            });
+            fuzzyAlgorithm.addEventListener('change', updateRuleDefinition);
+            fuzzyThreshold.addEventListener('input', function () {
+                thresholdDisplay.textContent = this.value + '%';
+                minimumScoreInput.value = this.value;
+                updateRuleDefinition();
+            });
+
+            // Form submit handler
+            document.getElementById('ruleForm').addEventListener('submit', function (e) {
+                updateRuleDefinition();
+            });
+
+            // Initialize
+            updateBuilderVisibility();
+        })();
+
+        function copyJsonToClipboard() {
+            const jsonContent = document.getElementById('ruleDefinitionInput').value;
+            navigator.clipboard.writeText(jsonContent).then(function () {
+                toastr.success('@_localizer["JSON copied to clipboard!"]');
+            }).catch(function (err) {
+                toastr.error('@_localizer["Failed to copy JSON"]');
+            });
+        }
+
+        function testRule() {
+            var toast = {
+                title: '@_localizer["Rule Testing"]',
+                content: '@_localizer["Rule testing interface coming soon. This will allow you to test the rule against sample data."]',
+                type: 'info'
+            };
+            toastr.info(toast.content, toast.title);
+        }
+    </script>
+}

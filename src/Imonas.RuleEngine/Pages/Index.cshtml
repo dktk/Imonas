@@ -1,0 +1,12 @@
+@page
+@{
+    ViewData["Title"] = "Home";
+}
+<div class="p-4 rounded bg-dark border">
+  <h2 class="mb-3">Imonas Rule Engine</h2>
+  <p class="mb-0">Nested rule groups with versioning & audit.</p>
+  <div class="mt-3 d-flex gap-2">
+    <a class="btn btn-primary" asp-page="/RuleGroups/Index">Rule Groups</a>
+    <a class="btn btn-outline-light" asp-page="/Evaluate/Index">Evaluate</a>
+  </div>
+</div>

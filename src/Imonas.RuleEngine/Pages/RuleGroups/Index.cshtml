@@ -1,0 +1,23 @@
+@page
+@model Imonas.RuleEngine.Pages.RuleGroups.IndexModel
+@using Imonas.RuleEngine.Models
+@{
+    ViewData["Title"] = "Rule Groups";
+}
+
+<div class="d-flex justify-content-between align-items-center mb-3">
+  <h2 class="mb-0">Rule Groups</h2>
+  <a class="btn btn-success" asp-page="Create">New Rule Group</a>
+</div>
+
+@if (!Model.Roots.Any())
+{
+  <div class="alert alert-secondary">No rule groups yet.</div>
+}
+else
+{
+  @foreach (var g in Model.Roots)
+  {
+    @await Html.PartialAsync("_GroupView", g)
+  }
+}

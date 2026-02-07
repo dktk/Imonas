@@ -1,0 +1,386 @@
+﻿@page
+@using Microsoft.AspNetCore.Mvc.Localization
+@using Domain.Enums
+@model SmartAdmin.WebUI.Pages.Cases.IndexModel
+@inject IStringLocalizer<IndexModel> _localizer
+
+@{
+    ViewData["Title"] = "Exception Cases";
+    ViewData["PageName"] = "cases_index";
+}
+
+@section HeadBlock {
+    <link rel="stylesheet" media="screen, print" href="~/css/fa-solid.css">
+}
+
+<div class="row mb-3">
+    <div class="col-12 d-flex justify-content-between align-items-center">
+        <div>
+            <h1 class="subheader-title">
+                <i class="subheader-icon @(Settings.Theme.IconPrefix) fa-folder-open"></i> @_localizer["Exception Cases"]
+            </h1>
+            <small class="text-muted">@_localizer["Manage reconciliation exceptions and variances"]</small>
+        </div>
+        <a asp-page="Create" class="btn btn-primary waves-effect waves-themed">
+            <i class="@(Settings.Theme.IconPrefix) fa-plus mr-1"></i>
+            @_localizer["Create Case"]
+        </a>
+    </div>
+</div>
+
+@if (TempData["SuccessMessage"] != null)
+{
+    <div class="alert alert-success alert-dismissible fade show" role="alert">
+        <i class="@(Settings.Theme.IconPrefix) fa-check-circle mr-2"></i>
+        @TempData["SuccessMessage"]
+        <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+            <span aria-hidden="true">&times;</span>
+        </button>
+    </div>
+}
+
+<!-- Stats Cards - Status -->
+<div class="row mb-4">
+    <div class="col-sm-6 col-xl-3">
+        <div class="p-3 bg-warning-400 rounded overflow-hidden position-relative text-white mb-g">
+            <div>
+                <h3 class="display-4 d-block l-h-n m-0 fw-500">
+                    @Model.Stats.OpenCases
+                </h3>
+                <span class="opacity-70">@_localizer["Open"]</span>
+            </div>
+            <i class="@(Settings.Theme.IconPrefix) fa-folder-open position-absolute pos-right pos-bottom opacity-15 mb-n1 mr-n1" style="font-size:6rem"></i>
+        </div>
+    </div>
+    <div class="col-sm-6 col-xl-3">
+        <div class="p-3 bg-info-500 rounded overflow-hidden position-relative text-white mb-g">
+            <div>
+                <h3 class="display-4 d-block l-h-n m-0 fw-500">
+                    @Model.Stats.InProgressCases
+                </h3>
+                <span class="opacity-70">@_localizer["In Progress"]</span>
+            </div>
+            <i class="@(Settings.Theme.IconPrefix) fa-spinner position-absolute pos-right pos-bottom opacity-15 mb-n1 mr-n1" style="font-size:6rem"></i>
+        </div>
+    </div>
+    <div class="col-sm-6 col-xl-3">
+        <div class="p-3 bg-primary-400 rounded overflow-hidden position-relative text-white mb-g">
+            <div>
+                <h3 class="display-4 d-block l-h-n m-0 fw-500">
+                    @Model.Stats.PendingReviewCases
+                </h3>
+                <span class="opacity-70">@_localizer["Pending Review"]</span>
+            </div>
+            <i class="@(Settings.Theme.IconPrefix) fa-clock position-absolute pos-right pos-bottom opacity-15 mb-n1 mr-n1" style="font-size:6rem"></i>
+        </div>
+    </div>
+    <div class="col-sm-6 col-xl-3">
+        <div class="p-3 bg-success-500 rounded overflow-hidden position-relative text-white mb-g">
+            <div>
+                <h3 class="display-4 d-block l-h-n m-0 fw-500">
+                    @Model.Stats.ClosedCases
+                </h3>
+                <span class="opacity-70">@_localizer["Closed"]</span>
+            </div>
+            <i class="@(Settings.Theme.IconPrefix) fa-check-circle position-absolute pos-right pos-bottom opacity-15 mb-n1 mr-n1" style="font-size:6rem"></i>
+        </div>
+    </div>
+</div>
+
+<!-- Severity Summary -->
+<div class="row mb-4">
+    <div class="col-xl-12">
+        <div id="panel-severity" class="panel">
+            <div class="panel-hdr">
+                <h2>
+                    <i class="@(Settings.Theme.IconPrefix) fa-exclamation-triangle mr-2"></i>
+                    @_localizer["Severity Summary"]
+                </h2>
+            </div>
+            <div class="panel-container show">
+                <div class="panel-content">
+                    <div class="row">
+                        <div class="col-sm-6 col-xl-3">
+                            <div class="card border-left border-danger mb-3" style="border-left-width: 4px !important;">
+                                <div class="card-body py-3">
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <div>
+                                            <h5 class="text-danger mb-0">@_localizer["Critical"]</h5>
+                                            <small class="text-muted">@_localizer["Immediate action required"]</small>
+                                        </div>
+                                        <h2 class="text-danger mb-0">@Model.Stats.CriticalCases</h2>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-sm-6 col-xl-3">
+                            <div class="card border-left border-warning mb-3" style="border-left-width: 4px !important;">
+                                <div class="card-body py-3">
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <div>
+                                            <h5 class="text-warning mb-0">@_localizer["High"]</h5>
+                                            <small class="text-muted">@_localizer["Priority attention needed"]</small>
+                                        </div>
+                                        <h2 class="text-warning mb-0">@Model.Stats.HighCases</h2>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-sm-6 col-xl-3">
+                            <div class="card border-left border-info mb-3" style="border-left-width: 4px !important;">
+                                <div class="card-body py-3">
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <div>
+                                            <h5 class="text-info mb-0">@_localizer["Medium"]</h5>
+                                            <small class="text-muted">@_localizer["Normal priority"]</small>
+                                        </div>
+                                        <h2 class="text-info mb-0">@Model.Stats.MediumCases</h2>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-sm-6 col-xl-3">
+                            <div class="card border-left border-secondary mb-3" style="border-left-width: 4px !important;">
+                                <div class="card-body py-3">
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <div>
+                                            <h5 class="text-secondary mb-0">@_localizer["Low"]</h5>
+                                            <small class="text-muted">@_localizer["When time permits"]</small>
+                                        </div>
+                                        <h2 class="text-secondary mb-0">@Model.Stats.LowCases</h2>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    @if (Model.Stats.OverdueCases > 0)
+                    {
+                        <div class="alert alert-danger mb-0">
+                            <i class="@(Settings.Theme.IconPrefix) fa-clock mr-2"></i>
+                            <strong>@Model.Stats.OverdueCases</strong> @_localizer["case(s) are overdue and require immediate attention."]
+                        </div>
+                    }
+                    @if (Model.Stats.TotalVarianceAmount != 0)
+                    {
+                        <div class="alert alert-info mb-0 mt-2">
+                            <i class="@(Settings.Theme.IconPrefix) fa-dollar-sign mr-2"></i>
+                            @_localizer["Total Variance Amount"]: <strong>@Model.Stats.TotalVarianceAmount.ToString("C")</strong>
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Filters -->
+<div class="row mb-4">
+    <div class="col-xl-12">
+        <form method="get" class="d-flex align-items-end gap-3">
+            <div class="form-group mb-0">
+                <label class="form-label">@_localizer["Status"]</label>
+                <select asp-for="StatusFilter" class="form-control select2" onchange="this.form.submit()">
+                    <option value="">@_localizer["All Statuses"]</option>
+                    <option value="Open">@_localizer["Open"]</option>
+                    <option value="InProgress">@_localizer["In Progress"]</option>
+                    <option value="PendingReview">@_localizer["Pending Review"]</option>
+                    <option value="Closed">@_localizer["Closed"]</option>
+                </select>
+            </div>
+            <div class="form-group mb-0">
+                <label class="form-label">@_localizer["Severity"]</label>
+                <select asp-for="SeverityFilter" class="form-control select2" onchange="this.form.submit()">
+                    <option value="">@_localizer["All Severities"]</option>
+                    <option value="Critical">@_localizer["Critical"]</option>
+                    <option value="High">@_localizer["High"]</option>
+                    <option value="Medium">@_localizer["Medium"]</option>
+                    <option value="Low">@_localizer["Low"]</option>
+                </select>
+            </div>
+            @if (!string.IsNullOrEmpty(Model.StatusFilter) || !string.IsNullOrEmpty(Model.SeverityFilter))
+            {
+                <a asp-page="Index" class="btn btn-secondary waves-effect waves-themed">
+                    <i class="@(Settings.Theme.IconPrefix) fa-times mr-1"></i>
+                    @_localizer["Clear Filters"]
+                </a>
+            }
+        </form>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-xl-12">
+        <div id="panel-cases" class="panel">
+            <div class="panel-hdr">
+                <h2>
+                    <i class="@(Settings.Theme.IconPrefix) fa-list mr-2"></i>
+                    @_localizer["Cases"]
+                    <span class="fw-300"><i>(@Model.Cases.Count() @_localizer["shown"])</i></span>
+                </h2>
+                <div class="panel-toolbar">
+                    <button class="btn btn-panel waves-effect waves-themed" data-action="panel-collapse" data-toggle="tooltip" data-offset="0,10" data-original-title="Collapse"></button>
+                    <button class="btn btn-panel waves-effect waves-themed" data-action="panel-fullscreen" data-toggle="tooltip" data-offset="0,10" data-original-title="Fullscreen"></button>
+                </div>
+            </div>
+            <div class="panel-container show">
+                <div class="panel-content">
+                    <div class="table-responsive">
+                        <table class="table table-bordered table-hover table-striped w-100">
+                            <thead class="bg-primary-600">
+                                <tr>
+                                    <th>@_localizer["Case #"]</th>
+                                    <th>@_localizer["Title"]</th>
+                                    <th>@_localizer["Severity"]</th>
+                                    <th>@_localizer["Status"]</th>
+                                    <th>@_localizer["Variance Type"]</th>
+                                    <th class="text-right">@_localizer["Amount"]</th>
+                                    <th>@_localizer["Assigned To"]</th>
+                                    <th>@_localizer["Due Date"]</th>
+                                    <th>@_localizer["Created"]</th>
+                                    <th class="text-center">@_localizer["Actions"]</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var caseItem in Model.Cases)
+                                {
+                                    var isOverdue = caseItem.DueDate.HasValue && caseItem.DueDate.Value < DateTime.UtcNow && caseItem.Status != CaseStatus.Closed;
+                                    <tr class="@(isOverdue ? "table-danger" : "")">
+                                        <td>
+                                            <a asp-page="Details" asp-route-id="@caseItem.Id" class="fw-500 text-primary">
+                                                @caseItem.CaseNumber
+                                            </a>
+                                        </td>
+                                        <td>
+                                            @caseItem.Title
+                                            @if (isOverdue)
+                                            {
+                                                <span class="badge badge-danger ml-1">@_localizer["Overdue"]</span>
+                                            }
+                                        </td>
+                                        <td>
+                                            @if (caseItem.Severity == CaseSeverity.Critical)
+                                            {
+                                                <span class="badge badge-danger">
+                                                    <i class="@(Settings.Theme.IconPrefix) fa-exclamation-circle mr-1"></i>@_localizer["Critical"]
+                                                </span>
+                                            }
+                                            else if (caseItem.Severity == CaseSeverity.High)
+                                            {
+                                                <span class="badge badge-warning">
+                                                    <i class="@(Settings.Theme.IconPrefix) fa-arrow-up mr-1"></i>@_localizer["High"]
+                                                </span>
+                                            }
+                                            else if (caseItem.Severity == CaseSeverity.Medium)
+                                            {
+                                                <span class="badge badge-info">
+                                                    <i class="@(Settings.Theme.IconPrefix) fa-minus mr-1"></i>@_localizer["Medium"]
+                                                </span>
+                                            }
+                                            else
+                                            {
+                                                <span class="badge badge-secondary">
+                                                    <i class="@(Settings.Theme.IconPrefix) fa-arrow-down mr-1"></i>@_localizer["Low"]
+                                                </span>
+                                            }
+                                        </td>
+                                        <td>
+                                            @if (caseItem.Status == CaseStatus.Closed)
+                                            {
+                                                <span class="badge badge-secondary">@_localizer["Closed"]</span>
+                                            }
+                                            else if (caseItem.Status == CaseStatus.InProgress)
+                                            {
+                                                <span class="badge badge-info">@_localizer["In Progress"]</span>
+                                            }
+                                            else if (caseItem.Status == CaseStatus.Open)
+                                            {
+                                                <span class="badge badge-warning">@_localizer["Open"]</span>
+                                            }
+                                            else if (caseItem.Status == CaseStatus.PendingReview)
+                                            {
+                                                <span class="badge badge-primary">@_localizer["Pending Review"]</span>
+                                            }
+                                            else
+                                            {
+                                                <span class="badge badge-success">@caseItem.Status</span>
+                                            }
+                                        </td>
+                                        <td>@caseItem.VarianceType</td>
+                                        <td class="text-right">
+                                            @if (caseItem.VarianceAmount.HasValue)
+                                            {
+                                                <span class="@(caseItem.VarianceAmount.Value < 0 ? "text-danger" : "text-success")">
+                                                    @caseItem.VarianceAmount.Value.ToString("C")
+                                                </span>
+                                            }
+                                            else
+                                            {
+                                                <span class="text-muted">-</span>
+                                            }
+                                        </td>
+                                        <td>
+                                            @if (!string.IsNullOrEmpty(caseItem.AssignedTo))
+                                            {
+                                                <span class="badge badge-light">@caseItem.AssignedTo</span>
+                                            }
+                                            else
+                                            {
+                                                <span class="text-muted">@_localizer["Unassigned"]</span>
+                                            }
+                                        </td>
+                                        <td>
+                                            @if (caseItem.DueDate.HasValue)
+                                            {
+                                                <span class="@(isOverdue ? "text-danger fw-500" : "")">
+                                                    @caseItem.DueDate.Value.ToString("yyyy-MM-dd")
+                                                </span>
+                                            }
+                                            else
+                                            {
+                                                <span class="text-muted">-</span>
+                                            }
+                                        </td>
+                                        <td>@caseItem.Created.ToString("yyyy-MM-dd")</td>
+                                        <td class="text-center">
+                                            <a asp-page="Details" asp-route-id="@caseItem.Id" class="btn btn-sm btn-outline-primary waves-effect waves-themed">
+                                                <i class="@(Settings.Theme.IconPrefix) fa-eye"></i>
+                                            </a>
+                                        </td>
+                                    </tr>
+                                }
+                                @if (!Model.Cases.Any())
+                                {
+                                    <tr>
+                                        <td colspan="10" class="text-center text-muted py-4">
+                                            <i class="@(Settings.Theme.IconPrefix) fa-inbox fa-3x mb-3 d-block"></i>
+                                            @if (!string.IsNullOrEmpty(Model.StatusFilter) || !string.IsNullOrEmpty(Model.SeverityFilter))
+                                            {
+                                                @_localizer["No cases match your filter criteria."]
+                                                <div class="mt-2">
+                                                    <a asp-page="Index" class="btn btn-secondary btn-sm">
+                                                        <i class="@(Settings.Theme.IconPrefix) fa-times mr-1"></i>
+                                                        @_localizer["Clear Filters"]
+                                                    </a>
+                                                </div>
+                                            }
+                                            else
+                                            {
+                                                @_localizer["No cases found. Create a new case to get started."]
+                                                <div class="mt-2">
+                                                    <a asp-page="Create" class="btn btn-primary btn-sm">
+                                                        <i class="@(Settings.Theme.IconPrefix) fa-plus mr-1"></i>
+                                                        @_localizer["Create Case"]
+                                                    </a>
+                                                </div>
+                                            }
+                                        </td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

@@ -1,0 +1,591 @@
+﻿@page
+@using Microsoft.AspNetCore.Mvc.Localization
+@model SmartAdmin.WebUI.Pages.Psps.AdminModel
+@inject IStringLocalizer<AdminModel> _localizer
+
+@{
+    ViewData["Title"] = "PSP Administration";
+    ViewData["PageName"] = "psps_admin";
+
+    var createUrl = Url.Page("/Psps/Admin", "Create");
+    var updateUrl = Url.Page("/Psps/Admin", "Update");
+    var deleteUrl = Url.Page("/Psps/Admin", "Delete");
+    var toggleActiveUrl = Url.Page("/Psps/Admin", "ToggleActive");
+    var seedUrl = Url.Page("/Psps/Admin", "Seed");
+
+    var activeCount = Model.Psps.Count(p => p.IsActive);
+    var csvBasedCount = Model.Psps.Count(p => p.IsCsvBased);
+    var totalTransactions = Model.Psps.Sum(p => p.TransactionCount);
+}
+
+@section HeadBlock {
+    <link rel="stylesheet" media="screen, print" href="~/css/fa-solid.css">
+    <style>
+        .psp-card {
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        .psp-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        }
+        .psp-inactive {
+            opacity: 0.7;
+        }
+        .count-badge {
+            font-size: 0.7rem;
+        }
+        .code-badge {
+            font-family: monospace;
+            font-size: 0.85rem;
+        }
+    </style>
+}
+
+<div class="row mb-3">
+    <div class="col-12 d-flex justify-content-between align-items-center">
+        <div>
+            <h1 class="subheader-title">
+                <i class="subheader-icon @(Settings.Theme.IconPrefix) fa-credit-card"></i> @_localizer["PSP Administration"]
+            </h1>
+            <small class="text-muted">@_localizer["Manage Payment Service Providers and their configurations"]</small>
+        </div>
+        <div>
+            <button type="button" class="btn btn-outline-info waves-effect waves-themed" id="seedBtn">
+                <i class="@(Settings.Theme.IconPrefix) fa-database mr-1"></i>
+                @_localizer["Seed PSPs"]
+            </button>
+            <button type="button" class="btn btn-success waves-effect waves-themed" data-toggle="modal" data-target="#createModal">
+                <i class="@(Settings.Theme.IconPrefix) fa-plus mr-1"></i>
+                @_localizer["Add PSP"]
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- Summary Cards -->
+<div class="row mb-4">
+    <div class="col-sm-6 col-xl-3">
+        <div class="p-3 bg-primary-400 rounded overflow-hidden position-relative text-white mb-g">
+            <div class="">
+                <h3 class="display-4 d-block l-h-n m-0 fw-500">
+                    @Model.Psps.Count
+                    <small class="m-0 l-h-n">@_localizer["Total PSPs"]</small>
+                </h3>
+            </div>
+            <i class="@(Settings.Theme.IconPrefix) fa-credit-card position-absolute pos-right pos-bottom opacity-15 mb-n1 mr-n1" style="font-size:6rem"></i>
+        </div>
+    </div>
+    <div class="col-sm-6 col-xl-3">
+        <div class="p-3 bg-success-400 rounded overflow-hidden position-relative text-white mb-g">
+            <div class="">
+                <h3 class="display-4 d-block l-h-n m-0 fw-500">
+                    @activeCount
+                    <small class="m-0 l-h-n">@_localizer["Active PSPs"]</small>
+                </h3>
+            </div>
+            <i class="@(Settings.Theme.IconPrefix) fa-check-circle position-absolute pos-right pos-bottom opacity-15 mb-n1 mr-n1" style="font-size:6rem"></i>
+        </div>
+    </div>
+    <div class="col-sm-6 col-xl-3">
+        <div class="p-3 bg-info-400 rounded overflow-hidden position-relative text-white mb-g">
+            <div class="">
+                <h3 class="display-4 d-block l-h-n m-0 fw-500">
+                    @csvBasedCount
+                    <small class="m-0 l-h-n">@_localizer["CSV-Based"]</small>
+                </h3>
+            </div>
+            <i class="@(Settings.Theme.IconPrefix) fa-file-csv position-absolute pos-right pos-bottom opacity-15 mb-n1 mr-n1" style="font-size:6rem"></i>
+        </div>
+    </div>
+    <div class="col-sm-6 col-xl-3">
+        <div class="p-3 bg-warning-400 rounded overflow-hidden position-relative text-white mb-g">
+            <div class="">
+                <h3 class="display-4 d-block l-h-n m-0 fw-500">
+                    @totalTransactions.ToString("N0")
+                    <small class="m-0 l-h-n">@_localizer["Total Transactions"]</small>
+                </h3>
+            </div>
+            <i class="@(Settings.Theme.IconPrefix) fa-exchange-alt position-absolute pos-right pos-bottom opacity-15 mb-n1 mr-n1" style="font-size:6rem"></i>
+        </div>
+    </div>
+</div>
+
+<!-- PSPs Table -->
+<div class="row">
+    <div class="col-xl-12">
+        <div id="panel-psps" class="panel">
+            <div class="panel-hdr">
+                <h2>
+                    @_localizer["Payment Service Providers"]
+                    <span class="fw-300"><i>(@Model.Psps.Count @_localizer["total"])</i></span>
+                </h2>
+                <div class="panel-toolbar">
+                    <button class="btn btn-panel waves-effect waves-themed" data-action="panel-collapse" data-toggle="tooltip" data-original-title="Collapse"></button>
+                    <button class="btn btn-panel waves-effect waves-themed" data-action="panel-fullscreen" data-toggle="tooltip" data-original-title="Fullscreen"></button>
+                </div>
+            </div>
+            <div class="panel-container show">
+                <div class="panel-content">
+                    <div class="table-responsive">
+                        <table class="table table-bordered table-hover table-striped w-100" id="pspsTable">
+                            <thead class="bg-primary-600">
+                                <tr>
+                                    <th style="width: 50px;">@_localizer["ID"]</th>
+                                    <th>@_localizer["Name"]</th>
+                                    <th style="width: 100px;">@_localizer["Code"]</th>
+                                    <th>@_localizer["Internal System"]</th>
+                                    <th class="text-center" style="width: 80px;">@_localizer["Status"]</th>
+                                    <th class="text-center" style="width: 80px;">@_localizer["CSV"]</th>
+                                    <th class="text-center" style="width: 100px;">@_localizer["Transactions"]</th>
+                                    <th class="text-center" style="width: 100px;">@_localizer["Mappings"]</th>
+                                    <th style="width: 140px;">@_localizer["Created"]</th>
+                                    <th class="text-center" style="width: 160px;">@_localizer["Actions"]</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var psp in Model.Psps)
+                                {
+                                    <tr class="@(psp.IsActive ? "" : "psp-inactive")">
+                                        <td>@psp.Id</td>
+                                        <td>
+                                            <i class="@(Settings.Theme.IconPrefix) fa-credit-card text-primary mr-2"></i>
+                                            <strong>@psp.Name</strong>
+                                        </td>
+                                        <td>
+                                            <span class="badge badge-secondary code-badge">@psp.Code</span>
+                                        </td>
+                                        <td>
+                                            <i class="@(Settings.Theme.IconPrefix) fa-server text-muted mr-1"></i>
+                                            @psp.InternalSystemName
+                                        </td>
+                                        <td class="text-center">
+                                            @if (psp.IsActive)
+                                            {
+                                                <span class="badge badge-success">@_localizer["Active"]</span>
+                                            }
+                                            else
+                                            {
+                                                <span class="badge badge-secondary">@_localizer["Inactive"]</span>
+                                            }
+                                        </td>
+                                        <td class="text-center">
+                                            @if (psp.IsCsvBased)
+                                            {
+                                                <i class="@(Settings.Theme.IconPrefix) fa-check text-success"></i>
+                                            }
+                                            else
+                                            {
+                                                <i class="@(Settings.Theme.IconPrefix) fa-times text-muted"></i>
+                                            }
+                                        </td>
+                                        <td class="text-center">
+                                            @if (psp.TransactionCount > 0)
+                                            {
+                                                <span class="badge badge-info count-badge">@psp.TransactionCount.ToString("N0")</span>
+                                            }
+                                            else
+                                            {
+                                                <span class="text-muted">-</span>
+                                            }
+                                        </td>
+                                        <td class="text-center">
+                                            @if (psp.FieldMappingCount > 0)
+                                            {
+                                                <span class="badge badge-warning count-badge">@psp.FieldMappingCount</span>
+                                            }
+                                            else
+                                            {
+                                                <span class="text-muted">-</span>
+                                            }
+                                        </td>
+                                        <td>@psp.Created.ToString("yyyy-MM-dd HH:mm")</td>
+                                        <td class="text-center">
+                                            <button class="btn btn-sm btn-outline-primary waves-effect waves-themed edit-btn"
+                                                    data-id="@psp.Id"
+                                                    data-name="@psp.Name"
+                                                    data-code="@psp.Code"
+                                                    data-active="@psp.IsActive.ToString().ToLower()"
+                                                    data-csv-based="@psp.IsCsvBased.ToString().ToLower()"
+                                                    data-internal-system-id="@psp.InternalSystemId"
+                                                    title="@_localizer["Edit"]">
+                                                <i class="@(Settings.Theme.IconPrefix) fa-edit"></i>
+                                            </button>
+                                            <button class="btn btn-sm @(psp.IsActive ? "btn-outline-warning" : "btn-outline-success") waves-effect waves-themed toggle-btn"
+                                                    data-id="@psp.Id"
+                                                    data-active="@psp.IsActive.ToString().ToLower()"
+                                                    title="@(psp.IsActive ? _localizer["Deactivate"] : _localizer["Activate"])">
+                                                <i class="@(Settings.Theme.IconPrefix) @(psp.IsActive ? "fa-toggle-on" : "fa-toggle-off")"></i>
+                                            </button>
+                                            <button class="btn btn-sm btn-outline-danger waves-effect waves-themed delete-btn"
+                                                    data-id="@psp.Id"
+                                                    data-name="@psp.Name"
+                                                    data-transaction-count="@psp.TransactionCount"
+                                                    data-mapping-count="@psp.FieldMappingCount"
+                                                    title="@_localizer["Delete"]"
+                                                    @(psp.TransactionCount > 0 || psp.FieldMappingCount > 0 ? "disabled" : "")>
+                                                <i class="@(Settings.Theme.IconPrefix) fa-trash"></i>
+                                            </button>
+                                        </td>
+                                    </tr>
+                                }
+                                @if (!Model.Psps.Any())
+                                {
+                                    <tr>
+                                        <td colspan="10" class="text-center text-muted py-4">
+                                            <i class="@(Settings.Theme.IconPrefix) fa-inbox fa-3x mb-3 d-block"></i>
+                                            @_localizer["No PSPs found."]
+                                            <div class="mt-2">
+                                                <button type="button" class="btn btn-info btn-sm mr-2" id="seedEmptyBtn">
+                                                    <i class="@(Settings.Theme.IconPrefix) fa-database mr-1"></i>
+                                                    @_localizer["Seed Default PSPs"]
+                                                </button>
+                                                <button type="button" class="btn btn-success btn-sm" data-toggle="modal" data-target="#createModal">
+                                                    <i class="@(Settings.Theme.IconPrefix) fa-plus mr-1"></i>
+                                                    @_localizer["Add your first PSP"]
+                                                </button>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Create Modal -->
+<div class="modal fade" id="createModal" tabindex="-1" role="dialog" aria-labelledby="createModalLabel" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header bg-success-600">
+                <h5 class="modal-title text-white" id="createModalLabel">
+                    <i class="@(Settings.Theme.IconPrefix) fa-plus mr-2"></i>
+                    @_localizer["Add PSP"]
+                </h5>
+                <button type="button" class="close text-white" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <form id="createForm">
+                @Html.AntiForgeryToken()
+                <div class="modal-body">
+                    <div class="form-group">
+                        <label class="form-label" for="createName">@_localizer["PSP Name"] <span class="text-danger">*</span></label>
+                        <input type="text" class="form-control" id="createName" name="Name" required placeholder="@_localizer["Enter PSP name..."]" />
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label" for="createCode">@_localizer["Code"] <span class="text-danger">*</span></label>
+                        <input type="text" class="form-control text-uppercase" id="createCode" name="Code" required placeholder="@_localizer["Enter code (e.g., PAYPAL)"]" style="font-family: monospace;" />
+                        <small class="text-muted">@_localizer["Code will be converted to uppercase"]</small>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label" for="createInternalSystemId">@_localizer["Internal System"] <span class="text-danger">*</span></label>
+                        <select class="form-control select2" id="createInternalSystemId" name="InternalSystemId" required>
+                            <option value="">@_localizer["-- Select Internal System --"]</option>
+                            @foreach (var system in Model.InternalSystems)
+                            {
+                                <option value="@system.Id">@system.Name</option>
+                            }
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <div class="custom-control custom-switch">
+                            <input type="checkbox" class="custom-control-input" id="createIsActive" name="IsActive" checked>
+                            <label class="custom-control-label" for="createIsActive">@_localizer["Active"]</label>
+                        </div>
+                        <small class="text-muted">@_localizer["Inactive PSPs cannot process transactions"]</small>
+                    </div>
+                    <div class="form-group">
+                        <div class="custom-control custom-switch">
+                            <input type="checkbox" class="custom-control-input" id="createIsCsvBased" name="IsCsvBased" checked>
+                            <label class="custom-control-label" for="createIsCsvBased">@_localizer["CSV-Based"]</label>
+                        </div>
+                        <small class="text-muted">@_localizer["Enable if this PSP uses CSV file imports"]</small>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">@_localizer["Cancel"]</button>
+                    <button type="submit" class="btn btn-success" id="createSubmitBtn">
+                        <i class="@(Settings.Theme.IconPrefix) fa-save mr-1"></i>
+                        @_localizer["Create"]
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Edit Modal -->
+<div class="modal fade" id="editModal" tabindex="-1" role="dialog" aria-labelledby="editModalLabel" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header bg-primary-600">
+                <h5 class="modal-title text-white" id="editModalLabel">
+                    <i class="@(Settings.Theme.IconPrefix) fa-edit mr-2"></i>
+                    @_localizer["Edit PSP"]
+                </h5>
+                <button type="button" class="close text-white" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <form id="editForm">
+                @Html.AntiForgeryToken()
+                <input type="hidden" id="editId" name="EditId" />
+                <div class="modal-body">
+                    <div class="form-group">
+                        <label class="form-label" for="editName">@_localizer["PSP Name"] <span class="text-danger">*</span></label>
+                        <input type="text" class="form-control" id="editName" name="Name" required placeholder="@_localizer["Enter PSP name..."]" />
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label" for="editCode">@_localizer["Code"] <span class="text-danger">*</span></label>
+                        <input type="text" class="form-control text-uppercase" id="editCode" name="Code" required placeholder="@_localizer["Enter code"]" style="font-family: monospace;" />
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label" for="editInternalSystemId">@_localizer["Internal System"] <span class="text-danger">*</span></label>
+                        <select class="form-control" id="editInternalSystemId" name="InternalSystemId" required>
+                            <option value="">@_localizer["-- Select Internal System --"]</option>
+                            @foreach (var system in Model.InternalSystems)
+                            {
+                                <option value="@system.Id">@system.Name</option>
+                            }
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <div class="custom-control custom-switch">
+                            <input type="checkbox" class="custom-control-input" id="editIsActive" name="IsActive">
+                            <label class="custom-control-label" for="editIsActive">@_localizer["Active"]</label>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <div class="custom-control custom-switch">
+                            <input type="checkbox" class="custom-control-input" id="editIsCsvBased" name="IsCsvBased">
+                            <label class="custom-control-label" for="editIsCsvBased">@_localizer["CSV-Based"]</label>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">@_localizer["Cancel"]</button>
+                    <button type="submit" class="btn btn-primary" id="editSubmitBtn">
+                        <i class="@(Settings.Theme.IconPrefix) fa-save mr-1"></i>
+                        @_localizer["Save Changes"]
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Delete Confirmation Modal -->
+<div class="modal fade" id="deleteModal" tabindex="-1" role="dialog" aria-labelledby="deleteModalLabel" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header bg-danger-600">
+                <h5 class="modal-title text-white" id="deleteModalLabel">
+                    <i class="@(Settings.Theme.IconPrefix) fa-exclamation-triangle mr-2"></i>
+                    @_localizer["Confirm Delete"]
+                </h5>
+                <button type="button" class="close text-white" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <p>@_localizer["Are you sure you want to delete the PSP"] <strong id="deletePspName"></strong>?</p>
+                <p class="text-danger mb-0">
+                    <i class="@(Settings.Theme.IconPrefix) fa-exclamation-circle mr-1"></i>
+                    @_localizer["This action cannot be undone."]
+                </p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">@_localizer["Cancel"]</button>
+                <button type="button" class="btn btn-danger" id="confirmDeleteBtn">
+                    <i class="@(Settings.Theme.IconPrefix) fa-trash mr-1"></i>
+                    @_localizer["Delete"]
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section ScriptsBlock {
+    <script src="~/lib/axios/dist/axios.js"></script>
+    <script>
+        $(function () {
+            'use strict';
+
+            var deletePspId = null;
+
+            // Seed button
+            $('#seedBtn, #seedEmptyBtn').on('click', function () {
+                var btn = $(this);
+                var originalHtml = btn.html();
+                btn.prop('disabled', true).html('<i class="fal fa-spinner fa-spin mr-1"></i> @_localizer["Seeding..."]');
+
+                axios.get('@seedUrl').then(function (res) {
+                    if (res.data.success) {
+                        toastr.success('@_localizer["PSPs seeded successfully."]');
+                        location.reload();
+                    } else {
+                        toastr.error(res.data.message || '@_localizer["Failed to seed PSPs."]');
+                        btn.prop('disabled', false).html(originalHtml);
+                    }
+                }).catch(function (err) {
+                    toastr.error('@_localizer["An error occurred while seeding PSPs."]');
+                    btn.prop('disabled', false).html(originalHtml);
+                });
+            });
+
+            // Create form submit
+            $('#createForm').on('submit', function (e) {
+                e.preventDefault();
+
+                var formData = $(this).serialize();
+
+                $('#createSubmitBtn').prop('disabled', true).html('<i class="fal fa-spinner fa-spin mr-1"></i> @_localizer["Creating..."]');
+
+                axios.post('@createUrl', formData, {
+                    headers: { 'Content-Type': 'application/x-www-form-urlencoded' }
+                }).then(function (res) {
+                    if (res.data.succeeded) {
+                        toastr.success(res.data.message);
+                        location.reload();
+                    } else {
+                        toastr.error(res.data.message);
+                        $('#createSubmitBtn').prop('disabled', false).html('<i class="fal fa-save mr-1"></i> @_localizer["Create"]');
+                    }
+                }).catch(function (err) {
+                    toastr.error('@_localizer["An error occurred while creating the PSP."]');
+                    $('#createSubmitBtn').prop('disabled', false).html('<i class="fal fa-save mr-1"></i> @_localizer["Create"]');
+                });
+            });
+
+            // Edit button click
+            $('.edit-btn').on('click', function () {
+                var id = $(this).data('id');
+                var name = $(this).data('name');
+                var code = $(this).data('code');
+                var active = $(this).data('active') === true || $(this).data('active') === 'true';
+                var csvBased = $(this).data('csv-based') === true || $(this).data('csv-based') === 'true';
+                var internalSystemId = $(this).data('internal-system-id');
+
+                $('#editId').val(id);
+                $('#editName').val(name);
+                $('#editCode').val(code);
+                $('#editIsActive').prop('checked', active);
+                $('#editIsCsvBased').prop('checked', csvBased);
+                $('#editInternalSystemId').val(internalSystemId);
+
+                $('#editModal').modal('show');
+            });
+
+            // Edit form submit
+            $('#editForm').on('submit', function (e) {
+                e.preventDefault();
+
+                var formData = $(this).serialize();
+
+                $('#editSubmitBtn').prop('disabled', true).html('<i class="fal fa-spinner fa-spin mr-1"></i> @_localizer["Saving..."]');
+
+                axios.post('@updateUrl', formData, {
+                    headers: { 'Content-Type': 'application/x-www-form-urlencoded' }
+                }).then(function (res) {
+                    if (res.data.succeeded) {
+                        toastr.success(res.data.message);
+                        location.reload();
+                    } else {
+                        toastr.error(res.data.message);
+                        $('#editSubmitBtn').prop('disabled', false).html('<i class="fal fa-save mr-1"></i> @_localizer["Save Changes"]');
+                    }
+                }).catch(function (err) {
+                    toastr.error('@_localizer["An error occurred while updating the PSP."]');
+                    $('#editSubmitBtn').prop('disabled', false).html('<i class="fal fa-save mr-1"></i> @_localizer["Save Changes"]');
+                });
+            });
+
+            // Toggle active button click
+            $('.toggle-btn').on('click', function () {
+                var btn = $(this);
+                var id = btn.data('id');
+                var isActive = btn.data('active') === true || btn.data('active') === 'true';
+                var action = isActive ? '@_localizer["Deactivating..."]' : '@_localizer["Activating..."]';
+
+                btn.prop('disabled', true).html('<i class="fal fa-spinner fa-spin"></i>');
+
+                axios.post('@toggleActiveUrl', 'id=' + id + '&__RequestVerificationToken=' + $('input[name="__RequestVerificationToken"]').val(), {
+                    headers: { 'Content-Type': 'application/x-www-form-urlencoded' }
+                }).then(function (res) {
+                    if (res.data.succeeded) {
+                        toastr.success(res.data.message);
+                        location.reload();
+                    } else {
+                        toastr.error(res.data.message);
+                        location.reload();
+                    }
+                }).catch(function (err) {
+                    toastr.error('@_localizer["An error occurred while toggling PSP status."]');
+                    location.reload();
+                });
+            });
+
+            // Delete button click
+            $('.delete-btn').on('click', function () {
+                var transactionCount = $(this).data('transaction-count');
+                var mappingCount = $(this).data('mapping-count');
+
+                if (transactionCount > 0 || mappingCount > 0) {
+                    var msg = '@_localizer["Cannot delete PSP with related data."]';
+                    if (transactionCount > 0) {
+                        msg += ' ' + transactionCount + ' @_localizer["transaction(s)"].';
+                    }
+                    if (mappingCount > 0) {
+                        msg += ' ' + mappingCount + ' @_localizer["field mapping(s)"].';
+                    }
+                    toastr.warning(msg);
+                    return;
+                }
+
+                deletePspId = $(this).data('id');
+                var name = $(this).data('name');
+                $('#deletePspName').text(name);
+                $('#deleteModal').modal('show');
+            });
+
+            // Confirm delete
+            $('#confirmDeleteBtn').on('click', function () {
+                if (!deletePspId) return;
+
+                $(this).prop('disabled', true).html('<i class="fal fa-spinner fa-spin mr-1"></i> @_localizer["Deleting..."]');
+
+                axios.post('@deleteUrl', 'id=' + deletePspId + '&__RequestVerificationToken=' + $('input[name="__RequestVerificationToken"]').val(), {
+                    headers: { 'Content-Type': 'application/x-www-form-urlencoded' }
+                }).then(function (res) {
+                    if (res.data.succeeded) {
+                        toastr.success(res.data.message);
+                        location.reload();
+                    } else {
+                        toastr.error(res.data.message);
+                        $('#confirmDeleteBtn').prop('disabled', false).html('<i class="fal fa-trash mr-1"></i> @_localizer["Delete"]');
+                        $('#deleteModal').modal('hide');
+                    }
+                }).catch(function (err) {
+                    toastr.error('@_localizer["An error occurred while deleting the PSP."]');
+                    $('#confirmDeleteBtn').prop('disabled', false).html('<i class="fal fa-trash mr-1"></i> @_localizer["Delete"]');
+                    $('#deleteModal').modal('hide');
+                });
+            });
+
+            // Reset modals on close
+            $('#createModal').on('hidden.bs.modal', function () {
+                $('#createForm')[0].reset();
+                $('#createIsActive').prop('checked', true);
+                $('#createIsCsvBased').prop('checked', true);
+            });
+
+            $('#deleteModal').on('hidden.bs.modal', function () {
+                deletePspId = null;
+            });
+        });
+    </script>
+}

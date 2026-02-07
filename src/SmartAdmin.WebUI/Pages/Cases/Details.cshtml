@@ -1,0 +1,341 @@
+﻿@page "{id:int}"
+@using Microsoft.AspNetCore.Mvc.Localization
+@using Domain.Enums
+@model SmartAdmin.WebUI.Pages.Cases.DetailsModel
+@inject IStringLocalizer<DetailsModel> _localizer
+
+@{
+    ViewData["Title"] = "Case Details";
+    ViewData["PageName"] = "cases_details";
+}
+
+@section HeadBlock {
+    <link rel="stylesheet" media="screen, print" href="~/css/fa-solid.css">
+}
+
+@if (Model.Case == null)
+{
+    <div class="alert alert-danger">
+        <i class="@(Settings.Theme.IconPrefix) fa-exclamation-triangle mr-2"></i>
+        @_localizer["Case not found."]
+    </div>
+    <a asp-page="Index" class="btn btn-secondary waves-effect waves-themed">
+        <i class="@(Settings.Theme.IconPrefix) fa-arrow-left mr-1"></i>
+        @_localizer["Back to Cases"]
+    </a>
+}
+else
+{
+    <div class="row mb-3">
+        <div class="col-12 d-flex justify-content-between align-items-center">
+            <div>
+                <h1 class="subheader-title">
+                    <i class="subheader-icon @(Settings.Theme.IconPrefix) fa-folder-open"></i> @Model.Case.CaseNumber
+                </h1>
+                <small class="text-muted">@Model.Case.Title</small>
+            </div>
+            <div>
+                @if (Model.Case.Status != CaseStatus.Closed)
+                {
+                    <form method="post" asp-page-handler="Close" style="display: inline;">
+                        <button type="submit" class="btn btn-success waves-effect waves-themed mr-2">
+                            <i class="@(Settings.Theme.IconPrefix) fa-check mr-1"></i>
+                            @_localizer["Close Case"]
+                        </button>
+                    </form>
+                }
+                <a asp-page="Index" class="btn btn-secondary waves-effect waves-themed">
+                    <i class="@(Settings.Theme.IconPrefix) fa-arrow-left mr-1"></i>
+                    @_localizer["Back to Cases"]
+                </a>
+            </div>
+        </div>
+    </div>
+
+    @if (!string.IsNullOrEmpty((string?)TempData["SuccessMessage"]))
+    {
+        <div class="alert alert-success alert-dismissible fade show" role="alert">
+            <i class="@(Settings.Theme.IconPrefix) fa-check-circle mr-2"></i>
+            @TempData["SuccessMessage"]
+            <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                <span aria-hidden="true"><i class="@(Settings.Theme.IconPrefix) fa-times"></i></span>
+            </button>
+        </div>
+    }
+
+    <!-- Stats Cards -->
+    <div class="row mb-4">
+        <div class="col-sm-6 col-xl-4">
+            <div class="p-3 bg-primary-300 rounded overflow-hidden position-relative text-white mb-g">
+                <div>
+                    <span class="opacity-70">@_localizer["Status"]</span>
+                    <h3 class="display-5 d-block l-h-n m-0 fw-500 mt-2">
+                        @if (Model.Case.Status == CaseStatus.Closed)
+                        {
+                            <span class="badge badge-light" style="font-size: 1.2rem;">@_localizer["Closed"]</span>
+                        }
+                        else if (Model.Case.Status == CaseStatus.InProgress)
+                        {
+                            <span class="badge badge-info" style="font-size: 1.2rem;">@_localizer["In Progress"]</span>
+                        }
+                        else if (Model.Case.Status == CaseStatus.Open)
+                        {
+                            <span class="badge badge-warning" style="font-size: 1.2rem;">@_localizer["Open"]</span>
+                        }
+                        else
+                        {
+                            <span class="badge badge-secondary" style="font-size: 1.2rem;">@Model.Case.Status</span>
+                        }
+                    </h3>
+                </div>
+            </div>
+        </div>
+        <div class="col-sm-6 col-xl-4">
+            <div class="p-3 @(Model.Case.Severity == CaseSeverity.Critical ? "bg-danger-500" : Model.Case.Severity == CaseSeverity.High ? "bg-warning-600" : "bg-info-500") rounded overflow-hidden position-relative text-white mb-g">
+                <div>
+                    <span class="opacity-70">@_localizer["Severity"]</span>
+                    <h3 class="display-5 d-block l-h-n m-0 fw-500 mt-2">
+                        @Model.Case.Severity
+                    </h3>
+                </div>
+            </div>
+        </div>
+        <div class="col-sm-6 col-xl-4">
+            <div class="p-3 bg-success-500 rounded overflow-hidden position-relative text-white mb-g">
+                <div>
+                    <span class="opacity-70">@_localizer["Variance Amount"]</span>
+                    <h3 class="display-5 d-block l-h-n m-0 fw-500 mt-2">
+                        @(Model.Case.VarianceAmount?.ToString("C") ?? "N/A")
+                    </h3>
+                    <small class="opacity-70">@Model.Case.VarianceType</small>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- Case Information -->
+        <div class="col-xl-6">
+            <div id="panel-info" class="panel">
+                <div class="panel-hdr">
+                    <h2>
+                        <i class="@(Settings.Theme.IconPrefix) fa-info-circle mr-2"></i>
+                        @_localizer["Case Information"]
+                    </h2>
+                </div>
+                <div class="panel-container show">
+                    <div class="panel-content">
+                        <table class="table table-bordered">
+                            <tbody>
+                                <tr>
+                                    <td class="fw-500" style="width: 40%;">@_localizer["Case Number"]</td>
+                                    <td>@Model.Case.CaseNumber</td>
+                                </tr>
+                                <tr>
+                                    <td class="fw-500">@_localizer["Assigned To"]</td>
+                                    <td>
+                                        @if (!string.IsNullOrEmpty(Model.Case.AssignedTo))
+                                        {
+                                            @Model.Case.AssignedTo
+                                            @if (Model.Case.Status == CaseStatus.Open)
+                                            {
+                                                <form method="post" asp-page-handler="Assign" style="display: inline; margin-left: 1rem;">
+                                                    <button type="submit" class="btn btn-sm btn-outline-secondary waves-effect waves-themed">@_localizer["Reassign"]</button>
+                                                </form>
+                                            }
+                                        }
+                                        else
+                                        {
+                                            <span class="text-muted">@_localizer["Unassigned"]</span>
+                                            <form method="post" asp-page-handler="Assign" style="display: inline; margin-left: 1rem;">
+                                                <button type="submit" class="btn btn-sm btn-primary waves-effect waves-themed">@_localizer["Assign to Me"]</button>
+                                            </form>
+                                        }
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td class="fw-500">@_localizer["Created"]</td>
+                                    <td>@Model.Case.Created.ToString("yyyy-MM-dd HH:mm") UTC by @Model.Case.CreatedBy</td>
+                                </tr>
+                                <tr>
+                                    <td class="fw-500">@_localizer["Due Date"]</td>
+                                    <td>
+                                        @if (Model.Case.DueDate.HasValue)
+                                        {
+                                            @Model.Case.DueDate.Value.ToString("yyyy-MM-dd")
+                                            @if (Model.Case.DueDate.Value < DateTime.UtcNow && Model.Case.Status != CaseStatus.Closed)
+                                            {
+                                                <span class="badge badge-danger ml-2">@_localizer["Overdue"]</span>
+                                            }
+                                        }
+                                        else
+                                        {
+                                            <span class="text-muted">@_localizer["Not set"]</span>
+                                        }
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td class="fw-500">@_localizer["Root Cause"]</td>
+                                    <td>@(Model.Case.RootCauseCode ?? "Not determined")</td>
+                                </tr>
+                                @if (Model.Case.Status == CaseStatus.Closed)
+                                {
+                                    <tr>
+                                        <td class="fw-500">@_localizer["Resolved"]</td>
+                                        <td>@Model.Case.ResolvedAt?.ToString("yyyy-MM-dd HH:mm") UTC by @Model.Case.ResolvedBy</td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <div id="panel-desc" class="panel">
+                <div class="panel-hdr">
+                    <h2>
+                        <i class="@(Settings.Theme.IconPrefix) fa-align-left mr-2"></i>
+                        @_localizer["Description"]
+                    </h2>
+                </div>
+                <div class="panel-container show">
+                    <div class="panel-content">
+                        <p style="white-space: pre-wrap;">@Model.Case.Description</p>
+                    </div>
+                </div>
+            </div>
+
+            @if (Model.Case.Status == CaseStatus.Closed && !string.IsNullOrEmpty(Model.Case.ResolutionNotes))
+            {
+                <div id="panel-resolution" class="panel">
+                    <div class="panel-hdr">
+                        <h2>
+                            <i class="@(Settings.Theme.IconPrefix) fa-check-circle mr-2"></i>
+                            @_localizer["Resolution Notes"]
+                        </h2>
+                    </div>
+                    <div class="panel-container show">
+                        <div class="panel-content">
+                            <p style="white-space: pre-wrap;">@Model.Case.ResolutionNotes</p>
+                        </div>
+                    </div>
+                </div>
+            }
+        </div>
+
+        <!-- Comments & Attachments -->
+        <div class="col-xl-6">
+            <div id="panel-comments" class="panel">
+                <div class="panel-hdr">
+                    <h2>
+                        <i class="@(Settings.Theme.IconPrefix) fa-comments mr-2"></i>
+                        @_localizer["Comments"] (@Model.Case.Comments.Count)
+                    </h2>
+                </div>
+                <div class="panel-container show">
+                    <div class="panel-content">
+                        @if (Model.Case.Comments.Any())
+                        {
+                            <div style="max-height: 400px; overflow-y: auto;">
+                                @foreach (var comment in Model.Case.Comments.OrderBy(c => c.Created))
+                                {
+                                    <div class="bg-fusion-50 rounded p-3 mb-3">
+                                        <div class="d-flex justify-content-between mb-2">
+                                            <h5 class="text-primary">@comment.CommentedBy</h5>
+                                            <small class="text-muted">@comment.Created.ToString("yyyy-MM-dd HH:mm")</small>
+                                        </div>
+                                        <p class="mb-0" style="white-space: pre-wrap;">@comment.Comment</p>
+                                    </div>
+                                }
+                            </div>
+                        }
+                        else
+                        {
+                            <p class="text-center text-muted py-4">
+                                <i class="@(Settings.Theme.IconPrefix) fa-comments fa-3x mb-3 d-block opacity-50"></i>
+                                @_localizer["No comments yet."]
+                            </p>
+                        }
+
+                        @if (Model.Case.Status != CaseStatus.Closed)
+                        {
+                            <form method="post" asp-page-handler="AddComment" class="mt-3">
+                                <div class="form-group">
+                                    <textarea name="comment" class="form-control" rows="3" placeholder="@_localizer["Add a comment..."]" required></textarea>
+                                </div>
+                                <button type="submit" class="btn btn-primary waves-effect waves-themed">
+                                    <i class="@(Settings.Theme.IconPrefix) fa-comment mr-1"></i>
+                                    @_localizer["Add Comment"]
+                                </button>
+                            </form>
+                        }
+                    </div>
+                </div>
+            </div>
+
+            <div id="panel-attachments" class="panel">
+                <div class="panel-hdr">
+                    <h2>
+                        <i class="@(Settings.Theme.IconPrefix) fa-paperclip mr-2"></i>
+                        @_localizer["Attachments"] (@Model.Case.Attachments.Count)
+                    </h2>
+                </div>
+                <div class="panel-container show">
+                    <div class="panel-content">
+                        @if (Model.Case.Attachments.Any())
+                        {
+                            @foreach (var attachment in Model.Case.Attachments.OrderByDescending(a => a.Created))
+                            {
+                                <div class="d-flex justify-content-between align-items-center p-2 border-bottom">
+                                    <div>
+                                        <strong>@attachment.FileName</strong>
+                                        <div class="small text-muted">
+                                            @((attachment.FileSizeBytes / 1024.0).ToString("F1")) KB - @attachment.Created.ToString("yyyy-MM-dd")
+                                        </div>
+                                    </div>
+                                    <button class="btn btn-sm btn-outline-secondary waves-effect waves-themed">
+                                        <i class="@(Settings.Theme.IconPrefix) fa-download"></i>
+                                    </button>
+                                </div>
+                            }
+                        }
+                        else
+                        {
+                            <p class="text-center text-muted py-3">
+                                @_localizer["No attachments."]
+                            </p>
+                        }
+
+                        @if (Model.Case.Status != CaseStatus.Closed)
+                        {
+                            <button class="btn btn-secondary waves-effect waves-themed w-100 mt-3">
+                                <i class="@(Settings.Theme.IconPrefix) fa-paperclip mr-1"></i>
+                                @_localizer["Attach File"]
+                            </button>
+                        }
+                    </div>
+                </div>
+            </div>
+
+            @if (Model.Case.Labels.Any())
+            {
+                <div id="panel-labels" class="panel">
+                    <div class="panel-hdr">
+                        <h2>
+                            <i class="@(Settings.Theme.IconPrefix) fa-tags mr-2"></i>
+                            @_localizer["Labels"]
+                        </h2>
+                    </div>
+                    <div class="panel-container show">
+                        <div class="panel-content">
+                            @foreach (var label in Model.Case.Labels)
+                            {
+                                <span class="badge badge-info mr-1 mb-1" style="font-size: 0.9rem;">@label.LabelName</span>
+                            }
+                        </div>
+                    </div>
+                </div>
+            }
+        </div>
+    </div>
+}

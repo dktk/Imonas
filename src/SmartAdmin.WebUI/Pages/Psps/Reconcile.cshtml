@@ -1,0 +1,46 @@
+﻿@page
+@model SmartAdmin.WebUI.Pages.Psps.ReconcileModel
+@{
+    var psps = Model.PspOptions != null ? new SelectList(Model.PspOptions, "Key", "Value") : new SelectList(Enumerable.Empty<string>());
+}
+
+@using Microsoft.AspNetCore.Mvc.Localization
+@using Infrastructure.Constants.Permission
+@inject Microsoft.Extensions.Localization.IStringLocalizer<ReconcileModel> localizer
+
+
+<div class="card-header bg-white d-flex align-items-center">
+    <h4 class="m-0">
+        @localizer["PSP Reconciliation"]
+        <small>@localizer["See all available options"]</small>
+    </h4>
+</div>
+<div class="card-body">
+    <form class="needs-validation" novalidate="novalidate" method="post">
+        @Html.AntiForgeryToken()
+        <div class="form-row">
+            <div class="col-md-12">
+                <label class="form-label" for="ReconciliationDate">@localizer["Start Date"]</label><span class="text-danger">*</span>
+                <input type="date" asp-for="Input.StartDate" class="form-control" placeholder="ReconciliationDate" />
+                <span class="invalid-feedback" asp-validation-for="Input.StartDate">Sorry, you missed this one.</span>
+            </div>
+
+            <div class="col-md-6">
+                <div class="form-group">
+                    <label class="form-label" for="EndDate">@localizer["End Date"] </label>
+                    <input type="date" asp-for="Input.EndDate" class="form-control" placeholder="EndDate" />
+                    <span class="invalid-feedback" asp-validation-for="Input.EndDate">Sorry, you missed this one.</span>
+                </div>
+            </div>
+
+            <div class="col-md-6">
+                <label class="form-label">PSP</label><span class="text-danger">*</span>
+                <select asp-for="Input.PspId" asp-items="psps" class="form-control select2">
+                </select>            
+            </div>
+            <div class="col-md-12">
+                <button type="submit" class="btn btn-primary">Submit</button>
+            </div>
+        </div>
+    </form>
+</div>

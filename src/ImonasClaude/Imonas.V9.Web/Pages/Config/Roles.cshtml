@@ -1,0 +1,155 @@
+@page
+@model Imonas.V9.Web.Pages.Config.RolesModel
+@{
+    ViewData["Title"] = "Roles & Permissions";
+}
+
+<div class="page-title">Roles & Permissions</div>
+<div class="page-subtitle">Manage user roles and access control</div>
+
+<div class="grid grid-2">
+    <div class="card">
+        <div class="card-header">System Roles</div>
+        <div class="card-body">
+            <div style="margin-bottom: 1.5rem;">
+                <div style="display: flex; justify-content: space-between; align-items: center; padding: 1rem; background-color: var(--bg-tertiary); border-radius: 8px;">
+                    <div>
+                        <strong style="color: var(--accent-primary);">Admin</strong>
+                        <div style="font-size: 0.875rem; color: var(--text-muted); margin-top: 0.25rem;">
+                            Full system access and configuration
+                        </div>
+                    </div>
+                    <span class="badge badge-info">@Model.AdminCount users</span>
+                </div>
+            </div>
+
+            <div style="margin-bottom: 1.5rem;">
+                <div style="display: flex; justify-content: space-between; align-items: center; padding: 1rem; background-color: var(--bg-tertiary); border-radius: 8px;">
+                    <div>
+                        <strong style="color: var(--accent-secondary);">Analyst</strong>
+                        <div style="font-size: 0.875rem; color: var(--text-muted); margin-top: 0.25rem;">
+                            Run reconciliations and manage cases
+                        </div>
+                    </div>
+                    <span class="badge badge-info">@Model.AnalystCount users</span>
+                </div>
+            </div>
+
+            <div style="margin-bottom: 1.5rem;">
+                <div style="display: flex; justify-content: space-between; align-items: center; padding: 1rem; background-color: var(--bg-tertiary); border-radius: 8px;">
+                    <div>
+                        <strong style="color: var(--text-warning);">Viewer</strong>
+                        <div style="font-size: 0.875rem; color: var(--text-muted); margin-top: 0.25rem;">
+                            Read-only access to reports
+                        </div>
+                    </div>
+                    <span class="badge badge-info">@Model.ViewerCount users</span>
+                </div>
+            </div>
+
+            <div style="margin-bottom: 1.5rem;">
+                <div style="display: flex; justify-content: space-between; align-items: center; padding: 1rem; background-color: var(--bg-tertiary); border-radius: 8px;">
+                    <div>
+                        <strong>Finance Admin</strong>
+                        <div style="font-size: 0.875rem; color: var(--text-muted); margin-top: 0.25rem;">
+                            Manage fee contracts and settlements
+                        </div>
+                    </div>
+                    <span class="badge badge-info">0 users</span>
+                </div>
+            </div>
+
+            <div>
+                <div style="display: flex; justify-content: space-between; align-items: center; padding: 1rem; background-color: var(--bg-tertiary); border-radius: 8px;">
+                    <div>
+                        <strong>Config Manager</strong>
+                        <div style="font-size: 0.875rem; color: var(--text-muted); margin-top: 0.25rem;">
+                            Manage PSP profiles and mappings
+                        </div>
+                    </div>
+                    <span class="badge badge-info">0 users</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div>
+        <div class="card">
+            <div class="card-header">Permissions Matrix</div>
+            <div class="card-body">
+                <div class="table-container">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Permission</th>
+                                <th>Admin</th>
+                                <th>Analyst</th>
+                                <th>Viewer</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>View Dashboard</td>
+                                <td style="text-align: center;">✓</td>
+                                <td style="text-align: center;">✓</td>
+                                <td style="text-align: center;">✓</td>
+                            </tr>
+                            <tr>
+                                <td>Start Runs</td>
+                                <td style="text-align: center;">✓</td>
+                                <td style="text-align: center;">✓</td>
+                                <td style="text-align: center; color: var(--text-muted);">-</td>
+                            </tr>
+                            <tr>
+                                <td>Manage Cases</td>
+                                <td style="text-align: center;">✓</td>
+                                <td style="text-align: center;">✓</td>
+                                <td style="text-align: center; color: var(--text-muted);">-</td>
+                            </tr>
+                            <tr>
+                                <td>Upload Files</td>
+                                <td style="text-align: center;">✓</td>
+                                <td style="text-align: center;">✓</td>
+                                <td style="text-align: center; color: var(--text-muted);">-</td>
+                            </tr>
+                            <tr>
+                                <td>Configure Rules</td>
+                                <td style="text-align: center;">✓</td>
+                                <td style="text-align: center; color: var(--text-muted);">-</td>
+                                <td style="text-align: center; color: var(--text-muted);">-</td>
+                            </tr>
+                            <tr>
+                                <td>System Config</td>
+                                <td style="text-align: center;">✓</td>
+                                <td style="text-align: center; color: var(--text-muted);">-</td>
+                                <td style="text-align: center; color: var(--text-muted);">-</td>
+                            </tr>
+                            <tr>
+                                <td>User Management</td>
+                                <td style="text-align: center;">✓</td>
+                                <td style="text-align: center; color: var(--text-muted);">-</td>
+                                <td style="text-align: center; color: var(--text-muted);">-</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <div class="card mt-3">
+            <div class="card-header">Row-Level Security</div>
+            <div class="card-body">
+                <p style="color: var(--text-secondary); margin-bottom: 1rem;">
+                    Control data access by brand and country for multi-tenant scenarios.
+                </p>
+                <div class="form-group">
+                    <label>
+                        <input type="checkbox" style="margin-right: 0.5rem;" />
+                        Enable row-level security
+                    </label>
+                </div>
+                <button class="btn btn-primary">Configure Security Policies</button>
+            </div>
+        </div>
+    </div>
+</div>

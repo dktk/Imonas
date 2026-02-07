@@ -1,0 +1,290 @@
+@page
+@using Microsoft.AspNetCore.Mvc.Localization
+@using Domain.Constants
+@model SmartAdmin.WebUI.Pages.Users.PermissionsModel
+@inject IStringLocalizer<PermissionsModel> _localizer
+
+@{
+    ViewData["Title"] = "Permission Matrix";
+    ViewData["PageName"] = "users_permissions";
+}
+
+@section HeadBlock {
+    <link rel="stylesheet" media="screen, print" href="~/css/fa-solid.css">
+    <style>
+        .permission-matrix th, .permission-matrix td {
+            text-align: center;
+            vertical-align: middle;
+        }
+        .permission-matrix th:first-child, .permission-matrix td:first-child {
+            text-align: left;
+        }
+        .permission-icon {
+            font-size: 1.2rem;
+        }
+        .permission-check {
+            cursor: pointer;
+        }
+        .role-header {
+            writing-mode: vertical-lr;
+            transform: rotate(180deg);
+            white-space: nowrap;
+            min-width: 60px;
+            padding: 10px 5px !important;
+        }
+        @@media (min-width: 992px) {
+            .role-header {
+                writing-mode: horizontal-tb;
+                transform: none;
+            }
+        }
+    </style>
+}
+
+<div class="row mb-3">
+    <div class="col-12 d-flex justify-content-between align-items-center">
+        <div>
+            <h1 class="subheader-title">
+                <i class="subheader-icon @(Settings.Theme.IconPrefix) fa-key"></i> @_localizer["Permission Matrix"]
+            </h1>
+            <small class="text-muted">@_localizer["Configure permissions for each role"]</small>
+        </div>
+        <div>
+            <a asp-page="Roles" class="btn btn-outline-primary waves-effect waves-themed mr-2">
+                <i class="@(Settings.Theme.IconPrefix) fa-user-tag mr-1"></i>
+                @_localizer["Manage Roles"]
+            </a>
+            <a asp-page="Index" class="btn btn-secondary waves-effect waves-themed">
+                <i class="@(Settings.Theme.IconPrefix) fa-arrow-left mr-1"></i>
+                @_localizer["Back to Users"]
+            </a>
+        </div>
+    </div>
+</div>
+
+@if (TempData["SuccessMessage"] != null)
+{
+    <div class="alert alert-success alert-dismissible fade show" role="alert">
+        <i class="@(Settings.Theme.IconPrefix) fa-check-circle mr-2"></i>
+        @TempData["SuccessMessage"]
+        <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+            <span aria-hidden="true">&times;</span>
+        </button>
+    </div>
+}
+
+@if (TempData["ErrorMessage"] != null)
+{
+    <div class="alert alert-danger alert-dismissible fade show" role="alert">
+        <i class="@(Settings.Theme.IconPrefix) fa-exclamation-circle mr-2"></i>
+        @TempData["ErrorMessage"]
+        <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+            <span aria-hidden="true">&times;</span>
+        </button>
+    </div>
+}
+
+<!-- Legend -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="alert alert-info d-flex align-items-center">
+            <div class="mr-4">
+                <i class="@(Settings.Theme.IconPrefix) fa-info-circle fa-2x"></i>
+            </div>
+            <div>
+                <strong>@_localizer["Note:"]</strong> @_localizer["System Admin role has full access to all features and cannot be modified. Click on a permission checkbox to toggle it for a role."]
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Permission Matrix -->
+<div class="row">
+    <div class="col-12">
+        <div id="panel-matrix" class="panel">
+            <div class="panel-hdr">
+                <h2>
+                    <i class="@(Settings.Theme.IconPrefix) fa-table mr-2"></i>
+                    @_localizer["Permissions by Role"]
+                </h2>
+            </div>
+            <div class="panel-container show">
+                <div class="panel-content">
+                    <div class="table-responsive">
+                        <table class="table table-bordered permission-matrix w-100">
+                            <thead class="bg-primary-600">
+                                <tr>
+                                    <th style="min-width: 200px;">@_localizer["Permission"]</th>
+                                    @foreach (var rolePermission in Model.Matrix.RolePermissions)
+                                    {
+                                        var badgeClass = rolePermission.RoleName switch
+                                        {
+                                            "Admin" => "badge-warning",
+                                            "Analyst" => "badge-info",
+                                            "Viewer" => "badge-secondary",
+                                            "Finance Admin" => "badge-success",
+                                            "Config Manager" => "badge-primary",
+                                            _ => "badge-light"
+                                        };
+                                        <th class="role-header">
+                                            <span class="badge @badgeClass" id="role_@rolePermission.RoleName.Replace(" ", "_")">@rolePermission.RoleName</span>
+                                        </th>
+                                    }
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var permission in Model.Matrix.Permissions)
+                                {
+                                    var permissionName = Permissions.PermissionDescriptions.TryGetValue(permission, out var desc) ? desc : permission;
+                                    var iconClass = permission switch
+                                    {
+                                        Permissions.ViewDashboard => "fa-chart-line",
+                                        Permissions.StartRuns => "fa-play-circle",
+                                        Permissions.ManageCases => "fa-briefcase",
+                                        Permissions.UploadFiles => "fa-upload",
+                                        Permissions.ConfigureRules => "fa-cogs",
+                                        Permissions.SystemConfig => "fa-sliders-h",
+                                        Permissions.UserManagement => "fa-users-cog",
+                                        _ => "fa-key"
+                                    };
+                                    <tr>
+                                        <td>
+                                            <i class="@(Settings.Theme.IconPrefix) @iconClass mr-2 text-primary"></i>
+                                            @permissionName
+                                        </td>
+                                        @foreach (var rolePermission in Model.Matrix.RolePermissions)
+                                        {
+                                            var hasPermission = rolePermission.Permissions.TryGetValue(permission, out var hasPerm) && hasPerm;
+                                            <td>
+                                                <form method="post" asp-page-handler="UpdatePermissions" style="display: inline;">
+                                                    <input type="hidden" name="roleName" value="@rolePermission.RoleName" />
+                                                    @foreach (var perm in Model.Matrix.Permissions)
+                                                    {
+                                                        var isChecked = rolePermission.Permissions.TryGetValue(perm, out var chk) && chk;
+                                                        if (perm == permission)
+                                                        {
+                                                            // Toggle this permission
+                                                            if (!hasPermission)
+                                                            {
+                                                                <input type="hidden" name="permissions" value="@perm" />
+                                                            }
+                                                        }
+                                                        else if (isChecked)
+                                                        {
+                                                            // Keep existing permissions
+                                                            <input type="hidden" name="permissions" value="@perm" />
+                                                        }
+                                                    }
+                                                    <button type="submit" class="btn btn-link p-0 permission-check" title="@_localizer["Click to toggle"]">
+                                                        @if (hasPermission)
+                                                        {
+                                                            <i class="@(Settings.Theme.IconPrefix) fa-check-circle text-success permission-icon"></i>
+                                                        }
+                                                        else
+                                                        {
+                                                            <i class="@(Settings.Theme.IconPrefix) fa-times-circle text-danger permission-icon"></i>
+                                                        }
+                                                    </button>
+                                                </form>
+                                            </td>
+                                        }
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Permission Descriptions -->
+<div class="row mt-4">
+    <div class="col-xl-6">
+        <div class="panel">
+            <div class="panel-hdr">
+                <h2>
+                    <i class="@(Settings.Theme.IconPrefix) fa-book mr-2"></i>
+                    @_localizer["Permission Descriptions"]
+                </h2>
+            </div>
+            <div class="panel-container show">
+                <div class="panel-content">
+                    <dl class="row mb-0">
+                        <dt class="col-sm-4">
+                            <i class="@(Settings.Theme.IconPrefix) fa-chart-line mr-1 text-primary"></i>
+                            @_localizer["View Dashboard"]
+                        </dt>
+                        <dd class="col-sm-8">@_localizer["Access to view main dashboard and reports"]</dd>
+
+                        <dt class="col-sm-4">
+                            <i class="@(Settings.Theme.IconPrefix) fa-play-circle mr-1 text-primary"></i>
+                            @_localizer["Start Runs"]
+                        </dt>
+                        <dd class="col-sm-8">@_localizer["Ability to initiate reconciliation runs"]</dd>
+
+                        <dt class="col-sm-4">
+                            <i class="@(Settings.Theme.IconPrefix) fa-briefcase mr-1 text-primary"></i>
+                            @_localizer["Manage Cases"]
+                        </dt>
+                        <dd class="col-sm-8">@_localizer["Create, edit, and resolve exception cases"]</dd>
+
+                        <dt class="col-sm-4">
+                            <i class="@(Settings.Theme.IconPrefix) fa-upload mr-1 text-primary"></i>
+                            @_localizer["Upload Files"]
+                        </dt>
+                        <dd class="col-sm-8">@_localizer["Upload data files for reconciliation"]</dd>
+                    </dl>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-xl-6">
+        <div class="panel">
+            <div class="panel-hdr">
+                <h2>
+                    <i class="@(Settings.Theme.IconPrefix) fa-cog mr-2"></i>
+                    @_localizer["Administrative Permissions"]
+                </h2>
+            </div>
+            <div class="panel-container show">
+                <div class="panel-content">
+                    <dl class="row mb-0">
+                        <dt class="col-sm-4">
+                            <i class="@(Settings.Theme.IconPrefix) fa-cogs mr-1 text-primary"></i>
+                            @_localizer["Configure Rules"]
+                        </dt>
+                        <dd class="col-sm-8">@_localizer["Create and modify matching rules"]</dd>
+
+                        <dt class="col-sm-4">
+                            <i class="@(Settings.Theme.IconPrefix) fa-sliders-h mr-1 text-primary"></i>
+                            @_localizer["System Config"]
+                        </dt>
+                        <dd class="col-sm-8">@_localizer["Access system configuration settings"]</dd>
+
+                        <dt class="col-sm-4">
+                            <i class="@(Settings.Theme.IconPrefix) fa-users-cog mr-1 text-primary"></i>
+                            @_localizer["User Management"]
+                        </dt>
+                        <dd class="col-sm-8">@_localizer["Manage users, roles, and permissions"]</dd>
+                    </dl>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section ScriptsBlock {
+    <script>
+        // Highlight row on hover for better UX
+        document.querySelectorAll('.permission-matrix tbody tr').forEach(row => {
+            row.addEventListener('mouseenter', function() {
+                this.style.backgroundColor = 'rgba(0, 123, 255, 0.05)';
+            });
+            row.addEventListener('mouseleave', function() {
+                this.style.backgroundColor = '';
+            });
+        });
+    </script>
+}

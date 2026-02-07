@@ -1,0 +1,256 @@
+﻿@page
+@using Microsoft.AspNetCore.Mvc.Localization
+@model SmartAdmin.WebUI.Pages.Config.StatusMappings.CreateModel
+@inject IStringLocalizer<CreateModel> _localizer
+
+@{
+    ViewData["Title"] = "Create Status Mapping";
+    ViewData["PageName"] = "config_statusmappings_create";
+}
+
+@section HeadBlock {
+    <link rel="stylesheet" media="screen, print" href="~/css/fa-solid.css">
+}
+
+<div class="row mb-3">
+    <div class="col-12 d-flex justify-content-between align-items-center">
+        <div>
+            <h1 class="subheader-title">
+                <i class="subheader-icon @(Settings.Theme.IconPrefix) fa-plus-circle"></i> @_localizer["Create Status Mapping"]
+            </h1>
+            <small class="text-muted">@_localizer["Map PSP-specific status to canonical/internal status"]</small>
+        </div>
+        <a asp-page="/Config/StatusMappings" class="btn btn-secondary waves-effect waves-themed">
+            <i class="@(Settings.Theme.IconPrefix) fa-arrow-left mr-1"></i>
+            @_localizer["Back"]
+        </a>
+    </div>
+</div>
+
+@if (!string.IsNullOrEmpty(Model.ErrorMessage))
+{
+    <div class="alert alert-danger">
+        <i class="@(Settings.Theme.IconPrefix) fa-exclamation-triangle mr-2"></i>
+        @Model.ErrorMessage
+    </div>
+}
+else
+{
+    <div class="alert alert-info border-0">
+        <i class="@(Settings.Theme.IconPrefix) fa-info-circle mr-2"></i>
+        @_localizer["Status mappings normalize PSP-specific transaction statuses to a standard set of canonical/internal statuses (Completed, Pending, Failed, etc.). This ensures consistent reporting and reconciliation across all payment providers."]
+    </div>
+}
+<form method="post" class="needs-validation" novalidate>
+    @Html.AntiForgeryToken()
+
+    <div class="row">
+        <div class="col-xl-6">
+            <div id="panel-mapping" class="panel">
+                <div class="panel-hdr">
+                    <h2>
+                        <i class="@(Settings.Theme.IconPrefix) fa-cog mr-2"></i>
+                        @_localizer["Mapping Configuration"]
+                    </h2>
+                </div>
+                <div class="panel-container show">
+                    <div class="panel-content">
+                        <div class="form-group">
+                            <label class="form-label" asp-for="Input.PspId">@_localizer["PSP Profile"] <span class="text-danger">*</span></label>
+                            <select asp-for="Input.PspId" class="form-control select2" required>
+                                <option value="">-- @_localizer["0Select PSP Profile"] --</option>
+                                @foreach (var profile in Model.PspProfiles)
+                                {
+                                    <option value="@profile.Id">@profile.Name (@profile.Code)</option>
+                                }
+                            </select>
+                            <span asp-validation-for="Input.PspId" class="invalid-feedback"></span>
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label" asp-for="Input.PspStatus">@_localizer["PSP Status"] <span class="text-danger">*</span></label>
+                            <input asp-for="Input.PspStatus" class="form-control" required placeholder="e.g., succeeded, requires_payment_method" />
+                            <small class="form-text text-muted">@_localizer["The status code as it appears in PSP files/API responses"]</small>
+                            <span asp-validation-for="Input.PspStatus" class="invalid-feedback"></span>
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label" asp-for="Input.CanonicalStatus">@_localizer["Canonical/Internal Status"] <span class="text-danger">*</span></label>
+                            <select asp-for="Input.CanonicalStatus" class="form-control select2" required>
+                                <option value="">-- @_localizer["Select Canonical/Internal Status"] --</option>
+                                <optgroup label="@_localizer["Success States"]">
+                                    <option value="Completed">@_localizer["Completed"]</option>
+                                    <option value="Settled">@_localizer["Settled"]</option>
+                                    <option value="Refunded">@_localizer["Refunded"]</option>
+                                </optgroup>
+                                <optgroup label="@_localizer["Pending States"]">
+                                    <option value="Pending">@_localizer["Pending"]</option>
+                                    <option value="Processing">@_localizer["Processing"]</option>
+                                    <option value="Authorized">@_localizer["Authorized"]</option>
+                                    <option value="RequiresAction">@_localizer["Requires Action"]</option>
+                                    <option value="RequiresCapture">@_localizer["Requires Capture"]</option>
+                                </optgroup>
+                                <optgroup label="@_localizer["Failed States"]">
+                                    <option value="Failed">@_localizer["Failed"]</option>
+                                    <option value="Declined">@_localizer["Declined"]</option>
+                                    <option value="Cancelled">@_localizer["Cancelled"]</option>
+                                    <option value="Expired">@_localizer["Expired"]</option>
+                                </optgroup>
+                                <optgroup label="@_localizer["Other"]">
+                                    <option value="Unknown">@_localizer["Unknown"]</option>
+                                    <option value="Disputed">@_localizer["Disputed"]</option>
+                                    <option value="PartiallyRefunded">@_localizer["Partially Refunded"]</option>
+                                </optgroup>
+                            </select>
+                            <small class="form-text text-muted">@_localizer["The standardized status for reconciliation"]</small>
+                            <span asp-validation-for="Input.CanonicalStatus" class="invalid-feedback"></span>
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label" asp-for="Input.Description">@_localizer["Description"]</label>
+                            <textarea asp-for="Input.Description" class="form-control" rows="3" placeholder="@_localizer["Optional description or notes about this mapping"]"></textarea>
+                            <span asp-validation-for="Input.Description" class="invalid-feedback"></span>
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label" asp-for="Input.Version">@_localizer["Version"] <span class="text-danger">*</span></label>
+                            <input asp-for="Input.Version" class="form-control" required placeholder="1.0.0" />
+                            <small class="form-text text-muted">@_localizer["Semantic versioning for tracking changes"]</small>
+                            <span asp-validation-for="Input.Version" class="invalid-feedback"></span>
+                        </div>
+
+                        <div class="form-group">
+                            <div class="custom-control custom-checkbox">
+                                <input asp-for="Input.IsActive" type="checkbox" class="custom-control-input" id="isActiveCheck" />
+                                <label class="custom-control-label" for="isActiveCheck">@_localizer["Active"]</label>
+                            </div>
+                            <small class="form-text text-muted">@_localizer["Only active mappings are used during processing"]</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xl-6">
+            <div id="panel-categories" class="panel">
+                <div class="panel-hdr">
+                    <h2>
+                        <i class="@(Settings.Theme.IconPrefix) fa-tags mr-2"></i>
+                        @_localizer["Status Categories"]
+                    </h2>
+                </div>
+                <div class="panel-container show">
+                    <div class="panel-content">
+                        <div class="mb-4">
+                            <div class="d-flex align-items-center mb-2">
+                                <i class="@(Settings.Theme.IconPrefix) fa-check-circle fa-2x text-success mr-3"></i>
+                                <div>
+                                    <strong class="d-block">@_localizer["Success States"]</strong>
+                                    <small class="text-muted">@_localizer["Transactions completed successfully"]</small>
+                                </div>
+                            </div>
+                            <div class="bg-light rounded p-2">
+                                <strong>@_localizer["Examples:"]</strong> Completed, Settled, Refunded
+                            </div>
+                        </div>
+
+                        <div class="mb-4">
+                            <div class="d-flex align-items-center mb-2">
+                                <i class="@(Settings.Theme.IconPrefix) fa-clock fa-2x text-warning mr-3"></i>
+                                <div>
+                                    <strong class="d-block">@_localizer["Pending States"]</strong>
+                                    <small class="text-muted">@_localizer["Transactions in progress"]</small>
+                                </div>
+                            </div>
+                            <div class="bg-light rounded p-2">
+                                <strong>@_localizer["Examples:"]</strong> Pending, Processing, Authorized, Requires Action, Requires Capture
+                            </div>
+                        </div>
+
+                        <div class="mb-4">
+                            <div class="d-flex align-items-center mb-2">
+                                <i class="@(Settings.Theme.IconPrefix) fa-times-circle fa-2x text-danger mr-3"></i>
+                                <div>
+                                    <strong class="d-block">@_localizer["Failed States"]</strong>
+                                    <small class="text-muted">@_localizer["Transactions that failed or were cancelled"]</small>
+                                </div>
+                            </div>
+                            <div class="bg-light rounded p-2">
+                                <strong>@_localizer["Examples:"]</strong> Failed, Declined, Cancelled, Expired
+                            </div>
+                        </div>
+
+                        <div>
+                            <div class="d-flex align-items-center mb-2">
+                                <i class="@(Settings.Theme.IconPrefix) fa-exclamation-triangle fa-2x text-secondary mr-3"></i>
+                                <div>
+                                    <strong class="d-block">@_localizer["Other States"]</strong>
+                                    <small class="text-muted">@_localizer["Special cases and edge scenarios"]</small>
+                                </div>
+                            </div>
+                            <div class="bg-light rounded p-2">
+                                <strong>@_localizer["Examples:"]</strong> Unknown, Disputed, Partially Refunded
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div id="panel-examples" class="panel">
+                <div class="panel-hdr">
+                    <h2>
+                        <i class="@(Settings.Theme.IconPrefix) fa-lightbulb mr-2"></i>
+                        @_localizer["Common PSP Status Examples"]
+                    </h2>
+                </div>
+                <div class="panel-container show">
+                    <div class="panel-content">
+                        <div class="mb-3">
+                            <strong>Stripe:</strong>
+                            <div class="text-muted small">succeeded, pending, failed, requires_payment_method, requires_confirmation, requires_action, canceled</div>
+                        </div>
+                        <div class="mb-3">
+                            <strong>PayPal:</strong>
+                            <div class="text-muted small">COMPLETED, PENDING, FAILED, REFUNDED, PARTIALLY_REFUNDED, CANCELLED</div>
+                        </div>
+                        <div class="mb-3">
+                            <strong>Adyen:</strong>
+                            <div class="text-muted small">Authorised, Pending, Refused, Cancelled, Error, Expired</div>
+                        </div>
+                        <div>
+                            <strong>Bank Files:</strong>
+                            <div class="text-muted small">SETTLED, PENDING, REJECTED, RETURNED</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    @if (!string.IsNullOrEmpty(Model.ErrorMessage))
+    {
+        <div class="alert alert-danger">
+            <i class="@(Settings.Theme.IconPrefix) fa-exclamation-triangle mr-2"></i>
+            @Model.ErrorMessage
+        </div>
+    }
+
+    <div class="row">
+        <div class="col-12">
+            <div class="btn-group float-right" role="group">
+                <button type="submit" class="btn btn-primary waves-effect waves-themed">
+                    <i class="@(Settings.Theme.IconPrefix) fa-check mr-1"></i>
+                    @_localizer["Create Mapping"]
+                </button>
+                <a asp-page="/Config/StatusMappings" class="btn btn-secondary waves-effect waves-themed">
+                    <i class="@(Settings.Theme.IconPrefix) fa-times mr-1"></i>
+                    @_localizer["Cancel"]
+                </a>
+            </div>
+        </div>
+    </div>
+</form>
+
+@section ScriptsBlock {
+    <partial name="_ValidationScriptsPartial" />
+}

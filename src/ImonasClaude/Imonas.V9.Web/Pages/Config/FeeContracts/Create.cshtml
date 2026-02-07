@@ -1,0 +1,287 @@
+@page
+@model Imonas.V9.Web.Pages.Config.FeeContracts.CreateModel
+@{
+    ViewData["Title"] = "Create Fee Contract";
+}
+
+<div class="page-title">Create Fee Contract</div>
+<div class="page-subtitle">Define PSP fee structures and pricing models</div>
+
+<div class="card">
+    <div class="card-header">Contract Information</div>
+    <div class="card-body">
+        <form method="post">
+            <div class="grid grid-2 gap-3">
+                <div class="form-group">
+                    <label asp-for="Input.ContractName">Contract Name</label>
+                    <input asp-for="Input.ContractName" class="form-control" placeholder="e.g., Stripe Standard Fees - Visa" />
+                    <span asp-validation-for="Input.ContractName" class="text-danger"></span>
+                </div>
+
+                <div class="form-group">
+                    <label asp-for="Input.PspProfileId">PSP Profile</label>
+                    <select asp-for="Input.PspProfileId" class="form-control">
+                        <option value="">-- Select PSP --</option>
+                        @foreach (var profile in Model.PspProfiles)
+                        {
+                            <option value="@profile.Id">@profile.PspName (@profile.PspCode)</option>
+                        }
+                    </select>
+                    <span asp-validation-for="Input.PspProfileId" class="text-danger"></span>
+                </div>
+            </div>
+
+            <div class="grid grid-3 gap-3">
+                <div class="form-group">
+                    <label asp-for="Input.PaymentMethod">Payment Method</label>
+                    <select asp-for="Input.PaymentMethod" class="form-control">
+                        <option value="card">Card</option>
+                        <option value="bank_transfer">Bank Transfer</option>
+                        <option value="wallet">Digital Wallet</option>
+                        <option value="direct_debit">Direct Debit</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label asp-for="Input.Brand">Brand</label>
+                    <select asp-for="Input.Brand" class="form-control">
+                        <option value="Visa">Visa</option>
+                        <option value="Mastercard">Mastercard</option>
+                        <option value="Amex">American Express</option>
+                        <option value="Discover">Discover</option>
+                        <option value="All">All Brands</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label asp-for="Input.Currency">Currency</label>
+                    <select asp-for="Input.Currency" class="form-control">
+                        <option value="USD">USD</option>
+                        <option value="EUR">EUR</option>
+                        <option value="GBP">GBP</option>
+                        <option value="AUD">AUD</option>
+                        <option value="CAD">CAD</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="card mt-3" style="background-color: var(--bg-tertiary);">
+                <div class="card-body">
+                    <h4 style="font-size: 1.1rem; margin-bottom: 1rem;">Fee Structure</h4>
+
+                    <div class="form-group">
+                        <label asp-for="Input.FeeStructure">Fee Type</label>
+                        <select asp-for="Input.FeeStructure" class="form-control" id="feeStructureSelect">
+                            <option value="fixed">Fixed Fee</option>
+                            <option value="percentage">Percentage Fee</option>
+                            <option value="hybrid" selected>Hybrid (Fixed + Percentage)</option>
+                            <option value="tiered">Tiered by Volume</option>
+                        </select>
+                    </div>
+
+                    <div id="fixedFeeField" class="form-group">
+                        <label asp-for="Input.FixedFee">Fixed Fee Amount</label>
+                        <div style="display: flex; align-items: center; gap: 0.5rem;">
+                            <span style="color: var(--text-secondary); font-size: 1.2rem;">$</span>
+                            <input asp-for="Input.FixedFee" type="number" step="0.01" class="form-control" placeholder="0.30" />
+                        </div>
+                        <div style="font-size: 0.875rem; color: var(--text-muted); margin-top: 0.5rem;">
+                            Fixed amount charged per transaction
+                        </div>
+                    </div>
+
+                    <div id="percentageFeeField" class="form-group">
+                        <label asp-for="Input.PercentageFee">Percentage Fee</label>
+                        <div style="display: flex; align-items: center; gap: 0.5rem;">
+                            <input asp-for="Input.PercentageFee" type="number" step="0.0001" class="form-control" placeholder="2.90" />
+                            <span style="color: var(--text-secondary); font-size: 1.2rem;">%</span>
+                        </div>
+                        <div style="font-size: 0.875rem; color: var(--text-muted); margin-top: 0.5rem;">
+                            Percentage of transaction amount (e.g., 2.90 for 2.90%)
+                        </div>
+                    </div>
+
+                    <div id="tieredStructureField" style="display: none;" class="form-group">
+                        <label asp-for="Input.TieredStructure">Tiered Structure (JSON)</label>
+                        <textarea asp-for="Input.TieredStructure" class="form-control" rows="6" placeholder='[
+  {"min": 0, "max": 10000, "fixed": 0.30, "percentage": 2.90},
+  {"min": 10000, "max": 100000, "fixed": 0.25, "percentage": 2.50},
+  {"min": 100000, "max": null, "fixed": 0.20, "percentage": 2.20}
+]'></textarea>
+                        <div style="font-size: 0.875rem; color: var(--text-muted); margin-top: 0.5rem;">
+                            Define tiered pricing based on monthly volume
+                        </div>
+                    </div>
+
+                    <div class="grid grid-2 gap-3">
+                        <div class="form-group">
+                            <label asp-for="Input.MinimumFee">Minimum Fee (Optional)</label>
+                            <div style="display: flex; align-items: center; gap: 0.5rem;">
+                                <span style="color: var(--text-secondary); font-size: 1.2rem;">$</span>
+                                <input asp-for="Input.MinimumFee" type="number" step="0.01" class="form-control" placeholder="0.00" />
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label asp-for="Input.MaximumFee">Maximum Fee (Optional)</label>
+                            <div style="display: flex; align-items: center; gap: 0.5rem;">
+                                <span style="color: var(--text-secondary); font-size: 1.2rem;">$</span>
+                                <input asp-for="Input.MaximumFee" type="number" step="0.01" class="form-control" placeholder="0.00" />
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card mt-3" style="background-color: var(--bg-tertiary);">
+                <div class="card-body">
+                    <h4 style="font-size: 1.1rem; margin-bottom: 1rem;">Effective Period</h4>
+
+                    <div class="grid grid-2 gap-3">
+                        <div class="form-group">
+                            <label asp-for="Input.EffectiveFrom">Effective From</label>
+                            <input asp-for="Input.EffectiveFrom" type="date" class="form-control" />
+                            <span asp-validation-for="Input.EffectiveFrom" class="text-danger"></span>
+                        </div>
+
+                        <div class="form-group">
+                            <label asp-for="Input.EffectiveTo">Effective To (Optional)</label>
+                            <input asp-for="Input.EffectiveTo" type="date" class="form-control" />
+                            <div style="font-size: 0.875rem; color: var(--text-muted); margin-top: 0.5rem;">
+                                Leave empty for no end date
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label asp-for="Input.Version">Version</label>
+                        <input asp-for="Input.Version" class="form-control" placeholder="1.0" />
+                        <div style="font-size: 0.875rem; color: var(--text-muted); margin-top: 0.5rem;">
+                            Version number for tracking contract changes
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card mt-3" style="background-color: rgba(45, 156, 219, 0.1); border-color: var(--accent-primary);">
+                <div class="card-body">
+                    <h4 style="font-size: 1rem; margin-bottom: 0.75rem; color: var(--accent-primary);">Fee Calculator Preview</h4>
+                    <div class="grid grid-3 gap-3">
+                        <div>
+                            <label style="font-size: 0.875rem; color: var(--text-secondary);">Transaction Amount: $100.00</label>
+                            <div style="font-size: 1.25rem; font-weight: 600; color: var(--text-primary);" id="preview100">$0.00</div>
+                        </div>
+                        <div>
+                            <label style="font-size: 0.875rem; color: var(--text-secondary);">Transaction Amount: $1,000.00</label>
+                            <div style="font-size: 1.25rem; font-weight: 600; color: var(--text-primary);" id="preview1000">$0.00</div>
+                        </div>
+                        <div>
+                            <label style="font-size: 0.875rem; color: var(--text-secondary);">Transaction Amount: $10,000.00</label>
+                            <div style="font-size: 1.25rem; font-weight: 600; color: var(--text-primary);" id="preview10000">$0.00</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            @if (!string.IsNullOrEmpty(Model.ErrorMessage))
+            {
+                <div class="alert alert-danger mt-3">
+                    @Model.ErrorMessage
+                </div>
+            }
+
+            <div class="flex gap-2 mt-4">
+                <button type="submit" name="action" value="save" class="btn btn-primary">💾 Save as Draft</button>
+                <button type="submit" name="action" value="submit" class="btn btn-success">✓ Save & Submit for Approval</button>
+                <a asp-page="/Config/FeeContracts" class="btn btn-secondary">Cancel</a>
+            </div>
+        </form>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+    <script>
+        const feeStructureSelect = document.getElementById('feeStructureSelect');
+        const fixedFeeField = document.getElementById('fixedFeeField');
+        const percentageFeeField = document.getElementById('percentageFeeField');
+        const tieredStructureField = document.getElementById('tieredStructureField');
+
+        const fixedFeeInput = document.querySelector('input[name="Input.FixedFee"]');
+        const percentageFeeInput = document.querySelector('input[name="Input.PercentageFee"]');
+        const minFeeInput = document.querySelector('input[name="Input.MinimumFee"]');
+        const maxFeeInput = document.querySelector('input[name="Input.MaximumFee"]');
+
+        function updateFieldVisibility() {
+            const feeStructure = feeStructureSelect.value;
+
+            fixedFeeField.style.display = 'none';
+            percentageFeeField.style.display = 'none';
+            tieredStructureField.style.display = 'none';
+
+            switch(feeStructure) {
+                case 'fixed':
+                    fixedFeeField.style.display = 'block';
+                    break;
+                case 'percentage':
+                    percentageFeeField.style.display = 'block';
+                    break;
+                case 'hybrid':
+                    fixedFeeField.style.display = 'block';
+                    percentageFeeField.style.display = 'block';
+                    break;
+                case 'tiered':
+                    tieredStructureField.style.display = 'block';
+                    break;
+            }
+
+            updatePreview();
+        }
+
+        function calculateFee(amount) {
+            const feeStructure = feeStructureSelect.value;
+            const fixed = parseFloat(fixedFeeInput.value) || 0;
+            const percentage = parseFloat(percentageFeeInput.value) || 0;
+            const minFee = parseFloat(minFeeInput.value) || 0;
+            const maxFee = parseFloat(maxFeeInput.value) || null;
+
+            let fee = 0;
+
+            switch(feeStructure) {
+                case 'fixed':
+                    fee = fixed;
+                    break;
+                case 'percentage':
+                    fee = amount * (percentage / 100);
+                    break;
+                case 'hybrid':
+                    fee = fixed + (amount * (percentage / 100));
+                    break;
+                case 'tiered':
+                    fee = 0; // Would need to parse JSON
+                    break;
+            }
+
+            // Apply min/max
+            if (minFee > 0 && fee < minFee) fee = minFee;
+            if (maxFee !== null && fee > maxFee) fee = maxFee;
+
+            return fee.toFixed(2);
+        }
+
+        function updatePreview() {
+            document.getElementById('preview100').textContent = '$' + calculateFee(100);
+            document.getElementById('preview1000').textContent = '$' + calculateFee(1000);
+            document.getElementById('preview10000').textContent = '$' + calculateFee(10000);
+        }
+
+        feeStructureSelect.addEventListener('change', updateFieldVisibility);
+        fixedFeeInput.addEventListener('input', updatePreview);
+        percentageFeeInput.addEventListener('input', updatePreview);
+        minFeeInput.addEventListener('input', updatePreview);
+        maxFeeInput.addEventListener('input', updatePreview);
+
+        updateFieldVisibility();
+        updatePreview();
+    </script>
+}

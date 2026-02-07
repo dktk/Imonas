@@ -1,0 +1,372 @@
+@page "{id:int}"
+@using Microsoft.AspNetCore.Mvc.Localization
+@using Domain.Enums
+@model SmartAdmin.WebUI.Pages.Config.FeeContracts.DetailsModel
+@inject IStringLocalizer<DetailsModel> _localizer
+
+@{
+    ViewData["Title"] = "Fee Contract Details";
+    ViewData["PageName"] = "config_feecontracts_details";
+}
+
+@section HeadBlock {
+    <link rel="stylesheet" media="screen, print" href="~/css/fa-solid.css">
+}
+
+@if (Model.Contract == null)
+{
+    <div class="alert alert-danger">@_localizer["Contract not found."]</div>
+    <a asp-page="/Config/FeeContracts" class="btn btn-secondary">@_localizer["Back to Contracts"]</a>
+}
+else
+{
+    <div class="row mb-3">
+        <div class="col-12 d-flex justify-content-between align-items-center">
+            <div>
+                <h1 class="subheader-title">
+                    <i class="subheader-icon @(Settings.Theme.IconPrefix) fa-file-contract"></i> @Model.Contract.ContractName
+                </h1>
+                <small class="text-muted">@_localizer["Version"] @Model.Contract.Version</small>
+            </div>
+            <div>
+                @if (Model.Contract.Status == ContractStatus.Draft)
+                {
+                    <a asp-page="Edit" asp-route-id="@Model.Contract.Id" class="btn btn-primary waves-effect waves-themed">
+                        <i class="@(Settings.Theme.IconPrefix) fa-edit mr-1"></i>
+                        @_localizer["Edit"]
+                    </a>
+                    <form method="post" asp-page-handler="Submit" asp-route-id="@Model.Contract.Id" style="display: inline;">
+                        @Html.AntiForgeryToken()
+                        <button type="submit" class="btn btn-success waves-effect waves-themed">
+                            <i class="@(Settings.Theme.IconPrefix) fa-paper-plane mr-1"></i>
+                            @_localizer["Submit for Approval"]
+                        </button>
+                    </form>
+                }
+                @if (Model.Contract.Status == ContractStatus.PendingApproval)
+                {
+                    <form method="post" asp-page-handler="Approve" asp-route-id="@Model.Contract.Id" style="display: inline;">
+                        @Html.AntiForgeryToken()
+                        <button type="submit" class="btn btn-success waves-effect waves-themed">
+                            <i class="@(Settings.Theme.IconPrefix) fa-check mr-1"></i>
+                            @_localizer["Approve"]
+                        </button>
+                    </form>
+                    <button type="button" class="btn btn-danger waves-effect waves-themed" data-toggle="modal" data-target="#rejectModal">
+                        <i class="@(Settings.Theme.IconPrefix) fa-times mr-1"></i>
+                        @_localizer["Reject"]
+                    </button>
+                }
+                <a asp-page="/Config/FeeContracts" class="btn btn-secondary waves-effect waves-themed">
+                    <i class="@(Settings.Theme.IconPrefix) fa-arrow-left mr-1"></i>
+                    @_localizer["Back"]
+                </a>
+            </div>
+        </div>
+    </div>
+
+    @if (TempData["SuccessMessage"] != null)
+    {
+        <div class="alert alert-success alert-dismissible fade show" role="alert">
+            <i class="@(Settings.Theme.IconPrefix) fa-check-circle mr-2"></i>
+            @TempData["SuccessMessage"]
+            <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                <span aria-hidden="true">&times;</span>
+            </button>
+        </div>
+    }
+    @if (TempData["ErrorMessage"] != null)
+    {
+        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+            <i class="@(Settings.Theme.IconPrefix) fa-exclamation-triangle mr-2"></i>
+            @TempData["ErrorMessage"]
+            <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                <span aria-hidden="true">&times;</span>
+            </button>
+        </div>
+    }
+
+    <!-- Status Banner -->
+    <div class="row mb-3">
+        <div class="col-12">
+            @{
+                var statusBadge = Model.Contract.Status switch
+                {
+                    ContractStatus.Draft => "badge-secondary",
+                    ContractStatus.PendingApproval => "badge-warning",
+                    ContractStatus.Active => "badge-success",
+                    ContractStatus.Rejected => "badge-danger",
+                    _ => "badge-info"
+                };
+                var statusIcon = Model.Contract.Status switch
+                {
+                    ContractStatus.Draft => "fa-pencil-alt",
+                    ContractStatus.PendingApproval => "fa-clock",
+                    ContractStatus.Active => "fa-check-circle",
+                    ContractStatus.Rejected => "fa-times-circle",
+                    _ => "fa-info-circle"
+                };
+            }
+            <div class="alert border-0 mb-0 d-flex align-items-center justify-content-between" style="background-color: rgba(0,0,0,0.03);">
+                <div>
+                    <strong>@_localizer["Status:"]</strong>
+                    <span class="badge @statusBadge ml-2" style="font-size: 0.9rem;">
+                        <i class="@(Settings.Theme.IconPrefix) @statusIcon mr-1"></i>
+                        @Model.Contract.Status
+                    </span>
+                </div>
+                @if (!string.IsNullOrEmpty(Model.Contract.ApprovedBy))
+                {
+                    <small class="text-muted">
+                        @_localizer["Approved by"] <strong>@Model.Contract.ApprovedBy</strong> @_localizer["on"] @Model.Contract.ApprovedAt?.ToString("yyyy-MM-dd HH:mm")
+                    </small>
+                }
+                @if (!string.IsNullOrEmpty(Model.Contract.RejectionReason))
+                {
+                    <small class="text-danger">
+                        <strong>@_localizer["Reason:"]</strong> @Model.Contract.RejectionReason
+                    </small>
+                }
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-xl-6">
+            <div id="panel-details" class="panel">
+                <div class="panel-hdr">
+                    <h2>
+                        <i class="@(Settings.Theme.IconPrefix) fa-info-circle mr-2"></i>
+                        @_localizer["Contract Details"]
+                    </h2>
+                </div>
+                <div class="panel-container show">
+                    <div class="panel-content">
+                        <table class="table table-bordered table-striped mb-0">
+                            <tbody>
+                                <tr>
+                                    <th style="width:40%;">@_localizer["Contract Name"]</th>
+                                    <td>@Model.Contract.ContractName</td>
+                                </tr>
+                                <tr>
+                                    <th>@_localizer["PSP"]</th>
+                                    <td><span class="badge badge-secondary">@Model.Contract.PspName</span></td>
+                                </tr>
+                                <tr>
+                                    <th>@_localizer["Payment Method"]</th>
+                                    <td>@Model.Contract.PaymentMethod</td>
+                                </tr>
+                                <tr>
+                                    <th>@_localizer["Brand"]</th>
+                                    <td>@Model.Contract.Brand</td>
+                                </tr>
+                                <tr>
+                                    <th>@_localizer["Currency"]</th>
+                                    <td>@Model.Contract.Currency</td>
+                                </tr>
+                                <tr>
+                                    <th>@_localizer["Effective From"]</th>
+                                    <td>@Model.Contract.EffectiveFrom.ToString("yyyy-MM-dd")</td>
+                                </tr>
+                                <tr>
+                                    <th>@_localizer["Effective To"]</th>
+                                    <td>@(Model.Contract.EffectiveTo?.ToString("yyyy-MM-dd") ?? _localizer["No end date"].Value)</td>
+                                </tr>
+                                <tr>
+                                    <th>@_localizer["Version"]</th>
+                                    <td>@Model.Contract.Version</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <div id="panel-audit" class="panel">
+                <div class="panel-hdr">
+                    <h2>
+                        <i class="@(Settings.Theme.IconPrefix) fa-history mr-2"></i>
+                        @_localizer["Audit Information"]
+                    </h2>
+                </div>
+                <div class="panel-container show">
+                    <div class="panel-content">
+                        <table class="table table-bordered table-striped mb-0">
+                            <tbody>
+                                <tr>
+                                    <th style="width:40%;">@_localizer["Created By"]</th>
+                                    <td>@Model.Contract.CreatedBy</td>
+                                </tr>
+                                <tr>
+                                    <th>@_localizer["Created At"]</th>
+                                    <td>@Model.Contract.Created.ToString("yyyy-MM-dd HH:mm")</td>
+                                </tr>
+                                @if (Model.Contract.LastModified.HasValue)
+                                {
+                                    <tr>
+                                        <th>@_localizer["Last Updated"]</th>
+                                        <td>@Model.Contract.LastModified.Value.ToString("yyyy-MM-dd HH:mm")</td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xl-6">
+            <div id="panel-fee-structure" class="panel">
+                <div class="panel-hdr">
+                    <h2>
+                        <i class="@(Settings.Theme.IconPrefix) fa-dollar-sign mr-2"></i>
+                        @_localizer["Fee Structure"]
+                    </h2>
+                </div>
+                <div class="panel-container show">
+                    <div class="panel-content">
+                        <div class="p-3 bg-primary-50 rounded mb-3 text-center">
+                            <small class="text-muted d-block mb-1">@_localizer["Structure Type"]</small>
+                            <span class="fs-xl fw-700 text-primary">@Model.Contract.FeeStructure</span>
+                        </div>
+
+                        <table class="table table-bordered table-striped mb-0">
+                            <tbody>
+                                @if (Model.Contract.FixedFee.HasValue)
+                                {
+                                    <tr>
+                                        <th style="width:40%;">@_localizer["Fixed Fee"]</th>
+                                        <td class="fw-500">@Model.Contract.FixedFee.Value.ToString("C")</td>
+                                    </tr>
+                                }
+                                @if (Model.Contract.PercentageFee.HasValue)
+                                {
+                                    <tr>
+                                        <th>@_localizer["Percentage Fee"]</th>
+                                        <td class="fw-500">@((Model.Contract.PercentageFee.Value * 100).ToString("F2"))%</td>
+                                    </tr>
+                                }
+                                @if (Model.Contract.MinimumFee.HasValue)
+                                {
+                                    <tr>
+                                        <th>@_localizer["Minimum Fee"]</th>
+                                        <td class="fw-500">@Model.Contract.MinimumFee.Value.ToString("C")</td>
+                                    </tr>
+                                }
+                                @if (Model.Contract.MaximumFee.HasValue)
+                                {
+                                    <tr>
+                                        <th>@_localizer["Maximum Fee"]</th>
+                                        <td class="fw-500">@Model.Contract.MaximumFee.Value.ToString("C")</td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+
+                        @if (!string.IsNullOrEmpty(Model.Contract.TieredStructure))
+                        {
+                            <div class="mt-3">
+                                <label class="form-label fw-500">@_localizer["Tiered Structure"]</label>
+                                <pre class="bg-light p-3 rounded"><code>@Model.Contract.TieredStructure</code></pre>
+                            </div>
+                        }
+                    </div>
+                </div>
+            </div>
+
+            <div id="panel-calculator" class="panel">
+                <div class="panel-hdr">
+                    <h2>
+                        <i class="@(Settings.Theme.IconPrefix) fa-calculator mr-2"></i>
+                        @_localizer["Fee Calculator"]
+                    </h2>
+                </div>
+                <div class="panel-container show">
+                    <div class="panel-content">
+                        <div class="form-group">
+                            <label class="form-label">@_localizer["Transaction Amount"]</label>
+                            <div class="input-group">
+                                <div class="input-group-prepend">
+                                    <span class="input-group-text">$</span>
+                                </div>
+                                <input type="number" id="calcAmount" class="form-control" value="100.00" step="0.01" />
+                                <div class="input-group-append">
+                                    <button type="button" class="btn btn-primary" onclick="calculateFee()">
+                                        @_localizer["Calculate"]
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="p-3 bg-success-50 rounded text-center">
+                            <small class="text-muted d-block mb-1">@_localizer["Calculated Fee"]</small>
+                            <span class="display-4 fw-700 text-success" id="calcResult">$0.00</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Reject Modal -->
+    <div class="modal fade" id="rejectModal" tabindex="-1" role="dialog">
+        <div class="modal-dialog" role="document">
+            <div class="modal-content">
+                <form method="post" asp-page-handler="Reject" asp-route-id="@Model.Contract.Id">
+                    @Html.AntiForgeryToken()
+                    <div class="modal-header">
+                        <h5 class="modal-title">@_localizer["Reject Contract"]</h5>
+                        <button type="button" class="close" data-dismiss="modal">
+                            <span>&times;</span>
+                        </button>
+                    </div>
+                    <div class="modal-body">
+                        <div class="form-group">
+                            <label class="form-label">@_localizer["Rejection Reason"] <span class="text-danger">*</span></label>
+                            <textarea name="reason" class="form-control" rows="4" required placeholder="@_localizer["Provide a reason for rejecting this contract..."]"></textarea>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="submit" class="btn btn-danger">
+                            <i class="@(Settings.Theme.IconPrefix) fa-times mr-1"></i>
+                            @_localizer["Reject Contract"]
+                        </button>
+                        <button type="button" class="btn btn-secondary" data-dismiss="modal">@_localizer["Cancel"]</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+}
+
+@section ScriptsBlock {
+    <script>
+        function calculateFee() {
+            var amount = parseFloat(document.getElementById('calcAmount').value) || 0;
+            var fixedFee = @(Model.Contract?.FixedFee ?? 0);
+            var percentageFee = @(Model.Contract?.PercentageFee ?? 0);
+            var feeStructure = @((int)(Model.Contract?.FeeStructure ?? FeeStructureType.Fixed));
+            var minFee = @(Model.Contract?.MinimumFee ?? 0);
+            var maxFee = @(Model.Contract?.MaximumFee.HasValue == true ? Model.Contract.MaximumFee.Value.ToString() : "null");
+
+            var fee = 0;
+            switch (feeStructure) {
+                case @((int)FeeStructureType.Fixed):
+                    fee = fixedFee;
+                    break;
+                case @((int)FeeStructureType.Percentage):
+                    fee = amount * percentageFee;
+                    break;
+                case @((int)FeeStructureType.Hybrid):
+                    fee = fixedFee + (amount * percentageFee);
+                    break;
+            }
+
+            if (minFee > 0 && fee < minFee) fee = minFee;
+            if (maxFee !== null && fee > maxFee) fee = maxFee;
+
+            document.getElementById('calcResult').textContent = '$' + fee.toFixed(2);
+        }
+
+        calculateFee();
+    </script>
+}

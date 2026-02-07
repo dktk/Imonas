@@ -1,0 +1,24 @@
+###
+POST http://localhost:5241/publishing/
+Content-Type: application/json
+Accept-Language: en-US,en;q=0.5
+
+{
+  "startDate":"2025-11-13T00:00:00",
+  "endDate":"2025-11-14T00:00:00",
+  "pspName":"Btcbit",
+  "correlationId":"019a8a67-72c5-7827-ba8a-23840eb8a7a3"
+}
+
+
+###
+POST http://localhost:60317/psps/
+Content-Type: application/json
+Accept-Language: en-US,en;q=0.5
+
+{
+  "startDate":"2025-11-13T00:00:00",
+  "endDate":"2025-11-14T00:00:00",
+  "pspName":"Btcbit",
+  "correlationId":"019a8a67-72c5-7827-ba8a-23840eb8a7a3"
+}

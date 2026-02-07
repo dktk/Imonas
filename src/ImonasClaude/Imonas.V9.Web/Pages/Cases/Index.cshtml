@@ -1,0 +1,93 @@
+@page
+@model Imonas.V9.Web.Pages.Cases.IndexModel
+@{
+    ViewData["Title"] = "Cases";
+}
+
+<div class="flex-between mb-4">
+    <div>
+        <div class="page-title">Exception Cases</div>
+        <div class="page-subtitle">Manage reconciliation exceptions and variances</div>
+    </div>
+    <div>
+        <a asp-page="Create" class="btn btn-primary">➕ Create Case</a>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-body">
+        <div class="table-container">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Case #</th>
+                        <th>Title</th>
+                        <th>Severity</th>
+                        <th>Status</th>
+                        <th>Variance Type</th>
+                        <th>Amount</th>
+                        <th>Assigned To</th>
+                        <th>Created</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var caseItem in Model.Cases)
+                    {
+                        <tr>
+                            <td>
+                                <a asp-page="Details" asp-route-id="@caseItem.Id" style="color: var(--accent-primary); text-decoration: none; font-weight: 600;">
+                                    @caseItem.CaseNumber
+                                </a>
+                            </td>
+                            <td>@caseItem.Title</td>
+                            <td>
+                                @if (caseItem.Severity == Imonas.V9.Domain.Enums.CaseSeverity.Critical)
+                                {
+                                    <span class="badge badge-danger">🔴 Critical</span>
+                                }
+                                else if (caseItem.Severity == Imonas.V9.Domain.Enums.CaseSeverity.High)
+                                {
+                                    <span class="badge badge-warning">🟠 High</span>
+                                }
+                                else if (caseItem.Severity == Imonas.V9.Domain.Enums.CaseSeverity.Medium)
+                                {
+                                    <span class="badge badge-info">🟡 Medium</span>
+                                }
+                                else
+                                {
+                                    <span class="badge badge-secondary">🟢 Low</span>
+                                }
+                            </td>
+                            <td>
+                                @if (caseItem.Status == Imonas.V9.Domain.Enums.CaseStatus.Closed)
+                                {
+                                    <span class="badge badge-secondary">Closed</span>
+                                }
+                                else if (caseItem.Status == Imonas.V9.Domain.Enums.CaseStatus.InProgress)
+                                {
+                                    <span class="badge badge-info">In Progress</span>
+                                }
+                                else if (caseItem.Status == Imonas.V9.Domain.Enums.CaseStatus.Open)
+                                {
+                                    <span class="badge badge-warning">Open</span>
+                                }
+                                else
+                                {
+                                    <span class="badge badge-secondary">@caseItem.Status</span>
+                                }
+                            </td>
+                            <td>@caseItem.VarianceType</td>
+                            <td>@(caseItem.VarianceAmount?.ToString("C") ?? "-")</td>
+                            <td>@(caseItem.AssignedTo ?? "Unassigned")</td>
+                            <td>@caseItem.CreatedAt.ToString("yyyy-MM-dd")</td>
+                            <td>
+                                <a asp-page="Details" asp-route-id="@caseItem.Id" class="btn btn-secondary" style="padding: 0.5rem 1rem;">View</a>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>

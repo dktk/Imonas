@@ -1,0 +1,199 @@
+@page
+@using Microsoft.AspNetCore.Mvc.Localization
+@model SmartAdmin.WebUI.Pages.Users.CreateModel
+@inject IStringLocalizer<CreateModel> _localizer
+
+@{
+    ViewData["Title"] = "Create User";
+    ViewData["PageName"] = "users_create";
+}
+
+@section HeadBlock {
+    <link rel="stylesheet" media="screen, print" href="~/css/fa-solid.css">
+}
+
+<div class="row mb-3">
+    <div class="col-12 d-flex justify-content-between align-items-center">
+        <div>
+            <h1 class="subheader-title">
+                <i class="subheader-icon @(Settings.Theme.IconPrefix) fa-user-plus"></i> @_localizer["Create User"]
+            </h1>
+            <small class="text-muted">@_localizer["Add a new user to the system"]</small>
+        </div>
+        <div>
+            <a asp-page="Index" class="btn btn-secondary waves-effect waves-themed">
+                <i class="@(Settings.Theme.IconPrefix) fa-arrow-left mr-1"></i>
+                @_localizer["Back to Users"]
+            </a>
+        </div>
+    </div>
+</div>
+
+@if (!string.IsNullOrEmpty(Model.ErrorMessage))
+{
+    <div class="alert alert-danger alert-dismissible fade show" role="alert">
+        <i class="@(Settings.Theme.IconPrefix) fa-exclamation-circle mr-2"></i>
+        @Model.ErrorMessage
+        <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+            <span aria-hidden="true">&times;</span>
+        </button>
+    </div>
+}
+
+<div class="row">
+    <div class="col-xl-8">
+        <div id="panel-create" class="panel">
+            <div class="panel-hdr">
+                <h2>
+                    <i class="@(Settings.Theme.IconPrefix) fa-user mr-2"></i>
+                    @_localizer["User Information"]
+                </h2>
+            </div>
+            <div class="panel-container show">
+                <div class="panel-content">
+                    <form method="post">
+                        <div asp-validation-summary="ModelOnly" class="alert alert-danger" role="alert"></div>
+
+                        <div class="form-group row">
+                            <label asp-for="Input.Email" class="col-md-3 col-form-label">@_localizer["Email"]</label>
+                            <div class="col-md-9">
+                                <input asp-for="Input.Email" class="form-control" placeholder="@_localizer["Enter email address"]" />
+                                <span asp-validation-for="Input.Email" class="text-danger"></span>
+                            </div>
+                        </div>
+
+                        <div class="form-group row">
+                            <label asp-for="Input.DisplayName" class="col-md-3 col-form-label">@_localizer["Display Name"]</label>
+                            <div class="col-md-9">
+                                <input asp-for="Input.DisplayName" class="form-control" placeholder="@_localizer["Enter display name"]" />
+                                <span asp-validation-for="Input.DisplayName" class="text-danger"></span>
+                            </div>
+                        </div>
+
+                        <div class="form-group row">
+                            <label asp-for="Input.Password" class="col-md-3 col-form-label">@_localizer["Password"]</label>
+                            <div class="col-md-9">
+                                <input asp-for="Input.Password" class="form-control" placeholder="@_localizer["Enter password (min 8 characters)"]" />
+                                <span asp-validation-for="Input.Password" class="text-danger"></span>
+                            </div>
+                        </div>
+
+                        <div class="form-group row">
+                            <label asp-for="Input.ConfirmPassword" class="col-md-3 col-form-label">@_localizer["Confirm Password"]</label>
+                            <div class="col-md-9">
+                                <input asp-for="Input.ConfirmPassword" class="form-control" placeholder="@_localizer["Confirm password"]" />
+                                <span asp-validation-for="Input.ConfirmPassword" class="text-danger"></span>
+                            </div>
+                        </div>
+
+                        <hr class="my-4">
+
+                        <div class="form-group row">
+                            <label class="col-md-3 col-form-label">@_localizer["Roles"]</label>
+                            <div class="col-md-9">
+                                @foreach (var role in Model.AvailableRoles)
+                                {
+                                    var badgeClass = role.Name switch
+                                    {
+                                        "System Admin" => "badge-danger",
+                                        "Admin" => "badge-warning",
+                                        "Analyst" => "badge-info",
+                                        "Viewer" => "badge-secondary",
+                                        "Finance Admin" => "badge-success",
+                                        "Config Manager" => "badge-primary",
+                                        _ => "badge-light"
+                                    };
+                                    <div class="custom-control custom-checkbox mb-2">
+                                        <input type="checkbox" class="custom-control-input"
+                                               id="role_@role.Name.Replace(" ", "_")"
+                                               name="Input.SelectedRoles"
+                                               value="@role.Name" />
+                                        <label class="custom-control-label" for="role_@role.Name.Replace(" ", "_")">
+                                            <span class="badge @badgeClass">@role.Name</span>
+                                            @if (!string.IsNullOrEmpty(role.Description))
+                                            {
+                                                <small class="text-muted ml-2">@role.Description</small>
+                                            }
+                                        </label>
+                                    </div>
+                                }
+                                @if (!Model.AvailableRoles.Any())
+                                {
+                                    <p class="text-muted">
+                                        <i class="@(Settings.Theme.IconPrefix) fa-info-circle mr-1"></i>
+                                        @_localizer["No roles available. Please seed roles first."]
+                                    </p>
+                                }
+                            </div>
+                        </div>
+
+                        <hr class="my-4">
+
+                        <div class="form-group row">
+                            <div class="col-md-9 offset-md-3">
+                                <div class="custom-control custom-switch mb-2">
+                                    <input type="checkbox" class="custom-control-input" id="isActive" asp-for="Input.IsActive" />
+                                    <label class="custom-control-label" for="isActive">@_localizer["Account is Active"]</label>
+                                </div>
+                                <div class="custom-control custom-switch">
+                                    <input type="checkbox" class="custom-control-input" id="emailConfirmed" asp-for="Input.EmailConfirmed" />
+                                    <label class="custom-control-label" for="emailConfirmed">@_localizer["Email is Confirmed"]</label>
+                                </div>
+                            </div>
+                        </div>
+
+                        <hr class="my-4">
+
+                        <div class="form-group row">
+                            <div class="col-md-9 offset-md-3">
+                                <button type="submit" class="btn btn-primary waves-effect waves-themed">
+                                    <i class="@(Settings.Theme.IconPrefix) fa-user-plus mr-1"></i>
+                                    @_localizer["Create User"]
+                                </button>
+                                <a asp-page="Index" class="btn btn-secondary waves-effect waves-themed ml-2">
+                                    @_localizer["Cancel"]
+                                </a>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-xl-4">
+        <div class="alert alert-info">
+            <div class="d-flex align-items-center">
+                <div class="alert-icon">
+                    <i class="@(Settings.Theme.IconPrefix) fa-info-circle fa-2x"></i>
+                </div>
+                <div class="ml-3">
+                    <h5 class="mb-1">@_localizer["Password Requirements"]</h5>
+                    <ul class="mb-0 pl-3">
+                        <li>@_localizer["Minimum 8 characters"]</li>
+                        <li>@_localizer["At least one uppercase letter"]</li>
+                        <li>@_localizer["At least one lowercase letter"]</li>
+                        <li>@_localizer["At least one number"]</li>
+                        <li>@_localizer["At least one special character"]</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <div class="alert alert-warning">
+            <div class="d-flex align-items-center">
+                <div class="alert-icon">
+                    <i class="@(Settings.Theme.IconPrefix) fa-shield-alt fa-2x"></i>
+                </div>
+                <div class="ml-3">
+                    <h5 class="mb-1">@_localizer["Role Assignment"]</h5>
+                    <p class="mb-0">@_localizer["Be cautious when assigning elevated roles. System Admin has full access to all platform features."]</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section ScriptsBlock {
+    <partial name="_ValidationScriptsPartial" />
+}

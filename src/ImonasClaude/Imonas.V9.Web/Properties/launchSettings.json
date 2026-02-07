@@ -1,0 +1,12 @@
+{
+  "profiles": {
+    "Imonas.V9.Web": {
+      "commandName": "Project",
+      "launchBrowser": true,
+      "environmentVariables": {
+        "ASPNETCORE_ENVIRONMENT": "Development"
+      },
+      "applicationUrl": "https://localhost:56541;http://localhost:56542"
+    }
+  }
+}

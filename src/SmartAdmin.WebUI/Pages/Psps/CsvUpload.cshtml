@@ -1,0 +1,261 @@
+﻿@page
+@using Microsoft.AspNetCore.Mvc.Localization
+@model SmartAdmin.WebUI.Pages.Psps.CsvUploadModel
+@inject IStringLocalizer<CsvUploadModel> _localizer
+
+@{
+    ViewData["Title"] = _localizer["CSV Upload - Medallion Data"];
+    ViewData["PageName"] = "csv_upload";
+    ViewData["Heading"] = "<i class='subheader-icon fal fa-upload'></i> " + _localizer["CSV Upload"];
+    ViewData["Category"] = _localizer["PSPs"];
+
+    var pspSelectList = Model.PspOptions != null
+        ? new SelectList(Model.PspOptions, "Key", "Value")
+        : new SelectList(Enumerable.Empty<string>());
+}
+
+@section HeadBlock {
+    <style>
+        .upload-section {
+            padding: 20px;
+            border: 2px dashed #ddd;
+            border-radius: 8px;
+            text-align: center;
+            background-color: #f9f9f9;
+            margin-bottom: 20px;
+        }
+
+        .upload-section:hover {
+            border-color: #007bff;
+            background-color: #f0f8ff;
+        }
+
+        .file-input-wrapper {
+            position: relative;
+            overflow: hidden;
+            display: inline-block;
+        }
+
+        .file-input-wrapper input[type=file] {
+            font-size: 100px;
+            position: absolute;
+            left: 0;
+            top: 0;
+            opacity: 0;
+            cursor: pointer;
+        }
+
+        .file-info {
+            margin-top: 15px;
+            padding: 10px;
+            background-color: #e9ecef;
+            border-radius: 4px;
+            display: none;
+        }
+
+        .schema-card {
+            cursor: pointer;
+            transition: all 0.3s ease;
+            border: 2px solid transparent;
+        }
+
+        .schema-card:hover {
+            border-color: #007bff;
+            transform: translateY(-5px);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        }
+
+        .schema-card.selected {
+            border-color: #28a745;
+            background-color: #f0fff4;
+        }
+
+        .schema-badge {
+            font-size: 0.9rem;
+            padding: 5px 10px;
+        }
+    </style>
+}
+
+<div id="panel-1" class="panel">
+    <div class="panel-hdr">
+        <h2>
+            @_localizer["Upload CSV Files"] <span class="fw-300"><i>@_localizer["Bronze & Silver Medallion Schemas"]</i></span>
+        </h2>
+        <div class="panel-toolbar">
+            <button class="btn btn-panel" data-action="panel-collapse" data-toggle="tooltip" data-offset="0,10"
+                    data-original-title="Collapse"></button>
+        </div>
+    </div>
+    <div class="panel-container show">
+        <div class="panel-content">
+            <div class="row">
+                <!-- PSP Selection -->
+                <div class="col-md-6 mb-3">
+                    <div class="form-group">
+                        <label asp-for="SelectedPspId" class="form-label">@_localizer["Payment Service Provider"]</label>
+                        <select asp-for="SelectedPspId" asp-items="pspSelectList" class="form-control select2" id="pspSelector">
+                            <option value="">@_localizer["-- Select PSP --"]</option>
+                        </select>
+                        <span asp-validation-for="SelectedPspId" class="text-danger"></span>
+                    </div>
+                </div>
+              
+
+                <!-- File Upload -->
+                <div class="col-12">
+                    <h5>@_localizer["Step 3: Upload CSV File"]</h5>
+                    <div class="upload-section">
+                        <i class="fal fa-cloud-upload fa-3x text-muted mb-3"></i>
+                        <h5>@_localizer["Select or Drag CSV File"]</h5>
+                        <p class="text-muted">@_localizer["Maximum file size: 5MB"]</p>
+                        <div class="file-input-wrapper">
+                            <button class="btn btn-primary" type="button">
+                                <i class="fal fa-file-csv"></i> @_localizer["Choose File"]
+                            </button>
+                            <input type="file" asp-for="UploadedFile" id="csvFileInput" accept=".csv" />
+                        </div>
+                        <div class="file-info" id="fileInfo">
+                            <strong>@_localizer["Selected File:"]</strong> <span id="fileName"></span><br />
+                            <strong>@_localizer["Size:"]</strong> <span id="fileSize"></span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Upload Button -->
+                <div class="col-12 text-center mt-3">
+                    <button type="button" class="btn btn-success btn-lg" id="uploadBtn">
+                        <i class="fal fa-upload"></i> @_localizer["Upload CSV"]
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Progress Modal -->
+<div class="modal fade" id="uploadProgressModal" tabindex="-1" role="dialog" data-backdrop="static" data-keyboard="false">
+    <div class="modal-dialog modal-dialog-centered" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">@_localizer["Uploading CSV"]</h5>
+            </div>
+            <div class="modal-body text-center">
+                <div class="spinner-border text-primary" role="status">
+                    <span class="sr-only">@_localizer["Loading..."]</span>
+                </div>
+                <p class="mt-3">@_localizer["Please wait while your file is being uploaded..."]</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section ScriptsBlock {
+    <script>
+        let selectedFile = null;
+
+        $(document).ready(function () {
+            
+            // File input change handler
+            $('#csvFileInput').on('change', function () {
+                const file = this.files[0];
+                if (file) {
+                    selectedFile = file;
+
+                    // Check file size (5MB = 5 * 1024 * 1024 bytes)
+                    const maxSize = 5 * 1024 * 1024;
+                    if (file.size > maxSize) {
+                        toastr.error('@_localizer["File size exceeds 5MB limit. Please select a smaller file."]');
+                        this.value = '';
+                        $('#fileInfo').hide();
+                        checkUploadReady();
+                        return;
+                    }
+
+                    // Check file extension
+                    if (!file.name.toLowerCase().endsWith('.csv')) {
+                        toastr.error('@_localizer["Only CSV files are allowed."]');
+                        this.value = '';
+                        $('#fileInfo').hide();
+                        checkUploadReady();
+                        return;
+                    }
+
+                    // Display file info
+                    $('#fileName').text(file.name);
+                    $('#fileSize').text((file.size / 1024).toFixed(2) + ' KB');
+                    $('#fileInfo').show();
+                } else {
+                    selectedFile = null;
+                    $('#fileInfo').hide();
+                }
+                checkUploadReady();
+            });
+
+            // PSP selection change
+            $('#pspSelector').on('change', function () {
+                checkUploadReady();
+            });
+
+            // Upload button click
+            $('#uploadBtn').on('click', function () {
+                uploadCsv();
+            });
+        });
+
+        function checkUploadReady() {
+            const pspSelected = $('#pspSelector').val() !== '';
+            const fileSelected = selectedFile !== null;
+            
+            $('#uploadBtn').prop('disabled', !(pspSelected && fileSelected));
+        }
+
+        function uploadCsv() {
+            const formData = new FormData();
+            formData.append('UploadedFile', selectedFile);
+            formData.append('SelectedPspId', $('#pspSelector').val());
+            
+            const url = '@Url.Page("/Psps/CsvUpload")' + '?handler=bronze'
+
+            // Show progress modal
+            // todo: use this and then hide it on success/error
+            // $('#uploadProgressModal').modal('show');
+
+            $.ajax({
+                url: url,
+                type: 'POST',
+                data: formData,
+                processData: false,
+                contentType: false,
+                headers: {
+                    'RequestVerificationToken': $('input[name="__RequestVerificationToken"]').val()
+                },
+                success: function (response) {
+
+                    $('#uploadProgressModal').modal('hide');
+                    
+                    if (response.Succeeded) {
+                        toastr.success(response.Message || '@_localizer["CSV uploaded successfully!"]');
+                        // Reset form
+                        resetForm();
+                    } else {
+                        toastr.error(response.Message || '@_localizer["Upload failed. Please try again."]');
+                    }
+                },
+                error: function (xhr, status, error) {
+                    $('#uploadProgressModal').modal('hide');
+                    toastr.error('@_localizer["An error occurred during upload. Please try again."]');
+                    console.error('Upload error:', error);
+                }
+            });
+        }
+
+        function resetForm() {
+            $('#csvFileInput').val('');
+            $('#fileInfo').hide();
+            selectedFile = null;            
+            $('#pspSelector').val('').trigger('change');
+            checkUploadReady();
+        }
+    </script>
+}

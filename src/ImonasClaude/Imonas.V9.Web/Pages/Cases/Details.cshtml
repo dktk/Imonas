@@ -1,0 +1,318 @@
+@page "{id:guid}"
+@model Imonas.V9.Web.Pages.Cases.DetailsModel
+@{
+    ViewData["Title"] = "Case Details";
+}
+
+@if (Model.Case == null)
+{
+    <div class="alert alert-danger">Case not found.</div>
+    <a asp-page="Index" class="btn btn-secondary">Back to Cases</a>
+}
+else
+{
+    <div class="flex-between mb-4">
+        <div>
+            <div class="page-title">@Model.Case.CaseNumber</div>
+            <div class="page-subtitle">@Model.Case.Title</div>
+        </div>
+        <div class="flex gap-2">
+            @if (Model.Case.Status != Imonas.V9.Domain.Enums.CaseStatus.Closed)
+            {
+                <form method="post" asp-page-handler="Close" style="display: inline;">
+                    <button type="submit" class="btn btn-success">✓ Close Case</button>
+                </form>
+            }
+            <a asp-page="Index" class="btn btn-secondary">Back to Cases</a>
+        </div>
+    </div>
+
+    @if (!string.IsNullOrEmpty((string?)TempData["SuccessMessage"]))
+    {
+        <div class="alert alert-success">
+            @TempData["SuccessMessage"]
+        </div>
+    }
+
+    <div class="grid grid-3 mb-4">
+        <div class="stat-card">
+            <div style="font-size: 0.9rem; color: var(--text-muted); margin-bottom: 0.5rem;">Status</div>
+            @if (Model.Case.Status == Imonas.V9.Domain.Enums.CaseStatus.Closed)
+            {
+                <span class="badge badge-secondary" style="font-size: 1.2rem;">Closed</span>
+            }
+            else if (Model.Case.Status == Imonas.V9.Domain.Enums.CaseStatus.InProgress)
+            {
+                <span class="badge badge-info" style="font-size: 1.2rem;">In Progress</span>
+            }
+            else if (Model.Case.Status == Imonas.V9.Domain.Enums.CaseStatus.Open)
+            {
+                <span class="badge badge-warning" style="font-size: 1.2rem;">Open</span>
+            }
+            else
+            {
+                <span class="badge badge-secondary" style="font-size: 1.2rem;">@Model.Case.Status</span>
+            }
+        </div>
+
+        <div class="stat-card">
+            <div style="font-size: 0.9rem; color: var(--text-muted); margin-bottom: 0.5rem;">Severity</div>
+            @if (Model.Case.Severity == Imonas.V9.Domain.Enums.CaseSeverity.Critical)
+            {
+                <span class="badge badge-danger" style="font-size: 1.2rem;">🔴 Critical</span>
+            }
+            else if (Model.Case.Severity == Imonas.V9.Domain.Enums.CaseSeverity.High)
+            {
+                <span class="badge badge-warning" style="font-size: 1.2rem;">🟠 High</span>
+            }
+            else if (Model.Case.Severity == Imonas.V9.Domain.Enums.CaseSeverity.Medium)
+            {
+                <span class="badge badge-info" style="font-size: 1.2rem;">🟡 Medium</span>
+            }
+            else
+            {
+                <span class="badge badge-secondary" style="font-size: 1.2rem;">🟢 Low</span>
+            }
+        </div>
+
+        <div class="stat-card">
+            <div style="font-size: 0.9rem; color: var(--text-muted); margin-bottom: 0.5rem;">Variance</div>
+            @if (Model.Case.VarianceAmount.HasValue)
+            {
+                <div style="font-size: 1.5rem; font-weight: 700; color: var(--accent-danger);">
+                    @Model.Case.VarianceAmount.Value.ToString("C")
+                </div>
+            }
+            else
+            {
+                <div style="font-size: 1.5rem; font-weight: 700; color: var(--text-muted);">
+                    N/A
+                </div>
+            }
+            <div style="font-size: 0.85rem; color: var(--text-secondary); margin-top: 0.25rem;">
+                @Model.Case.VarianceType
+            </div>
+        </div>
+    </div>
+
+    <div class="grid grid-2">
+        <div>
+            <div class="card">
+                <div class="card-header">Case Information</div>
+                <div class="card-body">
+                    <table style="width: 100%;">
+                        <tr style="border-bottom: 1px solid var(--border-color);">
+                            <td style="padding: 0.75rem 0; font-weight: 600; width: 40%;">Case Number</td>
+                            <td style="padding: 0.75rem 0;">@Model.Case.CaseNumber</td>
+                        </tr>
+                        <tr style="border-bottom: 1px solid var(--border-color);">
+                            <td style="padding: 0.75rem 0; font-weight: 600;">Assigned To</td>
+                            <td style="padding: 0.75rem 0;">
+                                @if (!string.IsNullOrEmpty(Model.Case.AssignedTo))
+                                {
+                                    <span>@Model.Case.AssignedTo</span>
+                                    @if (Model.Case.Status == Imonas.V9.Domain.Enums.CaseStatus.Open)
+                                    {
+                                        <form method="post" asp-page-handler="Assign" style="display: inline; margin-left: 1rem;">
+                                            <button type="submit" class="btn btn-secondary" style="padding: 0.25rem 0.75rem; font-size: 0.875rem;">Reassign</button>
+                                        </form>
+                                    }
+                                }
+                                else
+                                {
+                                    <span style="color: var(--text-muted);">Unassigned</span>
+                                    <form method="post" asp-page-handler="Assign" style="display: inline; margin-left: 1rem;">
+                                        <button type="submit" class="btn btn-primary" style="padding: 0.25rem 0.75rem; font-size: 0.875rem;">Assign to Me</button>
+                                    </form>
+                                }
+                            </td>
+                        </tr>
+                        <tr style="border-bottom: 1px solid var(--border-color);">
+                            <td style="padding: 0.75rem 0; font-weight: 600;">Created</td>
+                            <td style="padding: 0.75rem 0;">@Model.Case.CreatedAt.ToString("yyyy-MM-dd HH:mm") UTC by @Model.Case.CreatedBy</td>
+                        </tr>
+                        <tr style="border-bottom: 1px solid var(--border-color);">
+                            <td style="padding: 0.75rem 0; font-weight: 600;">Due Date</td>
+                            <td style="padding: 0.75rem 0;">
+                                @if (Model.Case.DueDate.HasValue)
+                                {
+                                    <span>@Model.Case.DueDate.Value.ToString("yyyy-MM-dd")</span>
+                                    @if (Model.Case.DueDate.Value < DateTime.UtcNow && Model.Case.Status != Imonas.V9.Domain.Enums.CaseStatus.Closed)
+                                    {
+                                        <span class="badge badge-danger" style="margin-left: 0.5rem;">Overdue</span>
+                                    }
+                                }
+                                else
+                                {
+                                    <span style="color: var(--text-muted);">Not set</span>
+                                }
+                            </td>
+                        </tr>
+                        <tr style="border-bottom: 1px solid var(--border-color);">
+                            <td style="padding: 0.75rem 0; font-weight: 600;">Variance Type</td>
+                            <td style="padding: 0.75rem 0;">@Model.Case.VarianceType</td>
+                        </tr>
+                        <tr style="border-bottom: 1px solid var(--border-color);">
+                            <td style="padding: 0.75rem 0; font-weight: 600;">Root Cause</td>
+                            <td style="padding: 0.75rem 0;">
+                                @if (!string.IsNullOrEmpty(Model.Case.RootCauseCode))
+                                {
+                                    <span>@Model.Case.RootCauseCode</span>
+                                }
+                                else
+                                {
+                                    <span style="color: var(--text-muted);">Not determined</span>
+                                }
+                            </td>
+                        </tr>
+                        @if (Model.Case.LinkedTransactionId.HasValue)
+                        {
+                            <tr style="border-bottom: 1px solid var(--border-color);">
+                                <td style="padding: 0.75rem 0; font-weight: 600;">Linked Transaction</td>
+                                <td style="padding: 0.75rem 0;">
+                                    <a href="#" style="color: var(--accent-primary); text-decoration: none;">
+                                        @Model.Case.LinkedTransactionId.Value.ToString().Substring(0, 8)...
+                                    </a>
+                                </td>
+                            </tr>
+                        }
+                        @if (Model.Case.Status == Imonas.V9.Domain.Enums.CaseStatus.Closed)
+                        {
+                            <tr>
+                                <td style="padding: 0.75rem 0; font-weight: 600;">Resolved</td>
+                                <td style="padding: 0.75rem 0;">
+                                    @Model.Case.ResolvedAt?.ToString("yyyy-MM-dd HH:mm") UTC by @Model.Case.ResolvedBy
+                                </td>
+                            </tr>
+                        }
+                    </table>
+                </div>
+            </div>
+
+            <div class="card mt-3">
+                <div class="card-header">Description</div>
+                <div class="card-body">
+                    <p style="color: var(--text-secondary); white-space: pre-wrap;">@Model.Case.Description</p>
+                </div>
+            </div>
+
+            @if (Model.Case.Status == Imonas.V9.Domain.Enums.CaseStatus.Closed && !string.IsNullOrEmpty(Model.Case.ResolutionNotes))
+            {
+                <div class="card mt-3">
+                    <div class="card-header">Resolution Notes</div>
+                    <div class="card-body">
+                        <p style="color: var(--text-secondary); white-space: pre-wrap;">@Model.Case.ResolutionNotes</p>
+                    </div>
+                </div>
+            }
+        </div>
+
+        <div>
+            <div class="card">
+                <div class="card-header">
+                    <div class="flex-between">
+                        <span>Comments (@Model.Case.Comments.Count)</span>
+                    </div>
+                </div>
+                <div class="card-body">
+                    @if (Model.Case.Comments.Any())
+                    {
+                        <div style="max-height: 600px; overflow-y: auto;">
+                            @foreach (var comment in Model.Case.Comments.OrderBy(c => c.CreatedAt))
+                            {
+                                <div style="background-color: var(--bg-tertiary); border-radius: 8px; padding: 1rem; margin-bottom: 1rem;">
+                                    <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem;">
+                                        <strong style="color: var(--accent-primary);">@comment.CommentedBy</strong>
+                                        <span style="color: var(--text-muted); font-size: 0.875rem;">@comment.CreatedAt.ToString("yyyy-MM-dd HH:mm")</span>
+                                    </div>
+                                    <p style="color: var(--text-secondary); margin: 0; white-space: pre-wrap;">@comment.Comment</p>
+                                </div>
+                            }
+                        </div>
+                    }
+                    else
+                    {
+                        <p style="color: var(--text-muted); text-align: center; padding: 2rem 0;">
+                            No comments yet.
+                        </p>
+                    }
+
+                    @if (Model.Case.Status != Imonas.V9.Domain.Enums.CaseStatus.Closed)
+                    {
+                        <form method="post" asp-page-handler="AddComment" class="mt-3">
+                            <div class="form-group">
+                                <textarea name="comment" class="form-control" rows="3" placeholder="Add a comment..." required></textarea>
+                            </div>
+                            <button type="submit" class="btn btn-primary">💬 Add Comment</button>
+                        </form>
+                    }
+                </div>
+            </div>
+
+            <div class="card mt-3">
+                <div class="card-header">Attachments (@Model.Case.Attachments.Count)</div>
+                <div class="card-body">
+                    @if (Model.Case.Attachments.Any())
+                    {
+                        <div style="list-style: none; padding: 0;">
+                            @foreach (var attachment in Model.Case.Attachments.OrderByDescending(a => a.CreatedAt))
+                            {
+                                <div style="padding: 0.75rem; border-bottom: 1px solid var(--border-color); display: flex; justify-content: space-between; align-items: center;">
+                                    <div>
+                                        <strong>@attachment.FileName</strong>
+                                        <div style="font-size: 0.875rem; color: var(--text-muted);">
+                                            @((attachment.FileSizeBytes / 1024.0).ToString("F1")) KB • @attachment.CreatedAt.ToString("yyyy-MM-dd")
+                                        </div>
+                                    </div>
+                                    <a href="#" class="btn btn-secondary" style="padding: 0.5rem 1rem;">Download</a>
+                                </div>
+                            }
+                        </div>
+                    }
+                    else
+                    {
+                        <p style="color: var(--text-muted); text-align: center; padding: 1.5rem 0;">
+                            No attachments.
+                        </p>
+                    }
+
+                    @if (Model.Case.Status != Imonas.V9.Domain.Enums.CaseStatus.Closed)
+                    {
+                        <button class="btn btn-secondary mt-3" style="width: 100%;">📎 Attach File</button>
+                    }
+                </div>
+            </div>
+
+            @if (Model.Case.Labels.Any())
+            {
+                <div class="card mt-3">
+                    <div class="card-header">Labels</div>
+                    <div class="card-body">
+                        <div class="flex gap-1" style="flex-wrap: wrap;">
+                            @foreach (var label in Model.Case.Labels)
+                            {
+                                <span class="badge badge-info" style="font-size: 0.9rem;">
+                                    @label.LabelName
+                                </span>
+                            }
+                        </div>
+                    </div>
+                </div>
+            }
+        </div>
+    </div>
+}
+
+@section Scripts {
+    <script>
+        // Auto-refresh if case is still in progress
+        @if (Model.Case?.Status != Imonas.V9.Domain.Enums.CaseStatus.Closed)
+        {
+            <text>
+            setTimeout(() => {
+                console.log('Case still open - consider implementing real-time updates');
+            }, 30000);
+            </text>
+        }
+    </script>
+}

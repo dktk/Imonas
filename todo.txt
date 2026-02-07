@@ -1,0 +1,20 @@
+Nobody is going to come and push you !!!
+
+Michale - walking
+https://www.youtube.com/shorts/vdm66sSfhHs-1
+
+ghp_ LLWZygE1UAO9lIjrjXLtwy91nDHaWF03NdQA
+
+- auth0/keycloack?
+- db backups to coldstorage nightly
+- Notify SuperAdmins when the application stops
+
+
+
+colors:
+https://www.figma.com/color-palette-generator/?colors=A962D5-FCE6E3-991E4E-E94934
+https://www.figma.com/color-palette-generator/?colors=D3DDB6-D7B789-D2D9EF-857332-B19943-C7B36A-D8CA96-E9E1C3
+https://www.figma.com/color-palette-generator/?colors=317767-191505-FAF5E6-7D661A-B08F25-D6B23C-E1C66F-ECDAA2
+https://www.figma.com/color-palette-generator/?colors=DBD499-EBE7C6-4FCF90-7FDCAE-0C6279-128FB1-1F2A33-364959
+https://www.figma.com/color-palette-generator/?colors=B771AE-2F1655-F2D6B0-452617
+https://www.figma.com/color-palette-generator/?colors=1D1820-3D3243-856A32-B18D43-7BCEE0-ADE0EC-B8796B-CC9E94

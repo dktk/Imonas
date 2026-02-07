@@ -1,0 +1,191 @@
+@page
+@using Microsoft.AspNetCore.Mvc.Localization
+@model SmartAdmin.WebUI.Pages.Config.StatusMappingsModel
+@inject IStringLocalizer<StatusMappingsModel> _localizer
+
+@{
+    ViewData["Title"] = "Status Mappings";
+    ViewData["PageName"] = "config_statusmappings";
+
+    var successStatuses = new[] { "Completed", "Settled", "Refunded" };
+    var pendingStatuses = new[] { "Pending", "Processing", "Authorized", "RequiresAction", "RequiresCapture" };
+    var failedStatuses = new[] { "Failed", "Declined", "Cancelled", "Expired" };
+
+    var successCount = Model.Mappings.Count(m => successStatuses.Contains(m.CanonicalStatus));
+    var pendingCount = Model.Mappings.Count(m => pendingStatuses.Contains(m.CanonicalStatus));
+    var failedCount = Model.Mappings.Count(m => failedStatuses.Contains(m.CanonicalStatus));
+    var otherCount = Model.Mappings.Count() - successCount - pendingCount - failedCount;
+}
+
+@section HeadBlock {
+    <link rel="stylesheet" media="screen, print" href="~/css/fa-solid.css">
+}
+
+<div class="row mb-3">
+    <div class="col-12 d-flex justify-content-between align-items-center">
+        <div>
+            <h1 class="subheader-title">
+                <i class="subheader-icon @(Settings.Theme.IconPrefix) fa-exchange-alt"></i> @_localizer["Status Mappings"]
+            </h1>
+            <small class="text-muted">@_localizer["Map PSP-specific statuses to canonical statuses"]</small>
+        </div>
+        <div>
+            <a asp-page="/Config/StatusMappings/Create" class="btn btn-primary waves-effect waves-themed">
+                <i class="@(Settings.Theme.IconPrefix) fa-plus mr-1"></i>
+                @_localizer["Add Mapping"]
+            </a>
+            <a asp-page="Index" class="btn btn-secondary waves-effect waves-themed">
+                <i class="@(Settings.Theme.IconPrefix) fa-arrow-left mr-1"></i>
+                @_localizer["Back"]
+            </a>
+        </div>
+    </div>
+</div>
+
+@if (TempData["SuccessMessage"] != null)
+{
+    <div class="alert alert-success alert-dismissible fade show" role="alert">
+        <i class="@(Settings.Theme.IconPrefix) fa-check-circle mr-2"></i>
+        @TempData["SuccessMessage"]
+        <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+            <span aria-hidden="true">&times;</span>
+        </button>
+    </div>
+}
+
+<div class="row mb-4">
+    <div class="col-sm-6 col-xl-3">
+        <div class="p-3 bg-success-200 rounded overflow-hidden position-relative text-white mb-g">
+            <div class="">
+                <h3 class="display-4 d-block l-h-n m-0 fw-500">
+                    @successCount
+                    <small class="m-0 l-h-n">@_localizer["Success States"]</small>
+                </h3>
+            </div>
+            <i class="@(Settings.Theme.IconPrefix) fa-check-circle position-absolute pos-right pos-bottom opacity-15 mb-n1 mr-n1" style="font-size:6rem"></i>
+        </div>
+    </div>
+    <div class="col-sm-6 col-xl-3">
+        <div class="p-3 bg-warning-400 rounded overflow-hidden position-relative text-white mb-g">
+            <div class="">
+                <h3 class="display-4 d-block l-h-n m-0 fw-500">
+                    @pendingCount
+                    <small class="m-0 l-h-n">@_localizer["Pending States"]</small>
+                </h3>
+            </div>
+            <i class="@(Settings.Theme.IconPrefix) fa-clock position-absolute pos-right pos-bottom opacity-15 mb-n1 mr-n1" style="font-size:6rem"></i>
+        </div>
+    </div>
+    <div class="col-sm-6 col-xl-3">
+        <div class="p-3 bg-danger-400 rounded overflow-hidden position-relative text-white mb-g">
+            <div class="">
+                <h3 class="display-4 d-block l-h-n m-0 fw-500">
+                    @failedCount
+                    <small class="m-0 l-h-n">@_localizer["Failed States"]</small>
+                </h3>
+            </div>
+            <i class="@(Settings.Theme.IconPrefix) fa-times-circle position-absolute pos-right pos-bottom opacity-15 mb-n1 mr-n1" style="font-size:6rem"></i>
+        </div>
+    </div>
+    <div class="col-sm-6 col-xl-3">
+        <div class="p-3 bg-info-400 rounded overflow-hidden position-relative text-white mb-g">
+            <div class="">
+                <h3 class="display-4 d-block l-h-n m-0 fw-500">
+                    @otherCount
+                    <small class="m-0 l-h-n">@_localizer["Other States"]</small>
+                </h3>
+            </div>
+            <i class="@(Settings.Theme.IconPrefix) fa-question-circle position-absolute pos-right pos-bottom opacity-15 mb-n1 mr-n1" style="font-size:6rem"></i>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-xl-12">
+        <div id="panel-mappings" class="panel">
+            <div class="panel-hdr">
+                <h2>
+                    @_localizer["Status Mappings"]
+                    <span class="fw-300"><i>(@Model.Mappings.Count() @_localizer["total"])</i></span>
+                </h2>
+            </div>
+            <div class="panel-container show">
+                <div class="panel-content">
+                    <div class="table-responsive">
+                        <table class="table table-bordered table-hover table-striped w-100">
+                            <thead class="bg-primary-600">
+                                <tr>
+                                    <th>@_localizer["PSP"]</th>
+                                    <th>@_localizer["PSP Status"]</th>
+                                    <th class="text-center" style="width:40px;"></th>
+                                    <th>@_localizer["Canonical Status"]</th>
+                                    <th>@_localizer["Description"]</th>
+                                    <th>@_localizer["Version"]</th>
+                                    <th class="text-center">@_localizer["Active"]</th>
+                                    <th class="text-center">@_localizer["Actions"]</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var mapping in Model.Mappings)
+                                {
+                                    var badgeClass = "badge-info";
+                                    if (successStatuses.Contains(mapping.CanonicalStatus))
+                                    {
+                                        badgeClass = "badge-success";
+                                    }
+                                    else if (pendingStatuses.Contains(mapping.CanonicalStatus))
+                                    {
+                                        badgeClass = "badge-warning";
+                                    }
+                                    else if (failedStatuses.Contains(mapping.CanonicalStatus))
+                                    {
+                                        badgeClass = "badge-danger";
+                                    }
+
+                                    <tr>
+                                        <td><span class="badge badge-secondary">@mapping.PspName</span></td>
+                                        <td><code>@mapping.PspStatus</code></td>
+                                        <td class="text-center text-muted"><i class="@(Settings.Theme.IconPrefix) fa-arrow-right"></i></td>
+                                        <td><span class="badge @badgeClass">@mapping.CanonicalStatus</span></td>
+                                        <td>@(mapping.Description ?? "-")</td>
+                                        <td>@mapping.Version</td>
+                                        <td class="text-center">
+                                            @if (mapping.IsActive)
+                                            {
+                                                <span class="badge badge-success">@_localizer["Active"]</span>
+                                            }
+                                            else
+                                            {
+                                                <span class="badge badge-secondary">@_localizer["Inactive"]</span>
+                                            }
+                                        </td>
+                                        <td class="text-center">
+                                            <button class="btn btn-sm btn-outline-primary waves-effect waves-themed" title="@_localizer["Edit"]">
+                                                <i class="@(Settings.Theme.IconPrefix) fa-edit"></i>
+                                            </button>
+                                        </td>
+                                    </tr>
+                                }
+                                @if (!Model.Mappings.Any())
+                                {
+                                    <tr>
+                                        <td colspan="8" class="text-center text-muted py-4">
+                                            <i class="@(Settings.Theme.IconPrefix) fa-inbox fa-3x mb-3 d-block"></i>
+                                            @_localizer["No status mappings found."]
+                                            <div class="mt-2">
+                                                <a asp-page="/Config/StatusMappings/Create" class="btn btn-primary btn-sm">
+                                                    <i class="@(Settings.Theme.IconPrefix) fa-plus mr-1"></i>
+                                                    @_localizer["Add your first mapping"]
+                                                </a>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

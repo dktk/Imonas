@@ -1,0 +1,270 @@
+﻿@page
+@using Microsoft.AspNetCore.Mvc.Localization
+@model SmartAdmin.WebUI.Pages.Runs.CreateModel
+@inject IStringLocalizer<CreateModel> _localizer
+
+@{
+    ViewData["Title"] = "Start New Run";
+    ViewData["PageName"] = "runs_create";
+}
+
+@section HeadBlock {
+    <link rel="stylesheet" media="screen, print" href="~/css/fa-solid.css">
+}
+
+<div class="row mb-3">
+    <div class="col-12 d-flex justify-content-between align-items-center">
+        <div>
+            <h1 class="subheader-title">
+                <i class="subheader-icon @(Settings.Theme.IconPrefix) fa-rocket"></i> @_localizer["Start New Reconciliation Run"]
+            </h1>
+            <small class="text-muted">@_localizer["Configure and launch a new reconciliation process"]</small>
+        </div>
+        <a asp-page="Index" class="btn btn-secondary waves-effect waves-themed">
+            <i class="@(Settings.Theme.IconPrefix) fa-arrow-left mr-1"></i>
+            @_localizer["Back"]
+        </a>
+    </div>
+</div>
+
+<div class="alert alert-info border-0 mb-4">
+    <i class="@(Settings.Theme.IconPrefix) fa-info-circle mr-2"></i>
+    @_localizer["Configure your reconciliation parameters below and click 'Start Run' to begin the matching process. The run will process transactions according to your configured matching rules."]
+</div>
+
+<form method="post" class="needs-validation" novalidate>
+    @Html.AntiForgeryToken()
+
+    <div class="row">
+        <div class="col-xl-12">
+            <div id="panel-config" class="panel">
+                <div class="panel-hdr">
+                    <h2>
+                        <i class="@(Settings.Theme.IconPrefix) fa-cog mr-2"></i>
+                        @_localizer["Run Configuration"]
+                    </h2>
+                </div>
+                <div class="panel-container show">
+                    <div class="panel-content">
+                        <div class="form-row">
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label" asp-for="Input.RunName">@_localizer["Run Name"] <span class="text-danger">*</span></label>
+                                <input asp-for="Input.RunName" class="form-control" placeholder="@_localizer["e.g., Daily Recon - 2026-01-20"]" />
+                                <span asp-validation-for="Input.RunName" class="invalid-feedback"></span>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label" asp-for="Input.RulePackVersion">@_localizer["Rule Pack Version"] <span class="text-danger">*</span></label>
+                                <select asp-for="Input.RulePackVersion" class="form-control select2">
+                                    <option value="1.0.0">v1.0.0 (@_localizer["Current"])</option>
+                                    <option value="1.1.0">v1.1.0 (@_localizer["Beta"])</option>
+                                </select>
+                                <span asp-validation-for="Input.RulePackVersion" class="invalid-feedback"></span>
+                            </div>
+                        </div>
+
+                        <div class="form-row">
+                            <div class="col-12 mb-3">
+                                <label class="form-label" asp-for="Input.Description">@_localizer["Description"] (@_localizer["Optional"])</label>
+                                <textarea asp-for="Input.Description" class="form-control" rows="3" placeholder="@_localizer["Describe the purpose of this run..."]"></textarea>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-xl-6">
+            <div id="panel-datasource" class="panel">
+                <div class="panel-hdr">
+                    <h2>
+                        <i class="@(Settings.Theme.IconPrefix) fa-database mr-2"></i>
+                        @_localizer["Data Source Selection"]
+                    </h2>
+                </div>
+                <div class="panel-container show">
+                    <div class="panel-content">
+                        <div class="custom-control custom-checkbox mb-3">
+                            <input type="checkbox" asp-for="Input.IncludeInternalTransactions" class="custom-control-input" id="chkInternal">
+                            <label class="custom-control-label" for="chkInternal">@_localizer["Include Internal Transactions"]</label>
+                        </div>
+                        <div class="custom-control custom-checkbox mb-3">
+                            <input type="checkbox" asp-for="Input.IncludePspTransactions" class="custom-control-input" id="chkPsp">
+                            <label class="custom-control-label" for="chkPsp">@_localizer["Include PSP Transactions"]</label>
+                        </div>
+                        <div class="custom-control custom-checkbox mb-3">
+                            <input type="checkbox" asp-for="Input.IncludeBankTransactions" class="custom-control-input" id="chkBank">
+                            <label class="custom-control-label" for="chkBank">@_localizer["Include Bank Transactions"]</label>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xl-6">
+            <div id="panel-daterange" class="panel">
+                <div class="panel-hdr">
+                    <h2>
+                        <i class="@(Settings.Theme.IconPrefix) fa-calendar-alt mr-2"></i>
+                        @_localizer["Date Range"]
+                    </h2>
+                </div>
+                <div class="panel-container show">
+                    <div class="panel-content">
+                        <div class="form-row">
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label" asp-for="Input.StartDate">@_localizer["Start Date"]</label>
+                                <input type="date" asp-for="Input.StartDate" class="form-control" />
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label" asp-for="Input.EndDate">@_localizer["End Date"]</label>
+                                <input type="date" asp-for="Input.EndDate" class="form-control" />
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-xl-12">
+            <div id="panel-advanced" class="panel">
+                <div class="panel-hdr">
+                    <h2>
+                        <i class="@(Settings.Theme.IconPrefix) fa-sliders-h mr-2"></i>
+                        @_localizer["Advanced Options"]
+                    </h2>
+                </div>
+                <div class="panel-container show">
+                    <div class="panel-content">
+                        <div class="row">
+                            <div class="col-md-4">
+                                <div class="custom-control custom-checkbox mb-3">
+                                    <input type="checkbox" asp-for="Input.StopAtFirstMatch" class="custom-control-input" id="chkStopFirst">
+                                    <label class="custom-control-label" for="chkStopFirst">@_localizer["Stop at First Match"]</label>
+                                    <small class="form-text text-muted">@_localizer["Faster but less comprehensive"]</small>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="custom-control custom-checkbox mb-3">
+                                    <input type="checkbox" asp-for="Input.GenerateEvidencePack" class="custom-control-input" id="chkEvidence">
+                                    <label class="custom-control-label" for="chkEvidence">@_localizer["Generate Evidence Pack"]</label>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="custom-control custom-checkbox mb-3">
+                                    <input type="checkbox" asp-for="Input.CreateCasesForExceptions" class="custom-control-input" id="chkCases">
+                                    <label class="custom-control-label" for="chkCases">@_localizer["Auto-create Cases for Exceptions"]</label>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Pre-Run Checklist -->
+    <div class="row">
+        <div class="col-xl-12">
+            <div id="panel-checklist" class="panel">
+                <div class="panel-hdr">
+                    <h2>
+                        <i class="@(Settings.Theme.IconPrefix) fa-clipboard-check mr-2"></i>
+                        @_localizer["Pre-Run Checklist"]
+                    </h2>
+                </div>
+                <div class="panel-container show">
+                    <div class="panel-content">
+                        <div class="row">
+                            <div class="col-md-4">
+                                <div class="d-flex align-items-center mb-2">
+                                    <i class="@(Settings.Theme.IconPrefix) fa-check-circle text-success mr-2"></i>
+                                    <span>@_localizer["Matching rules configured"]</span>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="d-flex align-items-center mb-2">
+                                    <i class="@(Settings.Theme.IconPrefix) fa-check-circle text-success mr-2"></i>
+                                    <span>@_localizer["Field mappings defined"]</span>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="d-flex align-items-center mb-2">
+                                    <i class="@(Settings.Theme.IconPrefix) fa-check-circle text-success mr-2"></i>
+                                    <span>@_localizer["Status mappings configured"]</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-4">
+                                <div class="d-flex align-items-center mb-2">
+                                    <i class="@(Settings.Theme.IconPrefix) fa-info-circle text-info mr-2"></i>
+                                    <span>@_localizer["Data files uploaded (optional)"]</span>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="d-flex align-items-center mb-2">
+                                    <i class="@(Settings.Theme.IconPrefix) fa-info-circle text-info mr-2"></i>
+                                    <span>@_localizer["Notification settings (optional)"]</span>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="d-flex align-items-center mb-2">
+                                    <i class="@(Settings.Theme.IconPrefix) fa-info-circle text-info mr-2"></i>
+                                    <span>@_localizer["Fee contracts defined (optional)"]</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    @if (!string.IsNullOrEmpty(Model.ErrorMessage))
+    {
+        <div class="alert alert-danger">
+            <i class="@(Settings.Theme.IconPrefix) fa-exclamation-triangle mr-2"></i>
+            @Model.ErrorMessage
+        </div>
+    }
+
+    <div class="row">
+        <div class="col-12">
+            <div class="btn-group float-right" role="group">
+                <button type="submit" class="btn btn-primary btn-lg waves-effect waves-themed">
+                    <i class="@(Settings.Theme.IconPrefix) fa-rocket mr-1"></i>
+                    @_localizer["Start Run"]
+                </button>
+                <a asp-page="Index" class="btn btn-secondary waves-effect waves-themed">
+                    <i class="@(Settings.Theme.IconPrefix) fa-times mr-1"></i>
+                    @_localizer["Cancel"]
+                </a>
+            </div>
+        </div>
+    </div>
+</form>
+
+@section ScriptsBlock {
+    <partial name="_ValidationScriptsPartial" />
+    <script>
+        $(function () {
+            'use strict';
+
+            // Form validation
+            var forms = document.querySelectorAll('.needs-validation');
+            Array.prototype.slice.call(forms).forEach(function (form) {
+                form.addEventListener('submit', function (event) {
+                    if (!form.checkValidity()) {
+                        event.preventDefault();
+                        event.stopPropagation();
+                    }
+                    form.classList.add('was-validated');
+                }, false);
+            });
+        });
+    </script>
+}

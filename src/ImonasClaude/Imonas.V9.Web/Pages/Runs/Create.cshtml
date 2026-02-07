@@ -1,0 +1,125 @@
+@page
+@model Imonas.V9.Web.Pages.Runs.CreateModel
+@{
+    ViewData["Title"] = "Start New Run";
+}
+
+<div class="page-title">Start New Reconciliation Run</div>
+<div class="page-subtitle">Configure and launch a new reconciliation process</div>
+
+<div class="card">
+    <div class="card-header">Run Configuration</div>
+    <div class="card-body">
+        <form method="post">
+            <div class="grid grid-2 gap-3">
+                <div class="form-group">
+                    <label asp-for="Input.RunName">Run Name</label>
+                    <input asp-for="Input.RunName" class="form-control" placeholder="e.g., Daily Recon - 2026-01-12" />
+                    <span asp-validation-for="Input.RunName" class="text-danger"></span>
+                </div>
+
+                <div class="form-group">
+                    <label asp-for="Input.RulePackVersion">Rule Pack Version</label>
+                    <select asp-for="Input.RulePackVersion" class="form-control">
+                        <option value="1.0.0">v1.0.0 (Current)</option>
+                        <option value="1.1.0">v1.1.0 (Beta)</option>
+                    </select>
+                    <span asp-validation-for="Input.RulePackVersion" class="text-danger"></span>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label asp-for="Input.Description">Description (Optional)</label>
+                <textarea asp-for="Input.Description" class="form-control" rows="3" placeholder="Describe the purpose of this run..."></textarea>
+            </div>
+
+            <div class="card mt-3" style="background-color: var(--bg-tertiary);">
+                <div class="card-body">
+                    <h4 style="margin-bottom: 1rem; font-size: 1.1rem;">Data Source Selection</h4>
+
+                    <div class="form-group">
+                        <label>
+                            <input type="checkbox" asp-for="Input.IncludeInternalTransactions" style="margin-right: 0.5rem;" />
+                            Include Internal Transactions
+                        </label>
+                    </div>
+
+                    <div class="form-group">
+                        <label>
+                            <input type="checkbox" asp-for="Input.IncludePspTransactions" style="margin-right: 0.5rem;" />
+                            Include PSP Transactions
+                        </label>
+                    </div>
+
+                    <div class="form-group">
+                        <label>
+                            <input type="checkbox" asp-for="Input.IncludeBankTransactions" style="margin-right: 0.5rem;" />
+                            Include Bank Transactions
+                        </label>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card mt-3" style="background-color: var(--bg-tertiary);">
+                <div class="card-body">
+                    <h4 style="margin-bottom: 1rem; font-size: 1.1rem;">Date Range</h4>
+
+                    <div class="grid grid-2 gap-3">
+                        <div class="form-group">
+                            <label asp-for="Input.StartDate">Start Date</label>
+                            <input asp-for="Input.StartDate" type="date" class="form-control" />
+                        </div>
+
+                        <div class="form-group">
+                            <label asp-for="Input.EndDate">End Date</label>
+                            <input asp-for="Input.EndDate" type="date" class="form-control" />
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card mt-3" style="background-color: var(--bg-tertiary);">
+                <div class="card-body">
+                    <h4 style="margin-bottom: 1rem; font-size: 1.1rem;">Advanced Options</h4>
+
+                    <div class="form-group">
+                        <label>
+                            <input type="checkbox" asp-for="Input.StopAtFirstMatch" style="margin-right: 0.5rem;" />
+                            Stop at First Match (faster but less comprehensive)
+                        </label>
+                    </div>
+
+                    <div class="form-group">
+                        <label>
+                            <input type="checkbox" asp-for="Input.GenerateEvidencePack" style="margin-right: 0.5rem;" checked />
+                            Generate Evidence Pack
+                        </label>
+                    </div>
+
+                    <div class="form-group">
+                        <label>
+                            <input type="checkbox" asp-for="Input.CreateCasesForExceptions" style="margin-right: 0.5rem;" checked />
+                            Auto-create Cases for Exceptions
+                        </label>
+                    </div>
+                </div>
+            </div>
+
+            @if (!string.IsNullOrEmpty(Model.ErrorMessage))
+            {
+                <div class="alert alert-danger mt-3">
+                    @Model.ErrorMessage
+                </div>
+            }
+
+            <div class="flex gap-2 mt-4">
+                <button type="submit" class="btn btn-primary">🚀 Start Run</button>
+                <a asp-page="Index" class="btn btn-secondary">Cancel</a>
+            </div>
+        </form>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

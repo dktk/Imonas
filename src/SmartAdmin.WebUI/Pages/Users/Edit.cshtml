@@ -1,0 +1,245 @@
+@page "{id}"
+@using Microsoft.AspNetCore.Mvc.Localization
+@model SmartAdmin.WebUI.Pages.Users.EditModel
+@inject IStringLocalizer<EditModel> _localizer
+
+@{
+    ViewData["Title"] = "Edit User";
+    ViewData["PageName"] = "users_edit";
+}
+
+@section HeadBlock {
+    <link rel="stylesheet" media="screen, print" href="~/css/fa-solid.css">
+}
+
+<div class="row mb-3">
+    <div class="col-12 d-flex justify-content-between align-items-center">
+        <div>
+            <h1 class="subheader-title">
+                <i class="subheader-icon @(Settings.Theme.IconPrefix) fa-user-edit"></i> @_localizer["Edit User"]
+            </h1>
+            <small class="text-muted">@Model.UserDetails?.Email</small>
+        </div>
+        <div>
+            <a asp-page="Index" class="btn btn-secondary waves-effect waves-themed">
+                <i class="@(Settings.Theme.IconPrefix) fa-arrow-left mr-1"></i>
+                @_localizer["Back to Users"]
+            </a>
+        </div>
+    </div>
+</div>
+
+@if (TempData["SuccessMessage"] != null)
+{
+    <div class="alert alert-success alert-dismissible fade show" role="alert">
+        <i class="@(Settings.Theme.IconPrefix) fa-check-circle mr-2"></i>
+        @TempData["SuccessMessage"]
+        <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+            <span aria-hidden="true">&times;</span>
+        </button>
+    </div>
+}
+
+@if (TempData["ErrorMessage"] != null || !string.IsNullOrEmpty(Model.ErrorMessage))
+{
+    <div class="alert alert-danger alert-dismissible fade show" role="alert">
+        <i class="@(Settings.Theme.IconPrefix) fa-exclamation-circle mr-2"></i>
+        @(TempData["ErrorMessage"] ?? Model.ErrorMessage)
+        <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+            <span aria-hidden="true">&times;</span>
+        </button>
+    </div>
+}
+
+<div class="row">
+    <div class="col-xl-8">
+        <div id="panel-edit" class="panel">
+            <div class="panel-hdr">
+                <h2>
+                    <i class="@(Settings.Theme.IconPrefix) fa-user mr-2"></i>
+                    @_localizer["User Information"]
+                </h2>
+            </div>
+            <div class="panel-container show">
+                <div class="panel-content">
+                    <form method="post">
+                        <input type="hidden" asp-for="Input.Id" />
+                        <div asp-validation-summary="ModelOnly" class="alert alert-danger" role="alert"></div>
+
+                        <div class="form-group row">
+                            <label class="col-md-3 col-form-label">@_localizer["Email"]</label>
+                            <div class="col-md-9">
+                                <input type="text" class="form-control-plaintext" readonly value="@Model.UserDetails?.Email" />
+                                <small class="text-muted">@_localizer["Email cannot be changed"]</small>
+                            </div>
+                        </div>
+
+                        <div class="form-group row">
+                            <label class="col-md-3 col-form-label">@_localizer["Username"]</label>
+                            <div class="col-md-9">
+                                <input type="text" class="form-control-plaintext" readonly value="@Model.UserDetails?.UserName" />
+                            </div>
+                        </div>
+
+                        <div class="form-group row">
+                            <label asp-for="Input.DisplayName" class="col-md-3 col-form-label">@_localizer["Display Name"]</label>
+                            <div class="col-md-9">
+                                <input asp-for="Input.DisplayName" class="form-control" placeholder="@_localizer["Enter display name"]" />
+                                <span asp-validation-for="Input.DisplayName" class="text-danger"></span>
+                            </div>
+                        </div>
+
+                        <hr class="my-4">
+
+                        <div class="form-group row">
+                            <label class="col-md-3 col-form-label">@_localizer["Roles"]</label>
+                            <div class="col-md-9">
+                                @foreach (var role in Model.AvailableRoles)
+                                {
+                                    var badgeClass = role.Name switch
+                                    {
+                                        "System Admin" => "badge-danger",
+                                        "Admin" => "badge-warning",
+                                        "Analyst" => "badge-info",
+                                        "Viewer" => "badge-secondary",
+                                        "Finance Admin" => "badge-success",
+                                        "Config Manager" => "badge-primary",
+                                        _ => "badge-light"
+                                    };
+                                    var isChecked = Model.Input.SelectedRoles.Contains(role.Name);
+                                    <div class="custom-control custom-checkbox mb-2">
+                                        <input type="checkbox" class="custom-control-input"
+                                               id="role_@role.Name.Replace(" ", "_")"
+                                               name="Input.SelectedRoles"
+                                               value="@role.Name"
+                                               @(isChecked ? "checked" : "") />
+                                        <label class="custom-control-label" for="role_@role.Name.Replace(" ", "_")">
+                                            <span class="badge @badgeClass">@role.Name</span>
+                                            @if (!string.IsNullOrEmpty(role.Description))
+                                            {
+                                                <small class="text-muted ml-2">@role.Description</small>
+                                            }
+                                        </label>
+                                    </div>
+                                }
+                            </div>
+                        </div>
+
+                        <hr class="my-4">
+
+                        <div class="form-group row">
+                            <div class="col-md-9 offset-md-3">
+                                <div class="custom-control custom-switch">
+                                    <input type="checkbox" class="custom-control-input" id="isActive" asp-for="Input.IsActive" />
+                                    <label class="custom-control-label" for="isActive">@_localizer["Account is Active"]</label>
+                                </div>
+                            </div>
+                        </div>
+
+                        <hr class="my-4">
+
+                        <div class="form-group row">
+                            <div class="col-md-9 offset-md-3">
+                                <button type="submit" class="btn btn-primary waves-effect waves-themed">
+                                    <i class="@(Settings.Theme.IconPrefix) fa-save mr-1"></i>
+                                    @_localizer["Save Changes"]
+                                </button>
+                                <a asp-page="Index" class="btn btn-secondary waves-effect waves-themed ml-2">
+                                    @_localizer["Cancel"]
+                                </a>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-xl-4">
+        <!-- User Info Card -->
+        <div class="panel">
+            <div class="panel-hdr">
+                <h2>
+                    <i class="@(Settings.Theme.IconPrefix) fa-info-circle mr-2"></i>
+                    @_localizer["Account Details"]
+                </h2>
+            </div>
+            <div class="panel-container show">
+                <div class="panel-content">
+                    <div class="d-flex align-items-center mb-3">
+                        <span class="profile-image profile-image-lg rounded-circle d-block" style="background-color: #886ab5; color: white; display: flex !important; align-items: center; justify-content: center; width: 64px; height: 64px; font-size: 1.5rem; font-weight: 600;">
+                            @(string.IsNullOrEmpty(Model.UserDetails?.DisplayName) ? "?" : Model.UserDetails.DisplayName.Substring(0, 1).ToUpper())
+                        </span>
+                        <div class="ml-3">
+                            <h5 class="mb-0">@Model.UserDetails?.DisplayName</h5>
+                            <small class="text-muted">@Model.UserDetails?.Email</small>
+                        </div>
+                    </div>
+
+                    <hr>
+
+                    <div class="row">
+                        <div class="col-6">
+                            <small class="text-muted d-block">@_localizer["Status"]</small>
+                            @if (Model.UserDetails?.IsActive == true)
+                            {
+                                <span class="badge badge-success">@_localizer["Active"]</span>
+                            }
+                            else
+                            {
+                                <span class="badge badge-secondary">@_localizer["Inactive"]</span>
+                            }
+                        </div>
+                        <div class="col-6">
+                            <small class="text-muted d-block">@_localizer["Email Verified"]</small>
+                            @if (Model.UserDetails?.EmailConfirmed == true)
+                            {
+                                <i class="@(Settings.Theme.IconPrefix) fa-check-circle text-success"></i>
+                                <span class="text-success">@_localizer["Yes"]</span>
+                            }
+                            else
+                            {
+                                <i class="@(Settings.Theme.IconPrefix) fa-times-circle text-danger"></i>
+                                <span class="text-danger">@_localizer["No"]</span>
+                            }
+                        </div>
+                    </div>
+
+                    @if (Model.UserDetails?.LockoutEnd != null && Model.UserDetails.LockoutEnd > DateTimeOffset.Now)
+                    {
+                        <div class="alert alert-warning mt-3 mb-0">
+                            <i class="@(Settings.Theme.IconPrefix) fa-lock mr-1"></i>
+                            @_localizer["Account locked until"] @Model.UserDetails.LockoutEnd.Value.LocalDateTime.ToString("g")
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+
+        <!-- Password Reset -->
+        <div class="panel">
+            <div class="panel-hdr">
+                <h2>
+                    <i class="@(Settings.Theme.IconPrefix) fa-key mr-2"></i>
+                    @_localizer["Password Management"]
+                </h2>
+            </div>
+            <div class="panel-container show">
+                <div class="panel-content">
+                    <p class="text-muted">@_localizer["Reset the user's password to a temporary value."]</p>
+                    <form method="post" asp-page-handler="ResetPassword" asp-route-userId="@Model.Input.Id">
+                        <button type="submit" class="btn btn-warning waves-effect waves-themed"
+                                onclick="return confirm('@_localizer["Are you sure you want to reset this user\\'s password?"]')">
+                            <i class="@(Settings.Theme.IconPrefix) fa-sync-alt mr-1"></i>
+                            @_localizer["Reset Password"]
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section ScriptsBlock {
+    <partial name="_ValidationScriptsPartial" />
+}

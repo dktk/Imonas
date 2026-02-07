@@ -1,0 +1,184 @@
+﻿@page
+@using Microsoft.AspNetCore.Mvc.Localization
+@model SmartAdmin.WebUI.Pages.Config.IndexModel
+@inject IStringLocalizer<IndexModel> _localizer
+@inject SmartSettings Settings
+
+@{
+    ViewData["Title"] = "Configuration";
+    ViewData["PageName"] = "config_index";
+}
+
+@section HeadBlock {
+    <link rel="stylesheet" media="screen, print" href="~/css/fa-solid.css">
+}
+
+<div class="row mb-3">
+    <div class="col-12">
+        <h1 class="subheader-title">
+            <i class="subheader-icon @(Settings.Theme.IconPrefix) fa-cogs"></i> @_localizer["Configuration"]
+        </h1>
+        <small class="text-muted">@_localizer["Manage system configuration and mappings"]</small>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-lg-4 col-md-6">
+        <div class="card mb-g">
+            <div class="card-body">
+                <div class="d-flex align-items-center">
+                    <div class="icon-stack display-3 flex-shrink-0 mr-3">
+                        <i class="@(Settings.Theme.IconPrefix) fa-exchange-alt text-primary"></i>
+                    </div>
+                    <div>
+                        <h5 class="mb-1">@_localizer["Status Mappings"]</h5>
+                        <p class="text-muted mb-0">@_localizer["Map PSP statuses to canonical statuses"]</p>
+                    </div>
+                </div>
+                <a asp-page="StatusMappings" class="btn btn-outline-primary btn-block mt-3 waves-effect waves-themed">
+                    <i class="@(Settings.Theme.IconPrefix) fa-arrow-right mr-1"></i>
+                    @_localizer["Manage"]
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-4 col-md-6">
+        <div class="card mb-g">
+            <div class="card-body">
+                <div class="d-flex align-items-center">
+                    <div class="icon-stack display-3 flex-shrink-0 mr-3">
+                        <i class="@(Settings.Theme.IconPrefix) fa-columns text-success"></i>
+                    </div>
+                    <div>
+                        <h5 class="mb-1">@_localizer["Field Mappings"]</h5>
+                        <p class="text-muted mb-0">@_localizer["Configure field transformations"]</p>
+                    </div>
+                </div>
+                <a asp-page="FieldMappings" class="btn btn-outline-success btn-block mt-3 waves-effect waves-themed">
+                    <i class="@(Settings.Theme.IconPrefix) fa-arrow-right mr-1"></i>
+                    @_localizer["Manage"]
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-4 col-md-6">
+        <div class="card mb-g">
+            <div class="card-body">
+                <div class="d-flex align-items-center">
+                    <div class="icon-stack display-3 flex-shrink-0 mr-3">
+                        <i class="@(Settings.Theme.IconPrefix) fa-building-columns text-info"></i>
+                    </div>
+                    <div>
+                        <h5 class="mb-1">@_localizer["PSP Profiles"]</h5>
+                        <p class="text-muted mb-0">@_localizer["Payment service provider settings"]</p>
+                    </div>
+                </div>
+                <a href="/psps/admin" class="btn btn-outline-info btn-block mt-3 waves-effect waves-themed">
+                    <i class="@(Settings.Theme.IconPrefix) fa-arrow-right mr-1"></i>
+                    @_localizer["Manage"]
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-4 col-md-6">
+        <div class="card mb-g">
+            <div class="card-body">
+                <div class="d-flex align-items-center">
+                    <div class="icon-stack display-3 flex-shrink-0 mr-3">
+                        <i class="@(Settings.Theme.IconPrefix) fa-bell text-warning"></i>
+                    </div>
+                    <div>
+                        <h5 class="mb-1">@_localizer["Notifications"]</h5>
+                        <p class="text-muted mb-0">@_localizer["Configure alerts and notification channels"]</p>
+                    </div>
+                </div>
+                <a asp-page="Notifications" class="btn btn-outline-warning btn-block mt-3 waves-effect waves-themed">
+                    <i class="@(Settings.Theme.IconPrefix) fa-arrow-right mr-1"></i>
+                    @_localizer["Manage"]
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-4 col-md-6">
+        <div class="card mb-g">
+            <div class="card-body">
+                <div class="d-flex align-items-center">
+                    <div class="icon-stack display-3 flex-shrink-0 mr-3">
+                        <i class="@(Settings.Theme.IconPrefix) fa-coins text-danger"></i>
+                    </div>
+                    <div>
+                        <h5 class="mb-1">@_localizer["Currencies"]</h5>
+                        <p class="text-muted mb-0">@_localizer["Manage currency codes and symbols"]</p>
+                    </div>
+                </div>
+                <a asp-page="Currencies" class="btn btn-outline-danger btn-block mt-3 waves-effect waves-themed">
+                    <i class="@(Settings.Theme.IconPrefix) fa-arrow-right mr-1"></i>
+                    @_localizer["Manage"]
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-4 col-md-6">
+        <div class="card mb-g">
+            <div class="card-body">
+                <div class="d-flex align-items-center">
+                    <div class="icon-stack display-3 flex-shrink-0 mr-3">
+                        <i class="@(Settings.Theme.IconPrefix) fa-server text-secondary"></i>
+                    </div>
+                    <div>
+                        <h5 class="mb-1">@_localizer["Internal Systems"]</h5>
+                        <p class="text-muted mb-0">@_localizer["Manage internal systems for PSPs"]</p>
+                    </div>
+                </div>
+                <a asp-page="InternalSystems" class="btn btn-outline-secondary btn-block mt-3 waves-effect waves-themed">
+                    <i class="@(Settings.Theme.IconPrefix) fa-arrow-right mr-1"></i>
+                    @_localizer["Manage"]
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row mt-3">
+    <div class="col-xl-12">
+        <div id="panel-system" class="panel">
+            <div class="panel-hdr">
+                <h2>
+                    <i class="@(Settings.Theme.IconPrefix) fa-server mr-2"></i>
+                    @_localizer["System Status"]
+                </h2>
+            </div>
+            <div class="panel-container show">
+                <div class="panel-content">
+                    <div class="row">
+                        <div class="col-md-4">
+                            <div class="p-3 bg-success-50 rounded text-center">
+                                <h4 class="text-muted mb-2">@_localizer["Application Status"]</h4>
+                                <span class="badge badge-success" style="font-size: 1rem;">
+                                    <i class="@(Settings.Theme.IconPrefix) fa-check-circle mr-1"></i>@_localizer["Running"]
+                                </span>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="p-3 bg-info-50 rounded text-center">
+                                <h4 class="text-muted mb-2">@_localizer["Uptime"]</h4>
+                                <span class="fw-500" style="font-size: 1.2rem;">@Model.Uptime</span>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="p-3 bg-primary-50 rounded text-center">
+                                <h4 class="text-muted mb-2">@_localizer["Version"]</h4>
+                                <span class="fw-500" style="font-size: 1.2rem;">@Settings.Version</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

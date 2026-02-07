@@ -1,0 +1,8 @@
+services:
+  # webui:
+  #   environment:
+  #     - "ASPNETCORE_ENVIRONMENT=Development"
+  rabbitmq:
+    environment:
+        RABBITMQ_DEFAULT_USER: admin
+        RABBITMQ_DEFAULT_PASS: P@ss123$

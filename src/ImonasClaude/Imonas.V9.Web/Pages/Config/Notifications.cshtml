@@ -1,0 +1,160 @@
+@page
+@model Imonas.V9.Web.Pages.Config.NotificationsModel
+@{
+    ViewData["Title"] = "Notification Settings";
+}
+
+<div class="page-title">Notification Settings</div>
+<div class="page-subtitle">Configure alerts and notification channels</div>
+
+<div class="grid grid-2">
+    <div>
+        <div class="card">
+            <div class="card-header">Email Notifications</div>
+            <div class="card-body">
+                <div class="form-group">
+                    <label>SMTP Server</label>
+                    <input type="text" class="form-control" placeholder="smtp.example.com" />
+                </div>
+                <div class="grid grid-2 gap-3">
+                    <div class="form-group">
+                        <label>Port</label>
+                        <input type="number" class="form-control" placeholder="587" />
+                    </div>
+                    <div class="form-group">
+                        <label>From Address</label>
+                        <input type="email" class="form-control" placeholder="noreply@imonas.com" />
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>
+                        <input type="checkbox" style="margin-right: 0.5rem;" />
+                        Enable SSL/TLS
+                    </label>
+                </div>
+                <button class="btn btn-primary">Test Connection</button>
+            </div>
+        </div>
+
+        <div class="card mt-3">
+            <div class="card-header">Slack Integration</div>
+            <div class="card-body">
+                <div class="form-group">
+                    <label>Webhook URL</label>
+                    <input type="text" class="form-control" placeholder="https://hooks.slack.com/services/..." />
+                </div>
+                <div class="form-group">
+                    <label>Default Channel</label>
+                    <input type="text" class="form-control" placeholder="#reconciliation-alerts" />
+                </div>
+                <button class="btn btn-primary">Test Integration</button>
+            </div>
+        </div>
+
+        <div class="card mt-3">
+            <div class="card-header">Microsoft Teams Integration</div>
+            <div class="card-body">
+                <div class="form-group">
+                    <label>Webhook URL</label>
+                    <input type="text" class="form-control" placeholder="https://outlook.office.com/webhook/..." />
+                </div>
+                <button class="btn btn-primary">Test Integration</button>
+            </div>
+        </div>
+    </div>
+
+    <div>
+        <div class="card">
+            <div class="card-header">Notification Rules</div>
+            <div class="card-body">
+                <div style="background-color: var(--bg-tertiary); border-radius: 8px; padding: 1rem; margin-bottom: 1rem;">
+                    <div class="flex-between" style="margin-bottom: 0.5rem;">
+                        <strong>Run Completion</strong>
+                        <label style="margin: 0;">
+                            <input type="checkbox" checked style="margin-right: 0.5rem;" />
+                            Enabled
+                        </label>
+                    </div>
+                    <div style="font-size: 0.875rem; color: var(--text-muted);">
+                        Notify when reconciliation run completes
+                    </div>
+                    <div style="margin-top: 0.75rem;">
+                        <span class="badge badge-info" style="margin-right: 0.5rem;">Email</span>
+                        <span class="badge badge-info">Slack</span>
+                    </div>
+                </div>
+
+                <div style="background-color: var(--bg-tertiary); border-radius: 8px; padding: 1rem; margin-bottom: 1rem;">
+                    <div class="flex-between" style="margin-bottom: 0.5rem;">
+                        <strong>Run Failure</strong>
+                        <label style="margin: 0;">
+                            <input type="checkbox" checked style="margin-right: 0.5rem;" />
+                            Enabled
+                        </label>
+                    </div>
+                    <div style="font-size: 0.875rem; color: var(--text-muted);">
+                        Notify when reconciliation run fails
+                    </div>
+                    <div style="margin-top: 0.75rem;">
+                        <span class="badge badge-info" style="margin-right: 0.5rem;">Email</span>
+                        <span class="badge badge-info" style="margin-right: 0.5rem;">Slack</span>
+                        <span class="badge badge-info">Teams</span>
+                    </div>
+                </div>
+
+                <div style="background-color: var(--bg-tertiary); border-radius: 8px; padding: 1rem; margin-bottom: 1rem;">
+                    <div class="flex-between" style="margin-bottom: 0.5rem;">
+                        <strong>Low Match Rate</strong>
+                        <label style="margin: 0;">
+                            <input type="checkbox" checked style="margin-right: 0.5rem;" />
+                            Enabled
+                        </label>
+                    </div>
+                    <div style="font-size: 0.875rem; color: var(--text-muted);">
+                        Notify when match rate falls below 80%
+                    </div>
+                    <div style="margin-top: 0.75rem;">
+                        <span class="badge badge-info">Email</span>
+                    </div>
+                </div>
+
+                <div style="background-color: var(--bg-tertiary); border-radius: 8px; padding: 1rem; margin-bottom: 1rem;">
+                    <div class="flex-between" style="margin-bottom: 0.5rem;">
+                        <strong>Case SLA Breach</strong>
+                        <label style="margin: 0;">
+                            <input type="checkbox" checked style="margin-right: 0.5rem;" />
+                            Enabled
+                        </label>
+                    </div>
+                    <div style="font-size: 0.875rem; color: var(--text-muted);">
+                        Notify when case exceeds SLA deadline
+                    </div>
+                    <div style="margin-top: 0.75rem;">
+                        <span class="badge badge-info" style="margin-right: 0.5rem;">Email</span>
+                        <span class="badge badge-info">Slack</span>
+                    </div>
+                </div>
+
+                <div style="background-color: var(--bg-tertiary); border-radius: 8px; padding: 1rem;">
+                    <div class="flex-between" style="margin-bottom: 0.5rem;">
+                        <strong>Critical Case Created</strong>
+                        <label style="margin: 0;">
+                            <input type="checkbox" checked style="margin-right: 0.5rem;" />
+                            Enabled
+                        </label>
+                    </div>
+                    <div style="font-size: 0.875rem; color: var(--text-muted);">
+                        Notify when critical severity case is created
+                    </div>
+                    <div style="margin-top: 0.75rem;">
+                        <span class="badge badge-info" style="margin-right: 0.5rem;">Email</span>
+                        <span class="badge badge-info" style="margin-right: 0.5rem;">Slack</span>
+                        <span class="badge badge-info">Teams</span>
+                    </div>
+                </div>
+
+                <button class="btn btn-primary mt-3" style="width: 100%;">➕ Add Notification Rule</button>
+            </div>
+        </div>
+    </div>
+</div>

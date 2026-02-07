@@ -1,0 +1,60 @@
+@page
+@model Imonas.V9.Web.Pages.Config.PspProfilesModel
+@{
+    ViewData["Title"] = "PSP Profiles";
+}
+
+<div class="flex-between mb-4">
+    <div>
+        <div class="page-title">PSP Profiles</div>
+        <div class="page-subtitle">Manage payment service provider configurations</div>
+    </div>
+    <div>
+        <button class="btn btn-primary">➕ Add PSP Profile</button>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-body">
+        <div class="table-container">
+            <table>
+                <thead>
+                    <tr>
+                        <th>PSP Name</th>
+                        <th>Code</th>
+                        <th>File Format</th>
+                        <th>Time Zone</th>
+                        <th>Currencies</th>
+                        <th>Status</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var profile in Model.Profiles)
+                    {
+                        <tr>
+                            <td><strong>@profile.PspName</strong></td>
+                            <td><span class="badge badge-secondary">@profile.PspCode</span></td>
+                            <td>@profile.FileFormat</td>
+                            <td>@profile.TimeZone</td>
+                            <td>@profile.SupportedCurrencies</td>
+                            <td>
+                                @if (profile.IsActive)
+                                {
+                                    <span class="badge badge-success">Active</span>
+                                }
+                                else
+                                {
+                                    <span class="badge badge-secondary">Inactive</span>
+                                }
+                            </td>
+                            <td>
+                                <button class="btn btn-secondary" style="padding: 0.5rem 1rem;">Edit</button>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>

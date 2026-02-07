@@ -1,0 +1,273 @@
+@page "{id:guid}"
+@model Imonas.V9.Web.Pages.Config.FeeContracts.EditModel
+@{
+    ViewData["Title"] = "Edit Fee Contract";
+}
+
+@if (Model.Contract == null)
+{
+    <div class="alert alert-danger">Contract not found.</div>
+    <a asp-page="/Config/FeeContracts" class="btn btn-secondary">Back to Contracts</a>
+}
+else if (Model.Contract.Status != "Draft")
+{
+    <div class="alert alert-warning">Only contracts in Draft status can be edited.</div>
+    <a asp-page="Details" asp-route-id="@Model.Contract.Id" class="btn btn-secondary">Back to Details</a>
+}
+else
+{
+    <div class="flex-between mb-4">
+        <div>
+            <div class="page-title">Edit Fee Contract</div>
+            <div class="page-subtitle">@Model.Contract.ContractName - Version @Model.Contract.Version</div>
+        </div>
+        <a asp-page="Details" asp-route-id="@Model.Contract.Id" class="btn btn-secondary">Cancel</a>
+    </div>
+
+    @if (!string.IsNullOrEmpty((string?)TempData["ErrorMessage"]))
+    {
+        <div class="alert alert-danger">
+            @TempData["ErrorMessage"]
+        </div>
+    }
+
+    <form method="post">
+        <input type="hidden" asp-for="Input.Id" />
+
+        <div class="grid grid-2">
+            <div>
+                <div class="card">
+                    <div class="card-header">Contract Information</div>
+                    <div class="card-body">
+                        <div class="form-group">
+                            <label asp-for="Input.ContractName"></label>
+                            <input asp-for="Input.ContractName" class="form-control" required />
+                            <span asp-validation-for="Input.ContractName" class="text-danger"></span>
+                        </div>
+
+                        <div class="form-group">
+                            <label asp-for="Input.PaymentMethod"></label>
+                            <select asp-for="Input.PaymentMethod" class="form-control" required>
+                                <option value="">-- Select Payment Method --</option>
+                                <option value="Card">Card</option>
+                                <option value="Bank Transfer">Bank Transfer</option>
+                                <option value="Wallet">Wallet</option>
+                                <option value="DirectDebit">Direct Debit</option>
+                            </select>
+                            <span asp-validation-for="Input.PaymentMethod" class="text-danger"></span>
+                        </div>
+
+                        <div class="form-group">
+                            <label asp-for="Input.Brand"></label>
+                            <input asp-for="Input.Brand" class="form-control" placeholder="e.g., Visa, Mastercard, Amex" />
+                            <span asp-validation-for="Input.Brand" class="text-danger"></span>
+                        </div>
+
+                        <div class="form-group">
+                            <label asp-for="Input.Currency"></label>
+                            <select asp-for="Input.Currency" class="form-control" required>
+                                <option value="">-- Select Currency --</option>
+                                <option value="USD">USD</option>
+                                <option value="EUR">EUR</option>
+                                <option value="GBP">GBP</option>
+                                <option value="AUD">AUD</option>
+                                <option value="CAD">CAD</option>
+                            </select>
+                            <span asp-validation-for="Input.Currency" class="text-danger"></span>
+                        </div>
+
+                        <div class="grid grid-2">
+                            <div class="form-group">
+                                <label asp-for="Input.EffectiveFrom"></label>
+                                <input asp-for="Input.EffectiveFrom" type="date" class="form-control" required />
+                                <span asp-validation-for="Input.EffectiveFrom" class="text-danger"></span>
+                            </div>
+
+                            <div class="form-group">
+                                <label asp-for="Input.EffectiveTo"></label>
+                                <input asp-for="Input.EffectiveTo" type="date" class="form-control" />
+                                <span asp-validation-for="Input.EffectiveTo" class="text-danger"></span>
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <label asp-for="Input.Version"></label>
+                            <input asp-for="Input.Version" class="form-control" required />
+                            <small class="form-text">Use semantic versioning (e.g., 1.0.0)</small>
+                            <span asp-validation-for="Input.Version" class="text-danger"></span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div>
+                <div class="card">
+                    <div class="card-header">Fee Structure</div>
+                    <div class="card-body">
+                        <div class="form-group">
+                            <label asp-for="Input.FeeStructure"></label>
+                            <select asp-for="Input.FeeStructure" id="feeStructureSelect" class="form-control" required>
+                                <option value="">-- Select Fee Structure --</option>
+                                <option value="fixed">Fixed Fee</option>
+                                <option value="percentage">Percentage Fee</option>
+                                <option value="hybrid">Hybrid (Fixed + Percentage)</option>
+                                <option value="tiered">Tiered Structure</option>
+                            </select>
+                            <span asp-validation-for="Input.FeeStructure" class="text-danger"></span>
+                        </div>
+
+                        <div class="form-group" id="fixedFeeField" style="display: none;">
+                            <label asp-for="Input.FixedFee"></label>
+                            <input asp-for="Input.FixedFee" type="number" step="0.01" class="form-control" />
+                            <span asp-validation-for="Input.FixedFee" class="text-danger"></span>
+                        </div>
+
+                        <div class="form-group" id="percentageFeeField" style="display: none;">
+                            <label asp-for="Input.PercentageFee"></label>
+                            <input asp-for="Input.PercentageFee" type="number" step="0.0001" class="form-control" placeholder="e.g., 0.029 for 2.9%" />
+                            <small class="form-text">Enter as decimal (e.g., 0.029 for 2.9%)</small>
+                            <span asp-validation-for="Input.PercentageFee" class="text-danger"></span>
+                        </div>
+
+                        <div class="form-group" id="tieredStructureField" style="display: none;">
+                            <label asp-for="Input.TieredStructure"></label>
+                            <textarea asp-for="Input.TieredStructure" class="form-control" rows="6" placeholder='{"tiers": [{"min": 0, "max": 1000, "fee": 0.029}, {"min": 1000, "max": 10000, "fee": 0.025}]}'></textarea>
+                            <small class="form-text">Enter as JSON structure</small>
+                            <span asp-validation-for="Input.TieredStructure" class="text-danger"></span>
+                        </div>
+
+                        <div class="grid grid-2 mt-3">
+                            <div class="form-group">
+                                <label asp-for="Input.MinimumFee"></label>
+                                <input asp-for="Input.MinimumFee" type="number" step="0.01" class="form-control" />
+                                <small class="form-text">Optional floor</small>
+                                <span asp-validation-for="Input.MinimumFee" class="text-danger"></span>
+                            </div>
+
+                            <div class="form-group">
+                                <label asp-for="Input.MaximumFee"></label>
+                                <input asp-for="Input.MaximumFee" type="number" step="0.01" class="form-control" />
+                                <small class="form-text">Optional ceiling</small>
+                                <span asp-validation-for="Input.MaximumFee" class="text-danger"></span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card mt-3" id="previewCard" style="display: none;">
+                    <div class="card-header">Fee Preview</div>
+                    <div class="card-body">
+                        <div class="grid grid-3">
+                            <div style="text-align: center; padding: 1rem; background-color: var(--bg-tertiary); border-radius: 8px;">
+                                <div style="font-size: 0.875rem; color: var(--text-muted); margin-bottom: 0.5rem;">$100</div>
+                                <div style="font-size: 1.25rem; font-weight: 600; color: var(--accent-primary);" id="preview100">-</div>
+                            </div>
+                            <div style="text-align: center; padding: 1rem; background-color: var(--bg-tertiary); border-radius: 8px;">
+                                <div style="font-size: 0.875rem; color: var(--text-muted); margin-bottom: 0.5rem;">$1,000</div>
+                                <div style="font-size: 1.25rem; font-weight: 600; color: var(--accent-primary);" id="preview1000">-</div>
+                            </div>
+                            <div style="text-align: center; padding: 1rem; background-color: var(--bg-tertiary); border-radius: 8px;">
+                                <div style="font-size: 0.875rem; color: var(--text-muted); margin-bottom: 0.5rem;">$10,000</div>
+                                <div style="font-size: 1.25rem; font-weight: 600; color: var(--accent-primary);" id="preview10000">-</div>
+                            </div>
+                        </div>
+                        <button type="button" class="btn btn-secondary mt-3" style="width: 100%;" onclick="updatePreview()">Refresh Preview</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="flex gap-2 mt-4">
+            <button type="submit" name="action" value="save" class="btn btn-primary">Save Changes</button>
+            <button type="submit" name="action" value="submit" class="btn btn-success">Save & Submit for Approval</button>
+            <a asp-page="Details" asp-route-id="@Model.Contract.Id" class="btn btn-secondary">Cancel</a>
+        </div>
+    </form>
+}
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+    <script>
+        const feeStructureSelect = document.getElementById('feeStructureSelect');
+        const fixedFeeField = document.getElementById('fixedFeeField');
+        const percentageFeeField = document.getElementById('percentageFeeField');
+        const tieredStructureField = document.getElementById('tieredStructureField');
+        const previewCard = document.getElementById('previewCard');
+
+        feeStructureSelect.addEventListener('change', updateFieldVisibility);
+
+        function updateFieldVisibility() {
+            // Hide all fields first
+            fixedFeeField.style.display = 'none';
+            percentageFeeField.style.display = 'none';
+            tieredStructureField.style.display = 'none';
+
+            const feeStructure = feeStructureSelect.value;
+
+            switch(feeStructure) {
+                case 'fixed':
+                    fixedFeeField.style.display = 'block';
+                    previewCard.style.display = 'block';
+                    break;
+                case 'percentage':
+                    percentageFeeField.style.display = 'block';
+                    previewCard.style.display = 'block';
+                    break;
+                case 'hybrid':
+                    fixedFeeField.style.display = 'block';
+                    percentageFeeField.style.display = 'block';
+                    previewCard.style.display = 'block';
+                    break;
+                case 'tiered':
+                    tieredStructureField.style.display = 'block';
+                    previewCard.style.display = 'block';
+                    break;
+                default:
+                    previewCard.style.display = 'none';
+            }
+        }
+
+        function calculateFee(amount) {
+            const feeStructure = feeStructureSelect.value;
+            const fixedFee = parseFloat(document.querySelector('[name="Input.FixedFee"]').value) || 0;
+            const percentageFee = parseFloat(document.querySelector('[name="Input.PercentageFee"]').value) || 0;
+            const minFee = parseFloat(document.querySelector('[name="Input.MinimumFee"]').value) || 0;
+            const maxFee = parseFloat(document.querySelector('[name="Input.MaximumFee"]').value) || null;
+
+            let fee = 0;
+
+            switch(feeStructure) {
+                case 'fixed':
+                    fee = fixedFee;
+                    break;
+                case 'percentage':
+                    fee = amount * percentageFee;
+                    break;
+                case 'hybrid':
+                    fee = fixedFee + (amount * percentageFee);
+                    break;
+                case 'tiered':
+                    fee = 0; // Complex tiered logic would go here
+                    break;
+            }
+
+            // Apply min/max constraints
+            if (minFee > 0 && fee < minFee) fee = minFee;
+            if (maxFee !== null && fee > maxFee) fee = maxFee;
+
+            return fee;
+        }
+
+        function updatePreview() {
+            document.getElementById('preview100').textContent = '$' + calculateFee(100).toFixed(2);
+            document.getElementById('preview1000').textContent = '$' + calculateFee(1000).toFixed(2);
+            document.getElementById('preview10000').textContent = '$' + calculateFee(10000).toFixed(2);
+        }
+
+        // Initialize on page load
+        updateFieldVisibility();
+        if (feeStructureSelect.value) {
+            updatePreview();
+        }
+    </script>
+}

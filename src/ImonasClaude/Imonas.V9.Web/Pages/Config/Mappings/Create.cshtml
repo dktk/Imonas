@@ -1,0 +1,179 @@
+@page
+@model Imonas.V9.Web.Pages.Config.Mappings.CreateModel
+@{
+    ViewData["Title"] = "Create Field Mapping";
+}
+
+<div class="flex-between mb-4">
+    <div>
+        <div class="page-title">Create Field Mapping</div>
+        <div class="page-subtitle">Define source-to-target field transformation</div>
+    </div>
+    <a asp-page="/Config/Mappings" class="btn btn-secondary">Back</a>
+</div>
+
+<div class="alert alert-info">
+    Field mappings transform PSP/bank file fields to the canonical schema. Use transform expressions for complex conversions like date formats, currency codes, or string manipulations.
+</div>
+
+<form method="post">
+    <div class="grid grid-2">
+        <div>
+            <div class="card">
+                <div class="card-header">Mapping Configuration</div>
+                <div class="card-body">
+                    <div class="form-group">
+                        <label asp-for="Input.PspProfileId"></label>
+                        <select asp-for="Input.PspProfileId" class="form-control" required>
+                            <option value="">-- Select PSP Profile --</option>
+                            @foreach (var profile in Model.PspProfiles)
+                            {
+                                <option value="@profile.Id">@profile.PspName (@profile.PspCode)</option>
+                            }
+                        </select>
+                        <span asp-validation-for="Input.PspProfileId" class="text-danger"></span>
+                    </div>
+
+                    <div class="form-group">
+                        <label asp-for="Input.SourceField"></label>
+                        <input asp-for="Input.SourceField" class="form-control" required placeholder="e.g., transaction_id, payment_date" />
+                        <small class="form-text">The field name as it appears in the source file</small>
+                        <span asp-validation-for="Input.SourceField" class="text-danger"></span>
+                    </div>
+
+                    <div class="form-group">
+                        <label asp-for="Input.TargetField"></label>
+                        <select asp-for="Input.TargetField" class="form-control" required>
+                            <option value="">-- Select Target Field --</option>
+                            <optgroup label="Transaction Identifiers">
+                                <option value="TransactionId">TransactionId</option>
+                                <option value="ExternalTransactionId">ExternalTransactionId</option>
+                                <option value="Reference">Reference</option>
+                                <option value="AuthCode">AuthCode</option>
+                            </optgroup>
+                            <optgroup label="Amounts & Currency">
+                                <option value="Amount">Amount</option>
+                                <option value="Currency">Currency</option>
+                                <option value="FeeAmount">FeeAmount</option>
+                                <option value="NetAmount">NetAmount</option>
+                            </optgroup>
+                            <optgroup label="Dates & Times">
+                                <option value="TransactionDate">TransactionDate</option>
+                                <option value="SettlementDate">SettlementDate</option>
+                                <option value="ProcessedDate">ProcessedDate</option>
+                            </optgroup>
+                            <optgroup label="Status & Type">
+                                <option value="Status">Status</option>
+                                <option value="PaymentMethod">PaymentMethod</option>
+                                <option value="TransactionType">TransactionType</option>
+                            </optgroup>
+                            <optgroup label="Customer & Merchant">
+                                <option value="CustomerId">CustomerId</option>
+                                <option value="CustomerEmail">CustomerEmail</option>
+                                <option value="MerchantId">MerchantId</option>
+                            </optgroup>
+                            <optgroup label="Other">
+                                <option value="Description">Description</option>
+                                <option value="Metadata">Metadata</option>
+                            </optgroup>
+                        </select>
+                        <small class="form-text">The canonical field in the Silver schema</small>
+                        <span asp-validation-for="Input.TargetField" class="text-danger"></span>
+                    </div>
+
+                    <div class="grid grid-2">
+                        <div class="form-group">
+                            <label asp-for="Input.Version"></label>
+                            <input asp-for="Input.Version" class="form-control" required placeholder="1.0.0" />
+                            <small class="form-text">Semantic versioning</small>
+                            <span asp-validation-for="Input.Version" class="text-danger"></span>
+                        </div>
+
+                        <div class="form-group">
+                            <label asp-for="Input.EffectiveFrom"></label>
+                            <input asp-for="Input.EffectiveFrom" type="date" class="form-control" required />
+                            <span asp-validation-for="Input.EffectiveFrom" class="text-danger"></span>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label asp-for="Input.EffectiveTo"></label>
+                        <input asp-for="Input.EffectiveTo" type="date" class="form-control" />
+                        <small class="form-text">Leave empty for no end date</small>
+                        <span asp-validation-for="Input.EffectiveTo" class="text-danger"></span>
+                    </div>
+
+                    <div class="form-group">
+                        <label style="display: flex; align-items: center; gap: 0.5rem;">
+                            <input asp-for="Input.IsActive" type="checkbox" />
+                            <span>Active</span>
+                        </label>
+                        <small class="form-text">Only active mappings are used during processing</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div>
+            <div class="card">
+                <div class="card-header">Transform Expression (Optional)</div>
+                <div class="card-body">
+                    <div class="form-group">
+                        <label asp-for="Input.TransformExpression"></label>
+                        <textarea asp-for="Input.TransformExpression" class="form-control" rows="8" placeholder="Leave empty for direct mapping"></textarea>
+                        <small class="form-text">C# expression or function name for complex transformations</small>
+                        <span asp-validation-for="Input.TransformExpression" class="text-danger"></span>
+                    </div>
+
+                    <div style="background-color: var(--bg-tertiary); border-radius: 8px; padding: 1.5rem;">
+                        <div style="font-weight: 600; margin-bottom: 1rem; color: var(--text-primary);">Transform Examples</div>
+
+                        <div style="margin-bottom: 1rem;">
+                            <div style="font-size: 0.875rem; color: var(--text-muted); margin-bottom: 0.25rem;">Date Format Conversion</div>
+                            <code style="display: block; background-color: var(--bg-primary); padding: 0.5rem; border-radius: 4px; font-size: 0.875rem;">
+                                DateTime.ParseExact(value, "dd/MM/yyyy", null)
+                            </code>
+                        </div>
+
+                        <div style="margin-bottom: 1rem;">
+                            <div style="font-size: 0.875rem; color: var(--text-muted); margin-bottom: 0.25rem;">Currency Code Mapping</div>
+                            <code style="display: block; background-color: var(--bg-primary); padding: 0.5rem; border-radius: 4px; font-size: 0.875rem;">
+                                value == "USD" ? "US Dollar" : value
+                            </code>
+                        </div>
+
+                        <div style="margin-bottom: 1rem;">
+                            <div style="font-size: 0.875rem; color: var(--text-muted); margin-bottom: 0.25rem;">String Manipulation</div>
+                            <code style="display: block; background-color: var(--bg-primary); padding: 0.5rem; border-radius: 4px; font-size: 0.875rem;">
+                                value.ToUpper().Trim()
+                            </code>
+                        </div>
+
+                        <div style="margin-bottom: 1rem;">
+                            <div style="font-size: 0.875rem; color: var(--text-muted); margin-bottom: 0.25rem;">Amount Conversion (cents to dollars)</div>
+                            <code style="display: block; background-color: var(--bg-primary); padding: 0.5rem; border-radius: 4px; font-size: 0.875rem;">
+                                decimal.Parse(value) / 100
+                            </code>
+                        </div>
+
+                        <div>
+                            <div style="font-size: 0.875rem; color: var(--text-muted); margin-bottom: 0.25rem;">Conditional Logic</div>
+                            <code style="display: block; background-color: var(--bg-primary); padding: 0.5rem; border-radius: 4px; font-size: 0.875rem;">
+                                value == "success" ? "Completed" : "Failed"
+                            </code>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="flex gap-2 mt-4">
+        <button type="submit" class="btn btn-primary">Create Mapping</button>
+        <a asp-page="/Config/Mappings" class="btn btn-secondary">Cancel</a>
+    </div>
+</form>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

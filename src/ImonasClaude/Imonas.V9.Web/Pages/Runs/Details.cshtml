@@ -1,0 +1,214 @@
+@page "{id:guid}"
+@model Imonas.V9.Web.Pages.Runs.DetailsModel
+@{
+    ViewData["Title"] = "Run Details";
+}
+
+@if (Model.Run == null)
+{
+    <div class="alert alert-danger">Run not found.</div>
+    <a asp-page="Index" class="btn btn-secondary">Back to Runs</a>
+}
+else
+{
+    <div class="flex-between mb-4">
+        <div>
+            <div class="page-title">@Model.Run.RunName</div>
+            <div class="page-subtitle">Run ID: @Model.Run.Id</div>
+        </div>
+        <div class="flex gap-2">
+            @if (Model.Run.Status == Imonas.V9.Domain.Enums.RunStatus.Completed)
+            {
+                <button class="btn btn-primary">📥 Download Evidence Pack</button>
+            }
+            <a asp-page="Index" class="btn btn-secondary">Back to Runs</a>
+        </div>
+    </div>
+
+    @if (!string.IsNullOrEmpty((string?)TempData["SuccessMessage"]))
+    {
+        <div class="alert alert-success">
+            @TempData["SuccessMessage"]
+        </div>
+    }
+
+    <div class="grid grid-4 mb-4">
+        <div class="stat-card">
+            <div class="stat-value">@Model.Run.TotalRecords.ToString("N0")</div>
+            <div class="stat-label">Total Records</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-value" style="color: var(--accent-secondary);">@Model.Run.MatchedRecords.ToString("N0")</div>
+            <div class="stat-label">Matched</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-value" style="color: var(--accent-danger);">@Model.Run.UnmatchedRecords.ToString("N0")</div>
+            <div class="stat-label">Unmatched</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-value" style="color: var(--accent-warning);">@Model.Run.PartialMatchRecords.ToString("N0")</div>
+            <div class="stat-label">Partial Match</div>
+        </div>
+    </div>
+
+    <div class="grid grid-2">
+        <div class="card">
+            <div class="card-header">Run Information</div>
+            <div class="card-body">
+                <table style="width: 100%;">
+                    <tr style="border-bottom: 1px solid var(--border-color);">
+                        <td style="padding: 0.75rem 0; font-weight: 600;">Status</td>
+                        <td style="padding: 0.75rem 0;">
+                            @if (Model.Run.Status == Imonas.V9.Domain.Enums.RunStatus.Completed)
+                            {
+                                <span class="badge badge-success">✓ Completed</span>
+                            }
+                            else if (Model.Run.Status == Imonas.V9.Domain.Enums.RunStatus.Running)
+                            {
+                                <span class="badge badge-info">⟳ Running</span>
+                            }
+                            else if (Model.Run.Status == Imonas.V9.Domain.Enums.RunStatus.Failed)
+                            {
+                                <span class="badge badge-danger">✗ Failed</span>
+                            }
+                            else
+                            {
+                                <span class="badge badge-secondary">@Model.Run.Status</span>
+                            }
+                        </td>
+                    </tr>
+                    <tr style="border-bottom: 1px solid var(--border-color);">
+                        <td style="padding: 0.75rem 0; font-weight: 600;">Match Percentage</td>
+                        <td style="padding: 0.75rem 0;">
+                            <span class="badge @(Model.Run.MatchPercentage >= 95 ? "badge-success" : Model.Run.MatchPercentage >= 80 ? "badge-info" : "badge-warning")" style="font-size: 1rem;">
+                                @Model.Run.MatchPercentage.ToString("F2")%
+                            </span>
+                        </td>
+                    </tr>
+                    <tr style="border-bottom: 1px solid var(--border-color);">
+                        <td style="padding: 0.75rem 0; font-weight: 600;">Rule Pack Version</td>
+                        <td style="padding: 0.75rem 0;">@Model.Run.RulePackVersion</td>
+                    </tr>
+                    <tr style="border-bottom: 1px solid var(--border-color);">
+                        <td style="padding: 0.75rem 0; font-weight: 600;">Started</td>
+                        <td style="padding: 0.75rem 0;">@Model.Run.StartedAt.ToString("yyyy-MM-dd HH:mm:ss") UTC</td>
+                    </tr>
+                    <tr style="border-bottom: 1px solid var(--border-color);">
+                        <td style="padding: 0.75rem 0; font-weight: 600;">Completed</td>
+                        <td style="padding: 0.75rem 0;">
+                            @if (Model.Run.CompletedAt.HasValue)
+                            {
+                                @Model.Run.CompletedAt.Value.ToString("yyyy-MM-dd HH:mm:ss") <text>UTC</text>
+                            }
+                            else
+                            {
+                                <span style="color: var(--text-muted);">In Progress...</span>
+                            }
+                        </td>
+                    </tr>
+                    <tr>
+                        <td style="padding: 0.75rem 0; font-weight: 600;">Duration</td>
+                        <td style="padding: 0.75rem 0;">
+                            @if (Model.Run.CompletedAt.HasValue)
+                            {
+                                var duration = Model.Run.CompletedAt.Value - Model.Run.StartedAt;
+                                @($"{(int)duration.TotalMinutes}m {duration.Seconds}s")
+                            }
+                            else
+                            {
+                                var duration = DateTime.UtcNow - Model.Run.StartedAt;
+                                @($"{(int)duration.TotalMinutes}m {duration.Seconds}s (ongoing)")
+                            }
+                        </td>
+                    </tr>
+                </table>
+
+                @if (!string.IsNullOrEmpty(Model.Run.ErrorMessage))
+                {
+                    <div class="alert alert-danger mt-3">
+                        <strong>Error:</strong> @Model.Run.ErrorMessage
+                    </div>
+                }
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-header">Run Metrics</div>
+            <div class="card-body">
+                @if (Model.Run.Metrics.Any())
+                {
+                    <table style="width: 100%;">
+                        @foreach (var metric in Model.Run.Metrics)
+                        {
+                            <tr style="border-bottom: 1px solid var(--border-color);">
+                                <td style="padding: 0.75rem 0; font-weight: 600;">@metric.MetricName</td>
+                                <td style="padding: 0.75rem 0;">@metric.MetricValue</td>
+                            </tr>
+                        }
+                    </table>
+                }
+                else
+                {
+                    <p style="color: var(--text-muted); text-align: center; padding: 2rem 0;">
+                        No metrics available yet.
+                    </p>
+                }
+            </div>
+        </div>
+    </div>
+
+    <div class="card mt-4">
+        <div class="card-header">Match Breakdown</div>
+        <div class="card-body">
+            <div style="background-color: var(--bg-tertiary); border-radius: 8px; padding: 1.5rem;">
+                <div class="grid grid-3 gap-3">
+                    <div>
+                        <div style="font-size: 0.9rem; color: var(--text-muted); margin-bottom: 0.5rem;">Matched Records</div>
+                        <div style="font-size: 1.5rem; font-weight: 700; color: var(--accent-secondary);">
+                            @Model.Run.MatchedRecords.ToString("N0")
+                        </div>
+                        <div style="font-size: 0.85rem; color: var(--text-secondary); margin-top: 0.25rem;">
+                            @((Model.Run.TotalRecords > 0 ? (Model.Run.MatchedRecords * 100.0 / Model.Run.TotalRecords) : 0).ToString("F1"))% of total
+                        </div>
+                    </div>
+                    <div>
+                        <div style="font-size: 0.9rem; color: var(--text-muted); margin-bottom: 0.5rem;">Unmatched Records</div>
+                        <div style="font-size: 1.5rem; font-weight: 700; color: var(--accent-danger);">
+                            @Model.Run.UnmatchedRecords.ToString("N0")
+                        </div>
+                        <div style="font-size: 0.85rem; color: var(--text-secondary); margin-top: 0.25rem;">
+                            @((Model.Run.TotalRecords > 0 ? (Model.Run.UnmatchedRecords * 100.0 / Model.Run.TotalRecords) : 0).ToString("F1"))% of total
+                        </div>
+                    </div>
+                    <div>
+                        <div style="font-size: 0.9rem; color: var(--text-muted); margin-bottom: 0.5rem;">Partial Matches</div>
+                        <div style="font-size: 1.5rem; font-weight: 700; color: var(--accent-warning);">
+                            @Model.Run.PartialMatchRecords.ToString("N0")
+                        </div>
+                        <div style="font-size: 0.85rem; color: var(--text-secondary); margin-top: 0.25rem;">
+                            @((Model.Run.TotalRecords > 0 ? (Model.Run.PartialMatchRecords * 100.0 / Model.Run.TotalRecords) : 0).ToString("F1"))% of total
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="card mt-4">
+        <div class="card-header">Actions</div>
+        <div class="card-body">
+            <div class="flex gap-2">
+                <a asp-page="/Cases/Index" class="btn btn-primary">View Exception Cases</a>
+                @if (Model.Run.Status == Imonas.V9.Domain.Enums.RunStatus.Completed)
+                {
+                    <button class="btn btn-success">Export Matched Records</button>
+                    <button class="btn btn-warning">Export Unmatched Records</button>
+                }
+                @if (Model.Run.IsReplayable)
+                {
+                    <button class="btn btn-secondary">Replay Run</button>
+                }
+            </div>
+        </div>
+    </div>
+}

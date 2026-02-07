@@ -1,0 +1,329 @@
+@page "{id:int}"
+@using Microsoft.AspNetCore.Mvc.Localization
+@using Domain.Enums
+@model SmartAdmin.WebUI.Pages.Schedules.DetailsModel
+@inject IStringLocalizer<DetailsModel> _localizer
+
+@{
+    ViewData["Title"] = "Schedule Details";
+    ViewData["PageName"] = "schedules_details";
+}
+
+@section HeadBlock {
+    <link rel="stylesheet" media="screen, print" href="~/css/fa-solid.css">
+}
+
+<div class="row mb-3">
+    <div class="col-12 d-flex justify-content-between align-items-center">
+        <div>
+            <h1 class="subheader-title">
+                <i class="subheader-icon @(Settings.Theme.IconPrefix) fa-clock"></i> @Model.Schedule.Name
+            </h1>
+            <small class="text-muted">@_localizer["Schedule Details"]</small>
+        </div>
+        <div>
+            <a asp-page="Edit" asp-route-id="@Model.Schedule.Id" class="btn btn-info waves-effect waves-themed">
+                <i class="@(Settings.Theme.IconPrefix) fa-edit mr-1"></i>
+                @_localizer["Edit"]
+            </a>
+            <a asp-page="Index" class="btn btn-secondary waves-effect waves-themed">
+                <i class="@(Settings.Theme.IconPrefix) fa-arrow-left mr-1"></i>
+                @_localizer["Back"]
+            </a>
+        </div>
+    </div>
+</div>
+
+@if (!string.IsNullOrEmpty(Model.ErrorMessage))
+{
+    <div class="alert alert-danger alert-dismissible fade show" role="alert">
+        <i class="@(Settings.Theme.IconPrefix) fa-exclamation-triangle mr-2"></i>
+        @Model.ErrorMessage
+        <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+            <span aria-hidden="true">&times;</span>
+        </button>
+    </div>
+}
+
+<!-- Status Banner -->
+<div class="row mb-4">
+    <div class="col-12">
+        @if (Model.Schedule.IsActive)
+        {
+            <div class="alert alert-success border-0 mb-0">
+                <div class="d-flex align-items-center">
+                    <i class="@(Settings.Theme.IconPrefix) fa-check-circle fa-2x mr-3"></i>
+                    <div class="flex-grow-1">
+                        <h4 class="mb-1">@_localizer["Schedule Active"]</h4>
+                        @if (Model.Schedule.NextRunDate.HasValue)
+                        {
+                            <p class="mb-0">@_localizer["Next run scheduled for"]: <strong>@Model.Schedule.NextRunDate.Value.ToString("yyyy-MM-dd HH:mm")</strong></p>
+                        }
+                    </div>
+                    <form method="post" asp-page-handler="Toggle" asp-route-id="@Model.Schedule.Id">
+                        @Html.AntiForgeryToken()
+                        <button type="submit" class="btn btn-outline-light">
+                            <i class="@(Settings.Theme.IconPrefix) fa-pause mr-1"></i>
+                            @_localizer["Deactivate"]
+                        </button>
+                    </form>
+                </div>
+            </div>
+        }
+        else
+        {
+            <div class="alert alert-secondary border-0 mb-0">
+                <div class="d-flex align-items-center">
+                    <i class="@(Settings.Theme.IconPrefix) fa-pause-circle fa-2x mr-3"></i>
+                    <div class="flex-grow-1">
+                        <h4 class="mb-1">@_localizer["Schedule Inactive"]</h4>
+                        <p class="mb-0">@_localizer["This schedule is currently paused and will not trigger automatic runs."]</p>
+                    </div>
+                    <form method="post" asp-page-handler="Toggle" asp-route-id="@Model.Schedule.Id">
+                        @Html.AntiForgeryToken()
+                        <button type="submit" class="btn btn-outline-dark">
+                            <i class="@(Settings.Theme.IconPrefix) fa-play mr-1"></i>
+                            @_localizer["Activate"]
+                        </button>
+                    </form>
+                </div>
+            </div>
+        }
+    </div>
+</div>
+
+<div class="row">
+    <!-- Schedule Information -->
+    <div class="col-xl-6">
+        <div id="panel-info" class="panel">
+            <div class="panel-hdr">
+                <h2>
+                    <i class="@(Settings.Theme.IconPrefix) fa-info-circle mr-2"></i>
+                    @_localizer["Schedule Information"]
+                </h2>
+            </div>
+            <div class="panel-container show">
+                <div class="panel-content">
+                    <table class="table table-bordered mb-0">
+                        <tbody>
+                            <tr>
+                                <td class="fw-500" style="width: 35%;">@_localizer["Name"]</td>
+                                <td>@Model.Schedule.Name</td>
+                            </tr>
+                            <tr>
+                                <td class="fw-500">@_localizer["PSP"]</td>
+                                <td>@Model.Schedule.PspName @(!string.IsNullOrEmpty(Model.Schedule.PspCode) ? $"({Model.Schedule.PspCode})" : "")</td>
+                            </tr>
+                            <tr>
+                                <td class="fw-500">@_localizer["Description"]</td>
+                                <td>@(Model.Schedule.Description ?? "-")</td>
+                            </tr>
+                            <tr>
+                                <td class="fw-500">@_localizer["Created"]</td>
+                                <td>@Model.Schedule.Created.ToString("yyyy-MM-dd HH:mm") @(!string.IsNullOrEmpty(Model.Schedule.CreatedBy) ? $"by {Model.Schedule.CreatedBy}" : "")</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Recurrence Settings -->
+    <div class="col-xl-6">
+        <div id="panel-recurrence" class="panel">
+            <div class="panel-hdr">
+                <h2>
+                    <i class="@(Settings.Theme.IconPrefix) fa-redo mr-2"></i>
+                    @_localizer["Recurrence Settings"]
+                </h2>
+            </div>
+            <div class="panel-container show">
+                <div class="panel-content">
+                    <table class="table table-bordered mb-0">
+                        <tbody>
+                            <tr>
+                                <td class="fw-500" style="width: 35%;">@_localizer["Recurrence Type"]</td>
+                                <td>
+                                    @{
+                                        var recurrenceDisplay = Model.Schedule.RecurrenceType switch
+                                        {
+                                            RecurrenceType.Daily => _localizer["Daily"],
+                                            RecurrenceType.Weekly => _localizer["Weekly"],
+                                            RecurrenceType.BiWeekly => _localizer["Bi-Weekly"],
+                                            RecurrenceType.Monthly => _localizer["Monthly"],
+                                            RecurrenceType.Quarterly => _localizer["Quarterly"],
+                                            _ => Model.Schedule.RecurrenceTypeDisplay
+                                        };
+                                    }
+                                    <span class="badge badge-primary">@recurrenceDisplay</span>
+                                </td>
+                            </tr>
+                            <tr>
+                                <td class="fw-500">@_localizer["Scheduled Time"]</td>
+                                <td>@Model.Schedule.ScheduledTimeDisplay</td>
+                            </tr>
+                            @if (Model.Schedule.DayOfWeek.HasValue)
+                            {
+                                <tr>
+                                    <td class="fw-500">@_localizer["Day of Week"]</td>
+                                    <td>@Model.Schedule.DayOfWeekDisplay</td>
+                                </tr>
+                            }
+                            @if (Model.Schedule.DayOfMonth.HasValue)
+                            {
+                                <tr>
+                                    <td class="fw-500">@_localizer["Day of Month"]</td>
+                                    <td>@Model.Schedule.DayOfMonth</td>
+                                </tr>
+                            }
+                            <tr>
+                                <td class="fw-500">@_localizer["Start Date"]</td>
+                                <td>@(Model.Schedule.StartDate?.ToString("yyyy-MM-dd") ?? "-")</td>
+                            </tr>
+                            <tr>
+                                <td class="fw-500">@_localizer["End Date"]</td>
+                                <td>@(Model.Schedule.EndDate?.ToString("yyyy-MM-dd") ?? _localizer["No end date"])</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <!-- Run History -->
+    <div class="col-xl-6">
+        <div id="panel-timing" class="panel">
+            <div class="panel-hdr">
+                <h2>
+                    <i class="@(Settings.Theme.IconPrefix) fa-calendar-alt mr-2"></i>
+                    @_localizer["Timing Information"]
+                </h2>
+            </div>
+            <div class="panel-container show">
+                <div class="panel-content">
+                    <table class="table table-bordered mb-0">
+                        <tbody>
+                            <tr>
+                                <td class="fw-500" style="width: 35%;">@_localizer["Next Run"]</td>
+                                <td>
+                                    @if (Model.Schedule.NextRunDate.HasValue)
+                                    {
+                                        var isToday = Model.Schedule.NextRunDate.Value.Date == DateTime.Today;
+                                        var isPast = Model.Schedule.NextRunDate.Value < DateTime.Now;
+                                        var badgeClass = isPast ? "badge-danger" : isToday ? "badge-warning" : "badge-success";
+                                        <span class="badge @badgeClass">
+                                            @Model.Schedule.NextRunDate.Value.ToString("yyyy-MM-dd HH:mm")
+                                        </span>
+                                    }
+                                    else
+                                    {
+                                        <span class="text-muted">@_localizer["Not scheduled"]</span>
+                                    }
+                                </td>
+                            </tr>
+                            <tr>
+                                <td class="fw-500">@_localizer["Last Run"]</td>
+                                <td>@(Model.Schedule.LastRunDate?.ToString("yyyy-MM-dd HH:mm") ?? _localizer["Never"])</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Run Statistics -->
+    <div class="col-xl-6">
+        <div id="panel-stats" class="panel">
+            <div class="panel-hdr">
+                <h2>
+                    <i class="@(Settings.Theme.IconPrefix) fa-chart-bar mr-2"></i>
+                    @_localizer["Run Statistics"]
+                </h2>
+            </div>
+            <div class="panel-container show">
+                <div class="panel-content">
+                    <div class="row text-center">
+                        <div class="col-4">
+                            <h3 class="fw-700 text-primary mb-0">@Model.Schedule.TotalRunsExecuted</h3>
+                            <small class="text-muted">@_localizer["Total Runs"]</small>
+                        </div>
+                        <div class="col-4">
+                            <h3 class="fw-700 text-success mb-0">@Model.Schedule.SuccessfulRuns</h3>
+                            <small class="text-muted">@_localizer["Successful"]</small>
+                        </div>
+                        <div class="col-4">
+                            <h3 class="fw-700 text-danger mb-0">@Model.Schedule.FailedRuns</h3>
+                            <small class="text-muted">@_localizer["Failed"]</small>
+                        </div>
+                    </div>
+                    @if (Model.Schedule.TotalRunsExecuted > 0)
+                    {
+                        var successRate = (Model.Schedule.SuccessfulRuns * 100.0 / Model.Schedule.TotalRunsExecuted);
+                        <div class="progress mt-3" style="height: 20px;">
+                            <div class="progress-bar bg-success" role="progressbar" style="width: @successRate%" aria-valuenow="@successRate" aria-valuemin="0" aria-valuemax="100">
+                                @successRate.ToString("F1")% @_localizer["Success Rate"]
+                            </div>
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Actions -->
+<div class="row">
+    <div class="col-12">
+        <div class="btn-group float-right" role="group">
+            <a asp-page="Edit" asp-route-id="@Model.Schedule.Id" class="btn btn-info waves-effect waves-themed">
+                <i class="@(Settings.Theme.IconPrefix) fa-edit mr-1"></i>
+                @_localizer["Edit Schedule"]
+            </a>
+            <button type="button" class="btn btn-danger waves-effect waves-themed" data-toggle="modal" data-target="#deleteModal">
+                <i class="@(Settings.Theme.IconPrefix) fa-trash mr-1"></i>
+                @_localizer["Delete Schedule"]
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- Delete Confirmation Modal -->
+<div class="modal fade" id="deleteModal" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">@_localizer["Confirm Delete"]</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <p>@_localizer["Are you sure you want to delete the schedule"] <strong>@Model.Schedule.Name</strong>?</p>
+                <p class="text-danger"><i class="@(Settings.Theme.IconPrefix) fa-exclamation-triangle mr-1"></i> @_localizer["This action cannot be undone."]</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">@_localizer["Cancel"]</button>
+                <form method="post" asp-page-handler="Delete" asp-route-id="@Model.Schedule.Id" style="display:inline;">
+                    @Html.AntiForgeryToken()
+                    <button type="submit" class="btn btn-danger">
+                        <i class="@(Settings.Theme.IconPrefix) fa-trash mr-1"></i>
+                        @_localizer["Delete"]
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section ScriptsBlock {
+    <script>
+        $(function () {
+            'use strict';
+        });
+    </script>
+}

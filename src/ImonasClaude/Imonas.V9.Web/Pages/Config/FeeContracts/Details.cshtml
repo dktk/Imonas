@@ -1,0 +1,298 @@
+@page "{id:guid}"
+@model Imonas.V9.Web.Pages.Config.FeeContracts.DetailsModel
+@{
+    ViewData["Title"] = "Fee Contract Details";
+}
+
+@if (Model.Contract == null)
+{
+    <div class="alert alert-danger">Contract not found.</div>
+    <a asp-page="/Config/FeeContracts" class="btn btn-secondary">Back to Contracts</a>
+}
+else
+{
+    <div class="flex-between mb-4">
+        <div>
+            <div class="page-title">@Model.Contract.ContractName</div>
+            <div class="page-subtitle">Version @Model.Contract.Version</div>
+        </div>
+        <div class="flex gap-2">
+            @if (Model.Contract.Status == "Draft")
+            {
+                <a asp-page="Edit" asp-route-id="@Model.Contract.Id" class="btn btn-primary">✏️ Edit</a>
+                <form method="post" asp-page-handler="Submit" style="display: inline;">
+                    <button type="submit" class="btn btn-success">✓ Submit for Approval</button>
+                </form>
+            }
+            @if (Model.Contract.Status == "PendingApproval")
+            {
+                <form method="post" asp-page-handler="Approve" style="display: inline;">
+                    <button type="submit" class="btn btn-success">✓ Approve</button>
+                </form>
+                <button type="button" class="btn btn-danger" onclick="showRejectModal()">✗ Reject</button>
+            }
+            <a asp-page="/Config/FeeContracts" class="btn btn-secondary">Back</a>
+        </div>
+    </div>
+
+    @if (!string.IsNullOrEmpty((string?)TempData["SuccessMessage"]))
+    {
+        <div class="alert alert-success">
+            @TempData["SuccessMessage"]
+        </div>
+    }
+
+    <div class="card mb-3">
+        <div class="card-body">
+            <div class="flex-between">
+                <div>
+                    <strong>Status:</strong>
+                    @if (Model.Contract.Status == "Active")
+                    {
+                        <span class="badge badge-success" style="font-size: 1rem; margin-left: 0.5rem;">✓ Active</span>
+                    }
+                    else if (Model.Contract.Status == "PendingApproval")
+                    {
+                        <span class="badge badge-warning" style="font-size: 1rem; margin-left: 0.5rem;">⏳ Pending Approval</span>
+                    }
+                    else if (Model.Contract.Status == "Draft")
+                    {
+                        <span class="badge badge-secondary" style="font-size: 1rem; margin-left: 0.5rem;">📝 Draft</span>
+                    }
+                    else if (Model.Contract.Status == "Rejected")
+                    {
+                        <span class="badge badge-danger" style="font-size: 1rem; margin-left: 0.5rem;">✗ Rejected</span>
+                    }
+                    else
+                    {
+                        <span class="badge badge-secondary" style="font-size: 1rem; margin-left: 0.5rem;">@Model.Contract.Status</span>
+                    }
+                </div>
+                @if (!string.IsNullOrEmpty(Model.Contract.ApprovedBy))
+                {
+                    <div style="font-size: 0.875rem; color: var(--text-secondary);">
+                        Approved by <strong>@Model.Contract.ApprovedBy</strong> on @Model.Contract.ApprovedAt?.ToString("yyyy-MM-dd HH:mm")
+                    </div>
+                }
+            </div>
+        </div>
+    </div>
+
+    <div class="grid grid-2">
+        <div>
+            <div class="card">
+                <div class="card-header">Contract Details</div>
+                <div class="card-body">
+                    <table style="width: 100%;">
+                        <tr style="border-bottom: 1px solid var(--border-color);">
+                            <td style="padding: 0.75rem 0; font-weight: 600; width: 40%;">Contract Name</td>
+                            <td style="padding: 0.75rem 0;">@Model.Contract.ContractName</td>
+                        </tr>
+                        <tr style="border-bottom: 1px solid var(--border-color);">
+                            <td style="padding: 0.75rem 0; font-weight: 600;">PSP Profile</td>
+                            <td style="padding: 0.75rem 0;">
+                                <span class="badge badge-secondary">PSP</span>
+                            </td>
+                        </tr>
+                        <tr style="border-bottom: 1px solid var(--border-color);">
+                            <td style="padding: 0.75rem 0; font-weight: 600;">Payment Method</td>
+                            <td style="padding: 0.75rem 0;">@Model.Contract.PaymentMethod</td>
+                        </tr>
+                        <tr style="border-bottom: 1px solid var(--border-color);">
+                            <td style="padding: 0.75rem 0; font-weight: 600;">Brand</td>
+                            <td style="padding: 0.75rem 0;">@Model.Contract.Brand</td>
+                        </tr>
+                        <tr style="border-bottom: 1px solid var(--border-color);">
+                            <td style="padding: 0.75rem 0; font-weight: 600;">Currency</td>
+                            <td style="padding: 0.75rem 0;">@Model.Contract.Currency</td>
+                        </tr>
+                        <tr style="border-bottom: 1px solid var(--border-color);">
+                            <td style="padding: 0.75rem 0; font-weight: 600;">Effective From</td>
+                            <td style="padding: 0.75rem 0;">@Model.Contract.EffectiveFrom.ToString("yyyy-MM-dd")</td>
+                        </tr>
+                        <tr style="border-bottom: 1px solid var(--border-color);">
+                            <td style="padding: 0.75rem 0; font-weight: 600;">Effective To</td>
+                            <td style="padding: 0.75rem 0;">@(Model.Contract.EffectiveTo?.ToString("yyyy-MM-dd") ?? "No end date")</td>
+                        </tr>
+                        <tr>
+                            <td style="padding: 0.75rem 0; font-weight: 600;">Version</td>
+                            <td style="padding: 0.75rem 0;">@Model.Contract.Version</td>
+                        </tr>
+                    </table>
+                </div>
+            </div>
+
+            <div class="card mt-3">
+                <div class="card-header">Audit Information</div>
+                <div class="card-body">
+                    <table style="width: 100%;">
+                        <tr style="border-bottom: 1px solid var(--border-color);">
+                            <td style="padding: 0.75rem 0; font-weight: 600; width: 40%;">Created By</td>
+                            <td style="padding: 0.75rem 0;">@Model.Contract.CreatedBy</td>
+                        </tr>
+                        <tr style="border-bottom: 1px solid var(--border-color);">
+                            <td style="padding: 0.75rem 0; font-weight: 600;">Created At</td>
+                            <td style="padding: 0.75rem 0;">@Model.Contract.CreatedAt.ToString("yyyy-MM-dd HH:mm")</td>
+                        </tr>
+                        @if (Model.Contract.UpdatedAt.HasValue)
+                        {
+                            <tr>
+                                <td style="padding: 0.75rem 0; font-weight: 600;">Last Updated</td>
+                                <td style="padding: 0.75rem 0;">@Model.Contract.UpdatedAt.Value.ToString("yyyy-MM-dd HH:mm")</td>
+                            </tr>
+                        }
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <div>
+            <div class="card">
+                <div class="card-header">Fee Structure</div>
+                <div class="card-body">
+                    <div style="background-color: var(--bg-tertiary); border-radius: 8px; padding: 1.5rem; margin-bottom: 1rem;">
+                        <div style="font-size: 0.875rem; color: var(--text-muted); margin-bottom: 0.5rem;">Structure Type</div>
+                        <div style="font-size: 1.5rem; font-weight: 700; color: var(--accent-primary); text-transform: capitalize;">
+                            @Model.Contract.FeeStructure
+                        </div>
+                    </div>
+
+                    @if (Model.Contract.FixedFee.HasValue)
+                    {
+                        <div style="padding: 1rem 0; border-bottom: 1px solid var(--border-color);">
+                            <div style="font-size: 0.875rem; color: var(--text-muted); margin-bottom: 0.25rem;">Fixed Fee</div>
+                            <div style="font-size: 1.25rem; font-weight: 600; color: var(--text-primary);">
+                                @Model.Contract.FixedFee.Value.ToString("C")
+                            </div>
+                        </div>
+                    }
+
+                    @if (Model.Contract.PercentageFee.HasValue)
+                    {
+                        <div style="padding: 1rem 0; border-bottom: 1px solid var(--border-color);">
+                            <div style="font-size: 0.875rem; color: var(--text-muted); margin-bottom: 0.25rem;">Percentage Fee</div>
+                            <div style="font-size: 1.25rem; font-weight: 600; color: var(--text-primary);">
+                                @((Model.Contract.PercentageFee.Value * 100).ToString("F2"))%
+                            </div>
+                        </div>
+                    }
+
+                    @if (Model.Contract.MinimumFee.HasValue)
+                    {
+                        <div style="padding: 1rem 0; border-bottom: 1px solid var(--border-color);">
+                            <div style="font-size: 0.875rem; color: var(--text-muted); margin-bottom: 0.25rem;">Minimum Fee</div>
+                            <div style="font-size: 1.25rem; font-weight: 600; color: var(--text-primary);">
+                                @Model.Contract.MinimumFee.Value.ToString("C")
+                            </div>
+                        </div>
+                    }
+
+                    @if (Model.Contract.MaximumFee.HasValue)
+                    {
+                        <div style="padding: 1rem 0; border-bottom: 1px solid var(--border-color);">
+                            <div style="font-size: 0.875rem; color: var(--text-muted); margin-bottom: 0.25rem;">Maximum Fee</div>
+                            <div style="font-size: 1.25rem; font-weight: 600; color: var(--text-primary);">
+                                @Model.Contract.MaximumFee.Value.ToString("C")
+                            </div>
+                        </div>
+                    }
+
+                    @if (!string.IsNullOrEmpty(Model.Contract.TieredStructure))
+                    {
+                        <div style="padding: 1rem 0;">
+                            <div style="font-size: 0.875rem; color: var(--text-muted); margin-bottom: 0.5rem;">Tiered Structure</div>
+                            <pre style="background-color: var(--bg-primary); padding: 1rem; border-radius: 4px; overflow-x: auto; font-size: 0.875rem;"><code>@Model.Contract.TieredStructure</code></pre>
+                        </div>
+                    }
+                </div>
+            </div>
+
+            <div class="card mt-3">
+                <div class="card-header">Fee Calculator</div>
+                <div class="card-body">
+                    <div class="form-group">
+                        <label>Transaction Amount</label>
+                        <div style="display: flex; gap: 0.5rem;">
+                            <span style="color: var(--text-secondary); font-size: 1.2rem; padding-top: 0.5rem;">$</span>
+                            <input type="number" id="calcAmount" class="form-control" value="100.00" step="0.01" />
+                        </div>
+                    </div>
+                    <div style="background-color: var(--bg-tertiary); border-radius: 8px; padding: 1rem; margin-top: 1rem;">
+                        <div style="font-size: 0.875rem; color: var(--text-muted); margin-bottom: 0.5rem;">Calculated Fee</div>
+                        <div style="font-size: 2rem; font-weight: 700; color: var(--accent-secondary);" id="calcResult">$0.00</div>
+                    </div>
+                    <button type="button" class="btn btn-primary mt-3" style="width: 100%;" onclick="calculateFee()">Calculate</button>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
+<!-- Reject Modal -->
+<div id="rejectModal" style="display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background-color: rgba(0,0,0,0.7); z-index: 2000; align-items: center; justify-content: center;">
+    <div style="background-color: var(--bg-secondary); border-radius: 12px; padding: 2rem; max-width: 500px; width: 90%;">
+        <h3 style="margin-bottom: 1rem;">Reject Contract</h3>
+        <form method="post" asp-page-handler="Reject">
+            <div class="form-group">
+                <label>Rejection Reason</label>
+                <textarea name="reason" class="form-control" rows="4" required placeholder="Provide a reason for rejecting this contract..."></textarea>
+            </div>
+            <div class="flex gap-2 mt-3">
+                <button type="submit" class="btn btn-danger">Reject Contract</button>
+                <button type="button" class="btn btn-secondary" onclick="hideRejectModal()">Cancel</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        function showRejectModal() {
+            document.getElementById('rejectModal').style.display = 'flex';
+        }
+
+        function hideRejectModal() {
+            document.getElementById('rejectModal').style.display = 'none';
+        }
+
+        async function calculateFee() {
+            const amount = parseFloat(document.getElementById('calcAmount').value) || 0;
+
+            try {
+                const response = await fetch(`/Config/FeeContracts/Details/@Model.Contract?.Id?handler=CalculateFee&amount=${amount}`);
+                const result = await response.json();
+                document.getElementById('calcResult').textContent = '$' + result.fee.toFixed(2);
+            } catch (error) {
+                console.error('Error calculating fee:', error);
+
+                // Fallback client-side calculation
+                const fixedFee = @(Model.Contract?.FixedFee ?? 0);
+                const percentageFee = @(Model.Contract?.PercentageFee ?? 0);
+                const feeStructure = '@Model.Contract?.FeeStructure';
+                const minFee = @(Model.Contract?.MinimumFee ?? 0);
+                const maxFee = @(Model.Contract?.MaximumFee.HasValue == true ? Model.Contract.MaximumFee.Value.ToString() : "null");
+
+                let fee = 0;
+                switch(feeStructure) {
+                    case 'fixed':
+                        fee = fixedFee;
+                        break;
+                    case 'percentage':
+                        fee = amount * percentageFee;
+                        break;
+                    case 'hybrid':
+                        fee = fixedFee + (amount * percentageFee);
+                        break;
+                }
+
+                if (minFee > 0 && fee < minFee) fee = minFee;
+                if (maxFee !== null && fee > maxFee) fee = maxFee;
+
+                document.getElementById('calcResult').textContent = '$' + fee.toFixed(2);
+            }
+        }
+
+        // Calculate on page load
+        calculateFee();
+    </script>
+}

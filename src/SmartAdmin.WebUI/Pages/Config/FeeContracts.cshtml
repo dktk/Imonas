@@ -1,0 +1,204 @@
+@page
+@using Microsoft.AspNetCore.Mvc.Localization
+@using Domain.Enums
+@model SmartAdmin.WebUI.Pages.Config.FeeContractsModel
+@inject IStringLocalizer<FeeContractsModel> _localizer
+
+@{
+    ViewData["Title"] = "Fee Contracts";
+    ViewData["PageName"] = "config_feecontracts";
+
+    var draftCount = Model.Contracts.Count(c => c.Status == ContractStatus.Draft);
+    var pendingCount = Model.Contracts.Count(c => c.Status == ContractStatus.PendingApproval);
+    var activeCount = Model.Contracts.Count(c => c.Status == ContractStatus.Active);
+    var rejectedCount = Model.Contracts.Count(c => c.Status == ContractStatus.Rejected);
+}
+
+@section HeadBlock {
+    <link rel="stylesheet" media="screen, print" href="~/css/fa-solid.css">
+}
+
+<div class="row mb-3">
+    <div class="col-12 d-flex justify-content-between align-items-center">
+        <div>
+            <h1 class="subheader-title">
+                <i class="subheader-icon @(Settings.Theme.IconPrefix) fa-file-contract"></i> @_localizer["Fee Contracts"]
+            </h1>
+            <small class="text-muted">@_localizer["Configure PSP fee structures and pricing"]</small>
+        </div>
+        <div>
+            <a asp-page="/Config/FeeContracts/Create" class="btn btn-primary waves-effect waves-themed">
+                <i class="@(Settings.Theme.IconPrefix) fa-plus mr-1"></i>
+                @_localizer["Add Contract"]
+            </a>
+            <a asp-page="Index" class="btn btn-secondary waves-effect waves-themed">
+                <i class="@(Settings.Theme.IconPrefix) fa-arrow-left mr-1"></i>
+                @_localizer["Back"]
+            </a>
+        </div>
+    </div>
+</div>
+
+@if (TempData["SuccessMessage"] != null)
+{
+    <div class="alert alert-success alert-dismissible fade show" role="alert">
+        <i class="@(Settings.Theme.IconPrefix) fa-check-circle mr-2"></i>
+        @TempData["SuccessMessage"]
+        <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+            <span aria-hidden="true">&times;</span>
+        </button>
+    </div>
+}
+
+<div class="row mb-4">
+    <div class="col-sm-6 col-xl-3">
+        <div class="p-3 bg-primary-300 rounded overflow-hidden position-relative text-white mb-g">
+            <div>
+                <h3 class="display-4 d-block l-h-n m-0 fw-500">
+                    @draftCount
+                    <small class="m-0 l-h-n">@_localizer["Draft"]</small>
+                </h3>
+            </div>
+            <i class="@(Settings.Theme.IconPrefix) fa-pencil-alt position-absolute pos-right pos-bottom opacity-15 mb-n1 mr-n1" style="font-size:6rem"></i>
+        </div>
+    </div>
+    <div class="col-sm-6 col-xl-3">
+        <div class="p-3 bg-warning-400 rounded overflow-hidden position-relative text-white mb-g">
+            <div>
+                <h3 class="display-4 d-block l-h-n m-0 fw-500">
+                    @pendingCount
+                    <small class="m-0 l-h-n">@_localizer["Pending Approval"]</small>
+                </h3>
+            </div>
+            <i class="@(Settings.Theme.IconPrefix) fa-clock position-absolute pos-right pos-bottom opacity-15 mb-n1 mr-n1" style="font-size:6rem"></i>
+        </div>
+    </div>
+    <div class="col-sm-6 col-xl-3">
+        <div class="p-3 bg-success-200 rounded overflow-hidden position-relative text-white mb-g">
+            <div>
+                <h3 class="display-4 d-block l-h-n m-0 fw-500">
+                    @activeCount
+                    <small class="m-0 l-h-n">@_localizer["Active"]</small>
+                </h3>
+            </div>
+            <i class="@(Settings.Theme.IconPrefix) fa-check-circle position-absolute pos-right pos-bottom opacity-15 mb-n1 mr-n1" style="font-size:6rem"></i>
+        </div>
+    </div>
+    <div class="col-sm-6 col-xl-3">
+        <div class="p-3 bg-danger-400 rounded overflow-hidden position-relative text-white mb-g">
+            <div>
+                <h3 class="display-4 d-block l-h-n m-0 fw-500">
+                    @rejectedCount
+                    <small class="m-0 l-h-n">@_localizer["Rejected"]</small>
+                </h3>
+            </div>
+            <i class="@(Settings.Theme.IconPrefix) fa-times-circle position-absolute pos-right pos-bottom opacity-15 mb-n1 mr-n1" style="font-size:6rem"></i>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-xl-12">
+        <div id="panel-contracts" class="panel">
+            <div class="panel-hdr">
+                <h2>
+                    @_localizer["Fee Contracts"]
+                    <span class="fw-300"><i>(@Model.Contracts.Count() @_localizer["total"])</i></span>
+                </h2>
+            </div>
+            <div class="panel-container show">
+                <div class="panel-content">
+                    <div class="table-responsive">
+                        <table class="table table-bordered table-hover table-striped w-100">
+                            <thead class="bg-primary-600">
+                                <tr>
+                                    <th>@_localizer["Contract Name"]</th>
+                                    <th>@_localizer["PSP"]</th>
+                                    <th>@_localizer["Payment Method"]</th>
+                                    <th>@_localizer["Brand"]</th>
+                                    <th>@_localizer["Fee Structure"]</th>
+                                    <th class="text-center">@_localizer["Status"]</th>
+                                    <th>@_localizer["Effective From"]</th>
+                                    <th>@_localizer["Version"]</th>
+                                    <th class="text-center">@_localizer["Actions"]</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var contract in Model.Contracts)
+                                {
+                                    var statusBadge = contract.Status switch
+                                    {
+                                        ContractStatus.Draft => "badge-secondary",
+                                        ContractStatus.PendingApproval => "badge-warning",
+                                        ContractStatus.Active => "badge-success",
+                                        ContractStatus.Rejected => "badge-danger",
+                                        _ => "badge-info"
+                                    };
+
+                                    <tr>
+                                        <td>
+                                            <a asp-page="/Config/FeeContracts/Details" asp-route-id="@contract.Id" class="fw-500">
+                                                @contract.ContractName
+                                            </a>
+                                        </td>
+                                        <td><span class="badge badge-secondary">@contract.PspName</span></td>
+                                        <td>@contract.PaymentMethod</td>
+                                        <td>@contract.Brand</td>
+                                        <td>
+                                            @switch (contract.FeeStructure)
+                                            {
+                                                case FeeStructureType.Fixed:
+                                                    <span>@(contract.FixedFee?.ToString("C") ?? "-")</span>
+                                                    break;
+                                                case FeeStructureType.Percentage:
+                                                    <span>@(contract.PercentageFee?.ToString("P2") ?? "-")</span>
+                                                    break;
+                                                case FeeStructureType.Hybrid:
+                                                    <span>@(contract.FixedFee?.ToString("C") ?? "-") + @(contract.PercentageFee?.ToString("P2") ?? "-")</span>
+                                                    break;
+                                                case FeeStructureType.Tiered:
+                                                    <span class="badge badge-info">Tiered</span>
+                                                    break;
+                                            }
+                                        </td>
+                                        <td class="text-center">
+                                            <span class="badge @statusBadge">@contract.Status</span>
+                                        </td>
+                                        <td>@contract.EffectiveFrom.ToString("yyyy-MM-dd")</td>
+                                        <td>@contract.Version</td>
+                                        <td class="text-center">
+                                            <a asp-page="/Config/FeeContracts/Details" asp-route-id="@contract.Id" class="btn btn-sm btn-outline-info waves-effect waves-themed" title="@_localizer["View"]">
+                                                <i class="@(Settings.Theme.IconPrefix) fa-eye"></i>
+                                            </a>
+                                            @if (contract.Status == ContractStatus.Draft)
+                                            {
+                                                <a asp-page="/Config/FeeContracts/Edit" asp-route-id="@contract.Id" class="btn btn-sm btn-outline-primary waves-effect waves-themed" title="@_localizer["Edit"]">
+                                                    <i class="@(Settings.Theme.IconPrefix) fa-edit"></i>
+                                                </a>
+                                            }
+                                        </td>
+                                    </tr>
+                                }
+                                @if (!Model.Contracts.Any())
+                                {
+                                    <tr>
+                                        <td colspan="9" class="text-center text-muted py-4">
+                                            <i class="@(Settings.Theme.IconPrefix) fa-inbox fa-3x mb-3 d-block"></i>
+                                            @_localizer["No fee contracts found."]
+                                            <div class="mt-2">
+                                                <a asp-page="/Config/FeeContracts/Create" class="btn btn-primary btn-sm">
+                                                    <i class="@(Settings.Theme.IconPrefix) fa-plus mr-1"></i>
+                                                    @_localizer["Add your first contract"]
+                                                </a>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

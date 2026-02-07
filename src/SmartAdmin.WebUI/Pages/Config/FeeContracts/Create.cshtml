@@ -1,0 +1,347 @@
+﻿@page
+@using Microsoft.AspNetCore.Mvc.Localization
+@using Domain.Enums
+@model SmartAdmin.WebUI.Pages.Config.FeeContracts.CreateModel
+@inject IStringLocalizer<CreateModel> _localizer
+
+@{
+    ViewData["Title"] = "Create Fee Contract";
+    ViewData["PageName"] = "config_feecontracts_create";
+}
+
+@section HeadBlock {
+    <link rel="stylesheet" media="screen, print" href="~/css/fa-solid.css">
+}
+
+<div class="row mb-3">
+    <div class="col-12 d-flex justify-content-between align-items-center">
+        <div>
+            <h1 class="subheader-title">
+                <i class="subheader-icon @(Settings.Theme.IconPrefix) fa-plus-circle"></i> @_localizer["Create Fee Contract"]
+            </h1>
+            <small class="text-muted">@_localizer["Define PSP fee structures and pricing models"]</small>
+        </div>
+        <a asp-page="/Config/FeeContracts" class="btn btn-secondary waves-effect waves-themed">
+            <i class="@(Settings.Theme.IconPrefix) fa-arrow-left mr-1"></i>
+            @_localizer["Back"]
+        </a>
+    </div>
+</div>
+
+@if (!string.IsNullOrEmpty(Model.ErrorMessage))
+{
+    <div class="alert alert-danger">
+        <i class="@(Settings.Theme.IconPrefix) fa-exclamation-triangle mr-2"></i>
+        @Model.ErrorMessage
+    </div>
+}
+
+<form method="post" class="needs-validation" novalidate>
+    @Html.AntiForgeryToken()
+
+    <div class="row">
+        <div class="col-xl-6">
+            <div id="panel-info" class="panel">
+                <div class="panel-hdr">
+                    <h2>
+                        <i class="@(Settings.Theme.IconPrefix) fa-info-circle mr-2"></i>
+                        @_localizer["Contract Information"]
+                    </h2>
+                </div>
+                <div class="panel-container show">
+                    <div class="panel-content">
+                        <div class="form-group">
+                            <label class="form-label" asp-for="Input.ContractName">@_localizer["Contract Name"] <span class="text-danger">*</span></label>
+                            <input asp-for="Input.ContractName" class="form-control" required placeholder="e.g., Stripe Standard Fees - Visa" />
+                            <span asp-validation-for="Input.ContractName" class="invalid-feedback"></span>
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label" asp-for="Input.PspId">@_localizer["PSP Profile"] <span class="text-danger">*</span></label>
+                            <select asp-for="Input.PspId" class="form-control select2" required>
+                                <option value="">-- @_localizer["Select PSP Profile"] --</option>
+                                @foreach (var profile in Model.PspProfiles)
+                                {
+                                    <option value="@profile.Id">@profile.Name (@profile.Code)</option>
+                                }
+                            </select>
+                            <span asp-validation-for="Input.PspId" class="invalid-feedback"></span>
+                        </div>
+
+                        <div class="form-row">
+                            <div class="col-md-4">
+                                <div class="form-group">
+                                    <label class="form-label" asp-for="Input.PaymentMethod">@_localizer["Payment Method"] <span class="text-danger">*</span></label>
+                                    <select asp-for="Input.PaymentMethod" class="form-control select2" required>
+                                        <option value="Card">Card</option>
+                                        <option value="Bank Transfer">Bank Transfer</option>
+                                        <option value="Wallet">Digital Wallet</option>
+                                        <option value="Direct Debit">Direct Debit</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="form-group">
+                                    <label class="form-label" asp-for="Input.Brand">@_localizer["Brand"] <span class="text-danger">*</span></label>
+                                    <select asp-for="Input.Brand" class="form-control select2" required>
+                                        <option value="Visa">Visa</option>
+                                        <option value="Mastercard">Mastercard</option>
+                                        <option value="Amex">American Express</option>
+                                        <option value="Discover">Discover</option>
+                                        <option value="All">All Brands</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="form-group">
+                                    <label class="form-label" asp-for="Input.Currency">@_localizer["Currency"] <span class="text-danger">*</span></label>
+                                    <select asp-for="Input.Currency" class="form-control select2" required>
+                                        <option value="USD">USD</option>
+                                        <option value="EUR">EUR</option>
+                                        <option value="GBP">GBP</option>
+                                        <option value="AUD">AUD</option>
+                                        <option value="CAD">CAD</option>
+                                        <option value="ZAR">ZAR</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="form-row">
+                            <div class="col-md-4">
+                                <div class="form-group">
+                                    <label class="form-label" asp-for="Input.EffectiveFrom">@_localizer["Effective From"] <span class="text-danger">*</span></label>
+                                    <input asp-for="Input.EffectiveFrom" type="date" class="form-control" required />
+                                    <span asp-validation-for="Input.EffectiveFrom" class="invalid-feedback"></span>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="form-group">
+                                    <label class="form-label" asp-for="Input.EffectiveTo">@_localizer["Effective To"]</label>
+                                    <input asp-for="Input.EffectiveTo" type="date" class="form-control" />
+                                    <small class="form-text text-muted">@_localizer["Leave empty for no end date"]</small>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="form-group">
+                                    <label class="form-label" asp-for="Input.Version">@_localizer["Version"] <span class="text-danger">*</span></label>
+                                    <input asp-for="Input.Version" class="form-control" required placeholder="1.0" />
+                                    <small class="form-text text-muted">@_localizer["Version tracking"]</small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xl-6">
+            <div id="panel-fees" class="panel">
+                <div class="panel-hdr">
+                    <h2>
+                        <i class="@(Settings.Theme.IconPrefix) fa-dollar-sign mr-2"></i>
+                        @_localizer["Fee Structure"]
+                    </h2>
+                </div>
+                <div class="panel-container show">
+                    <div class="panel-content">
+                        <div class="form-group">
+                            <label class="form-label" asp-for="Input.FeeStructure">@_localizer["Fee Type"] <span class="text-danger">*</span></label>
+                            <select asp-for="Input.FeeStructure" class="form-control select2" id="feeStructureSelect" required>
+                                <option value="@((int)FeeStructureType.Fixed)">Fixed Fee</option>
+                                <option value="@((int)FeeStructureType.Percentage)">Percentage Fee</option>
+                                <option value="@((int)FeeStructureType.Hybrid)">Hybrid (Fixed + Percentage)</option>
+                                <option value="@((int)FeeStructureType.Tiered)">Tiered by Volume</option>
+                            </select>
+                        </div>
+
+                        <div id="fixedFeeField" class="form-group">
+                            <label class="form-label" asp-for="Input.FixedFee">@_localizer["Fixed Fee Amount"]</label>
+                            <div class="input-group">
+                                <div class="input-group-prepend">
+                                    <span class="input-group-text">$</span>
+                                </div>
+                                <input asp-for="Input.FixedFee" type="number" step="0.01" class="form-control" placeholder="0.30" />
+                            </div>
+                            <small class="form-text text-muted">@_localizer["Fixed amount charged per transaction"]</small>
+                        </div>
+
+                        <div id="percentageFeeField" class="form-group">
+                            <label class="form-label" asp-for="Input.PercentageFee">@_localizer["Percentage Fee"]</label>
+                            <div class="input-group">
+                                <input asp-for="Input.PercentageFee" type="number" step="0.0001" class="form-control" placeholder="0.029" />
+                                <div class="input-group-append">
+                                    <span class="input-group-text">( x 100 = %)</span>
+                                </div>
+                            </div>
+                            <small class="form-text text-muted">@_localizer["Enter as decimal (e.g., 0.029 for 2.9%)"]</small>
+                        </div>
+
+                        <div id="tieredStructureField" class="form-group" style="display: none;">
+                            <label class="form-label" asp-for="Input.TieredStructure">@_localizer["Tiered Structure (JSON)"]</label>
+                            <textarea asp-for="Input.TieredStructure" class="form-control" rows="6" placeholder='[
+  {"min": 0, "max": 10000, "fixed": 0.30, "percentage": 0.029},
+  {"min": 10000, "max": 100000, "fixed": 0.25, "percentage": 0.025}
+]'></textarea>
+                            <small class="form-text text-muted">@_localizer["Define tiered pricing based on monthly volume"]</small>
+                        </div>
+
+                        <div class="form-row">
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label class="form-label" asp-for="Input.MinimumFee">@_localizer["Minimum Fee"]</label>
+                                    <div class="input-group">
+                                        <div class="input-group-prepend">
+                                            <span class="input-group-text">$</span>
+                                        </div>
+                                        <input asp-for="Input.MinimumFee" type="number" step="0.01" class="form-control" placeholder="0.00" />
+                                    </div>
+                                    <small class="form-text text-muted">@_localizer["Optional floor"]</small>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label class="form-label" asp-for="Input.MaximumFee">@_localizer["Maximum Fee"]</label>
+                                    <div class="input-group">
+                                        <div class="input-group-prepend">
+                                            <span class="input-group-text">$</span>
+                                        </div>
+                                        <input asp-for="Input.MaximumFee" type="number" step="0.01" class="form-control" placeholder="0.00" />
+                                    </div>
+                                    <small class="form-text text-muted">@_localizer["Optional ceiling"]</small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div id="panel-preview" class="panel">
+                <div class="panel-hdr">
+                    <h2>
+                        <i class="@(Settings.Theme.IconPrefix) fa-calculator mr-2"></i>
+                        @_localizer["Fee Calculator Preview"]
+                    </h2>
+                </div>
+                <div class="panel-container show">
+                    <div class="panel-content">
+                        <div class="row">
+                            <div class="col-4 text-center">
+                                <small class="text-muted d-block">$100</small>
+                                <span class="fs-xl fw-500 text-primary" id="preview100">$0.00</span>
+                            </div>
+                            <div class="col-4 text-center">
+                                <small class="text-muted d-block">$1,000</small>
+                                <span class="fs-xl fw-500 text-primary" id="preview1000">$0.00</span>
+                            </div>
+                            <div class="col-4 text-center">
+                                <small class="text-muted d-block">$10,000</small>
+                                <span class="fs-xl fw-500 text-primary" id="preview10000">$0.00</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-12">
+            <div class="btn-group float-right" role="group">
+                <button type="submit" name="action" value="save" class="btn btn-primary waves-effect waves-themed">
+                    <i class="@(Settings.Theme.IconPrefix) fa-save mr-1"></i>
+                    @_localizer["Save as Draft"]
+                </button>
+                <button type="submit" name="action" value="submit" class="btn btn-success waves-effect waves-themed">
+                    <i class="@(Settings.Theme.IconPrefix) fa-check mr-1"></i>
+                    @_localizer["Save & Submit for Approval"]
+                </button>
+                <a asp-page="/Config/FeeContracts" class="btn btn-secondary waves-effect waves-themed">
+                    <i class="@(Settings.Theme.IconPrefix) fa-times mr-1"></i>
+                    @_localizer["Cancel"]
+                </a>
+            </div>
+        </div>
+    </div>
+</form>
+
+@section ScriptsBlock {
+    <partial name="_ValidationScriptsPartial" />
+    <script>
+        var feeStructureSelect = document.getElementById('feeStructureSelect');
+        var fixedFeeField = document.getElementById('fixedFeeField');
+        var percentageFeeField = document.getElementById('percentageFeeField');
+        var tieredStructureField = document.getElementById('tieredStructureField');
+
+        var fixedFeeInput = document.querySelector('input[name="Input.FixedFee"]');
+        var percentageFeeInput = document.querySelector('input[name="Input.PercentageFee"]');
+        var minFeeInput = document.querySelector('input[name="Input.MinimumFee"]');
+        var maxFeeInput = document.querySelector('input[name="Input.MaximumFee"]');
+
+        function updateFieldVisibility() {
+            var feeStructure = parseInt(feeStructureSelect.value);
+            fixedFeeField.style.display = 'none';
+            percentageFeeField.style.display = 'none';
+            tieredStructureField.style.display = 'none';
+
+            switch (feeStructure) {
+                case @((int)FeeStructureType.Fixed):
+                    fixedFeeField.style.display = 'block';
+                    break;
+                case @((int)FeeStructureType.Percentage):
+                    percentageFeeField.style.display = 'block';
+                    break;
+                case @((int)FeeStructureType.Hybrid):
+                    fixedFeeField.style.display = 'block';
+                    percentageFeeField.style.display = 'block';
+                    break;
+                case @((int)FeeStructureType.Tiered):
+                    tieredStructureField.style.display = 'block';
+                    break;
+            }
+            updatePreview();
+        }
+
+        function calculateFee(amount) {
+            var feeStructure = parseInt(feeStructureSelect.value);
+            var fixed = parseFloat(fixedFeeInput.value) || 0;
+            var percentage = parseFloat(percentageFeeInput.value) || 0;
+            var minFee = parseFloat(minFeeInput.value) || 0;
+            var maxFee = parseFloat(maxFeeInput.value) || null;
+
+            var fee = 0;
+            switch (feeStructure) {
+                case @((int)FeeStructureType.Fixed):
+                    fee = fixed;
+                    break;
+                case @((int)FeeStructureType.Percentage):
+                    fee = amount * percentage;
+                    break;
+                case @((int)FeeStructureType.Hybrid):
+                    fee = fixed + (amount * percentage);
+                    break;
+                case @((int)FeeStructureType.Tiered):
+                    fee = 0;
+                    break;
+            }
+
+            if (minFee > 0 && fee < minFee) fee = minFee;
+            if (maxFee !== null && maxFee > 0 && fee > maxFee) fee = maxFee;
+            return fee.toFixed(2);
+        }
+
+        function updatePreview() {
+            document.getElementById('preview100').textContent = '$' + calculateFee(100);
+            document.getElementById('preview1000').textContent = '$' + calculateFee(1000);
+            document.getElementById('preview10000').textContent = '$' + calculateFee(10000);
+        }
+
+        feeStructureSelect.addEventListener('change', updateFieldVisibility);
+        fixedFeeInput.addEventListener('input', updatePreview);
+        percentageFeeInput.addEventListener('input', updatePreview);
+        minFeeInput.addEventListener('input', updatePreview);
+        maxFeeInput.addEventListener('input', updatePreview);
+
+        updateFieldVisibility();
+    </script>
+}

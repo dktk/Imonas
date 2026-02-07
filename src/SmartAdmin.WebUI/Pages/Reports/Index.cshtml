@@ -1,0 +1,573 @@
+﻿@page
+@using Application.Features.Reports.Queries
+@using Microsoft.AspNetCore.Mvc.Localization
+@model SmartAdmin.WebUI.Pages.Reports.IndexModel
+@inject IStringLocalizer<IndexModel> _localizer
+
+@{
+    ViewData["Title"] = "Transaction Reports";
+    ViewData["PageName"] = "reports_index";
+    ViewData["PreemptiveClass"] = "Default";
+
+    var dataUrl = Url.Page("/Reports/Index", "Data");
+    var exportUrl = Url.Page("/Reports/Index", "Export");
+}
+
+@section HeadBlock {
+    <link rel="stylesheet" media="screen, print" href="~/css/fa-solid.css">
+    <link rel="stylesheet" media="screen, print" href="~/css/datagrid/datatables/datatables.bundle.css">
+    <link rel="stylesheet" media="screen, print" href="~/css/formplugins/select2/select2.bundle.css">
+    <link rel="stylesheet" media="screen,print" href="~/lib/easyui/themes/insdep/easyui.css">
+    <style>
+        .filter-card {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border: none;
+        }
+        .filter-card .card-body {
+            background: rgba(255,255,255,0.95);
+            border-radius: 0.375rem;
+            margin: 2px;
+        }
+        .settlement-badge {
+            font-size: 0.75rem;
+            padding: 0.35em 0.65em;
+        }
+        .case-link {
+            color: #007bff;
+            text-decoration: none;
+        }
+        .case-link:hover {
+            text-decoration: underline;
+        }
+        .summary-card {
+            border-left: 4px solid;
+        }
+        .summary-card.settled {
+            border-left-color: #28a745;
+        }
+        .summary-card.unsettled {
+            border-left-color: #ffc107;
+        }
+        .summary-card.cases {
+            border-left-color: #dc3545;
+        }
+        .summary-card.total {
+            border-left-color: #17a2b8;
+        }
+    </style>
+}
+
+<div class="row mb-3">
+    <div class="col-12 d-flex justify-content-between align-items-center">
+        <div>
+            <h1 class="subheader-title">
+                <i class="subheader-icon @(Settings.Theme.IconPrefix) fa-file-alt"></i> @_localizer["Transaction Reports"]
+            </h1>
+            <small class="text-muted">@_localizer["View all transactions with settlement status and case information"]</small>
+        </div>
+        <div>
+            <button id="exportBtn" class="btn btn-success waves-effect waves-themed" disabled>
+                <i class="@(Settings.Theme.IconPrefix) fa-download mr-1"></i>
+                @_localizer["Export CSV"]
+            </button>
+        </div>
+    </div>
+</div>
+
+@if (Model.RunId.HasValue && Model.RunId.Value > 0)
+{
+    <div class="alert alert-info alert-dismissible fade show mb-3" role="alert">
+        <div class="d-flex align-items-center">
+            <i class="@(Settings.Theme.IconPrefix) fa-filter fa-2x mr-3"></i>
+            <div>
+                <strong>@_localizer["Filtered by Reconciliation Run"]</strong>
+                <span class="ml-2 badge badge-primary">Run #@Model.RunId</span>
+                @if (!string.IsNullOrEmpty(Model.RunName))
+                {
+                    <span class="ml-1">- @Model.RunName</span>
+                }
+                @if (Model.MatchStatus != MatchStatusFilter.All)
+                {
+                    <span class="ml-2 badge @(Model.MatchStatus == MatchStatusFilter.Matched ? "badge-success" : Model.MatchStatus == MatchStatusFilter.Unmatched ? "badge-danger" : "badge-warning")">
+                        @Model.MatchStatus.ToString()
+                    </span>
+                }
+            </div>
+            <a asp-page="/Runs/Details" asp-route-id="@Model.RunId" class="btn btn-sm btn-outline-info ml-auto mr-3">
+                <i class="@(Settings.Theme.IconPrefix) fa-arrow-left mr-1"></i>
+                @_localizer["Back to Run Details"]
+            </a>
+        </div>
+        <a href="/Reports" class="close" aria-label="Close" title="@_localizer["Clear filter"]">
+            <span aria-hidden="true"><i class="@(Settings.Theme.IconPrefix) fa-times"></i></span>
+        </a>
+    </div>
+}
+
+<!-- Summary Cards -->
+<div class="row mb-4" id="summaryCards" style="display: none;">
+    <div class="col-sm-6 col-xl-3">
+        <div class="card summary-card total mb-3">
+            <div class="card-body py-3">
+                <div class="d-flex align-items-center">
+                    <div class="flex-grow-1">
+                        <h6 class="text-muted mb-1">@_localizer["Total Transactions"]</h6>
+                        <h3 class="mb-0" id="totalCount">0</h3>
+                    </div>
+                    <div class="text-info">
+                        <i class="@(Settings.Theme.IconPrefix) fa-exchange-alt fa-2x opacity-50"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-sm-6 col-xl-3">
+        <div class="card summary-card settled mb-3">
+            <div class="card-body py-3">
+                <div class="d-flex align-items-center">
+                    <div class="flex-grow-1">
+                        <h6 class="text-muted mb-1">@_localizer["Settled"]</h6>
+                        <h3 class="mb-0" id="settledCount">0</h3>
+                    </div>
+                    <div class="text-success">
+                        <i class="@(Settings.Theme.IconPrefix) fa-check-circle fa-2x opacity-50"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-sm-6 col-xl-3">
+        <div class="card summary-card unsettled mb-3">
+            <div class="card-body py-3">
+                <div class="d-flex align-items-center">
+                    <div class="flex-grow-1">
+                        <h6 class="text-muted mb-1">@_localizer["Unsettled"]</h6>
+                        <h3 class="mb-0" id="unsettledCount">0</h3>
+                    </div>
+                    <div class="text-warning">
+                        <i class="@(Settings.Theme.IconPrefix) fa-clock fa-2x opacity-50"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-sm-6 col-xl-3">
+        <div class="card summary-card cases mb-3">
+            <div class="card-body py-3">
+                <div class="d-flex align-items-center">
+                    <div class="flex-grow-1">
+                        <h6 class="text-muted mb-1">@_localizer["With Cases"]</h6>
+                        <h3 class="mb-0" id="casesCount">0</h3>
+                    </div>
+                    <div class="text-danger">
+                        <i class="@(Settings.Theme.IconPrefix) fa-exclamation-triangle fa-2x opacity-50"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Filters Panel -->
+<div class="row mb-4">
+    <div class="col-xl-12">
+        <div class="card">
+            <div class="card-body">
+                <form id="reportForm" class="needs-validation" novalidate>
+                    @Html.AntiForgeryToken()
+                    <input type="hidden" id="runId" value="@(Model.RunId?.ToString() ?? "")" />
+                    <input type="hidden" id="matchStatus" value="@((int)Model.MatchStatus)" />
+                    <div class="row">
+                        <div class="col-md-3">
+                            <div class="form-group mb-2">
+                                <label class="form-label font-weight-bold">
+                                    <i class="@(Settings.Theme.IconPrefix) fa-building mr-1"></i>
+                                    @_localizer["PSP"]
+                                </label>
+                                <select asp-for="SelectedPspId" asp-items="Model.Psps" class="form-control select2" id="pspSelector">
+                                    <option value="">@_localizer["All PSPs"]</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="col-md-2">
+                            <div class="form-group mb-2">
+                                <label class="form-label font-weight-bold">
+                                    <i class="@(Settings.Theme.IconPrefix) fa-calendar mr-1"></i>
+                                    @_localizer["Start Date"]
+                                </label>
+                                <input type="date" asp-for="StartDate" class="form-control" id="startDate" />
+                            </div>
+                        </div>
+                        <div class="col-md-2">
+                            <div class="form-group mb-2">
+                                <label class="form-label font-weight-bold">
+                                    <i class="@(Settings.Theme.IconPrefix) fa-calendar mr-1"></i>
+                                    @_localizer["End Date"]
+                                </label>
+                                <input type="date" asp-for="EndDate" class="form-control" id="endDate" />
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="form-group mb-2">
+                                <label class="form-label font-weight-bold">
+                                    <i class="@(Settings.Theme.IconPrefix) fa-filter mr-1"></i>
+                                    @_localizer["Settlement Status"]
+                                </label>
+                                <select asp-for="SettlementFilter" class="form-control select2" id="settlementFilter">
+                                    <option value="@((int)SettlementFilter.All)">@_localizer["All Transactions"]</option>
+                                    <option value="@((int)SettlementFilter.Settled)">@_localizer["Settled Only"]</option>
+                                    <option value="@((int)SettlementFilter.Unsettled)">@_localizer["Unsettled Only"]</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="col-md-2 d-flex align-items-end">
+                            <div class="form-group mb-2 w-100">
+                                <button type="submit" id="searchBtn" class="btn btn-primary btn-block waves-effect waves-themed">
+                                    <i class="@(Settings.Theme.IconPrefix) fa-search mr-1"></i>
+                                    @_localizer["Search"]
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Data Grid Panel -->
+<div class="row">
+    <div class="col-xl-12">
+        <div id="panel-report" class="panel">
+            <div class="panel-hdr">
+                <h2>
+                    <i class="@(Settings.Theme.IconPrefix) fa-table mr-2"></i>
+                    @_localizer["Transactions"]
+                    <span class="fw-300" id="resultCount"></span>
+                </h2>
+                <div class="panel-toolbar">
+                    <button class="btn btn-panel waves-effect waves-themed" data-action="panel-collapse" data-toggle="tooltip" data-original-title="Collapse"></button>
+                    <button class="btn btn-panel waves-effect waves-themed" data-action="panel-fullscreen" data-toggle="tooltip" data-original-title="Fullscreen"></button>
+                </div>
+            </div>
+            <div class="panel-container show">
+                <div class="panel-content p-0">
+                    <table id="reportDataGrid"></table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section ScriptsBlock {
+    <script type="text/javascript" src="~/lib/easyui/jquery.easyui.min.js" asp-append-version="true"></script>
+    <script type="text/javascript" src="~/lib/easyui/plugins/datagrid-filter.js" asp-append-version="true"></script>
+    <script type="text/javascript" src="~/lib/easyui/jquery.easyui.component.js" asp-append-version="true"></script>
+    <script>jQuery.fn.tooltip = bootstrapTooltip;</script>
+    <script src="~/lib/axios/dist/axios.js"></script>
+    <script src="~/js/formplugins/select2/select2.bundle.js"></script>
+
+    <script>
+        $(function () {
+            'use strict';
+
+            var $dg;
+            var currentData = [];
+
+            // Initialize Select2
+            $('.select2').select2({
+                placeholder: '@_localizer["All PSPs"]',
+                allowClear: true
+            });
+
+            // Initialize DataGrid
+            $dg = $('#reportDataGrid').datagrid({
+                fit: false,
+                fitColumns: false,
+                height: (window.innerHeight - 450),
+                striped: true,
+                rownumbers: true,
+                pagination: true,
+                pageSize: 25,
+                pageList: [10, 25, 50, 100],
+                sortName: 'TxDate',
+                sortOrder: 'desc',
+                remoteSort: true,
+                singleSelect: true,
+                columns: [[
+                    {
+                        field: 'txDate',
+                        title: '@_localizer["Date"]',
+                        sortable: true,
+                        width: 150,
+                        formatter: function(value) {
+                            if (value) {
+                                return new Date(value).toLocaleString();
+                            }
+                            return '';
+                        }
+                    },
+                    {
+                        field: 'pspName',
+                        title: '@_localizer["PSP"]',
+                        sortable: true,
+                        width: 120
+                    },
+                    {
+                        field: 'txId',
+                        title: '@_localizer["Transaction ID"]',
+                        sortable: true,
+                        width: 150
+                    },
+                    {
+                        field: 'playerId',
+                        title: '@_localizer["Player ID"]',
+                        sortable: true,
+                        width: 150
+                    },
+                    {
+                        field: 'amount',
+                        title: '@_localizer["Amount"]',
+                        sortable: true,
+                        width: 100,
+                        align: 'right',
+                        formatter: function(value, row) {
+                            if (value != null) {
+                                return value.toFixed(2) + ' ' + (row.currencyCode || '');
+                            }
+                            return '';
+                        }
+                    },
+                    {
+                        field: 'status',
+                        title: '@_localizer["Status"]',
+                        sortable: true,
+                        width: 100,
+                        formatter: function(value) {
+                            var cls = value === 'completed' ? 'badge-success' : 'badge-secondary';
+                            return '<span class="badge ' + cls + '">' + value + '</span>';
+                        }
+                    },
+                    {
+                        field: 'action',
+                        title: '@_localizer["Action"]',
+                        sortable: true,
+                        width: 80
+                    },
+                    {
+                        field: 'settlementStatusDisplay',
+                        title: '@_localizer["Settlement"]',
+                        sortable: false,
+                        width: 120,
+                        formatter: function(value, row) {
+                            if (row.isSettled) {
+                                var cls = 'badge-success';
+                                if (row.settlementStatus === 2) cls = 'badge-warning'; // Pending
+                                if (row.settlementStatus === 0) cls = 'badge-danger'; // Failed
+                                return '<span class="badge settlement-badge ' + cls + '">' + value + '</span>';
+                            }
+                            return '<span class="badge settlement-badge badge-secondary">Not Settled</span>';
+                        }
+                    },
+                    {
+                        field: 'totalFees',
+                        title: '@_localizer["Fees"]',
+                        sortable: false,
+                        width: 80,
+                        align: 'right',
+                        formatter: function(value) {
+                            return value != null ? value.toFixed(2) : '-';
+                        }
+                    },
+                    {
+                        field: 'netSettlement',
+                        title: '@_localizer["Net"]',
+                        sortable: false,
+                        width: 80,
+                        align: 'right',
+                        formatter: function(value) {
+                            return value != null ? value.toFixed(2) : '-';
+                        }
+                    },
+                    {
+                        field: 'caseNumber',
+                        title: '@_localizer["Case"]',
+                        sortable: false,
+                        width: 120,
+                        formatter: function(value, row) {
+                            if (value) {
+                                var statusCls = 'badge-info';
+                                if (row.caseStatus === 'Resolved') statusCls = 'badge-success';
+                                if (row.caseStatus === 'Open') statusCls = 'badge-warning';
+                                return '<a href="/Cases/Details?id=' + row.caseId + '" class="case-link">' + value + '</a> ' +
+                                       '<span class="badge ' + statusCls + '">' + row.caseStatus + '</span>';
+                            }
+                            return '<span class="text-muted">-</span>';
+                        }
+                    },
+                    {
+                        field: 'brandId',
+                        title: '@_localizer["Brand"]',
+                        sortable: true,
+                        width: 100
+                    }
+                ]],
+                onBeforeLoad: function(param) {
+                    // Don't load on init
+                    if (!param || !param.startDate) {
+                        return false;
+                    }
+                },
+                loader: function(param, success, error) {
+                    var opts = $dg.datagrid('options');
+
+                    var queryParams = {
+                        startDate: $('#startDate').val(),
+                        endDate: $('#endDate').val(),
+                        pspId: $('#pspSelector').val() || null,
+                        runId: $('#runId').val() || null,
+                        settlementFilter: parseInt($('#settlementFilter').val()) || 0,
+                        matchStatus: parseInt($('#matchStatus').val()) || 0,
+                        page: param.page || 1,
+                        rows: param.rows || 25,
+                        sort: param.sort || 'TxDate',
+                        order: param.order || 'desc'
+                    };
+
+                    axios.get('@dataUrl', { params: queryParams })
+                        .then(function(res) {
+                            if (res.data && res.data.succeeded && res.data.data) {
+                                currentData = res.data.data.rows || [];
+                                updateSummary(currentData, res.data.data.total);
+                                success(res.data.data);
+                            } else {
+                                error();
+                            }
+                        })
+                        .catch(function(err) {
+                            toastr.error('@_localizer["Failed to load data"]: ' + err.message);
+                            error();
+                        });
+                }
+            });
+
+            // Form submit handler
+            $('#reportForm').on('submit', function(e) {
+                e.preventDefault();
+                loadData();
+            });
+
+            function loadData() {
+                $dg.datagrid('load', {
+                    startDate: $('#startDate').val()
+                });
+                $('#exportBtn').prop('disabled', false);
+            }
+
+            function updateSummary(data, total) {
+                var settled = 0;
+                var unsettled = 0;
+                var withCases = 0;
+
+                data.forEach(function(item) {
+                    if (item.isSettled) {
+                        settled++;
+                    } else {
+                        unsettled++;
+                    }
+                    if (item.caseNumber) {
+                        withCases++;
+                    }
+                });
+
+                // Show summary cards
+                $('#summaryCards').show();
+                $('#totalCount').text(total.toLocaleString()).attr('data-total', total);
+                $('#settledCount').text(settled.toLocaleString() + (total > data.length ? '+' : ''));
+                $('#unsettledCount').text(unsettled.toLocaleString() + (total > data.length ? '+' : ''));
+                $('#casesCount').text(withCases.toLocaleString() + (total > data.length ? '+' : ''));
+                $('#resultCount').html('<i>(' + total.toLocaleString() + ' @_localizer["total"])</i>');
+
+                // Enable export button when we have data
+                if (total > 0) {
+                    $('#exportBtn').prop('disabled', false);
+                }
+            }
+
+            // Export button handler
+            $('#exportBtn').on('click', function() {
+                var startDate = $('#startDate').val();
+                var endDate = $('#endDate').val();
+
+                // Validate dates
+                if (!startDate || !endDate) {
+                    toastr.warning('@_localizer["Please select a date range before exporting."]');
+                    return;
+                }
+
+                // Check if we have data to export
+                var totalCount = parseInt($('#totalCount').attr('data-total')) || 0;
+                if (totalCount === 0) {
+                    toastr.warning('@_localizer["No data to export. Please search for transactions first."]');
+                    return;
+                }
+
+                // Warn if exporting large dataset
+                if (totalCount > 10000) {
+                    if (!confirm('@_localizer["You are about to export"] ' + totalCount.toLocaleString() + ' @_localizer["records. This may take some time. Continue?"]')) {
+                        return;
+                    }
+                }
+
+                // Show loading state
+                var $btn = $(this);
+                var originalHtml = $btn.html();
+                $btn.html('<i class="@(Settings.Theme.IconPrefix) fa-spinner fa-spin mr-1"></i> @_localizer["Exporting..."]').prop('disabled', true);
+
+                // Build export URL
+                var params = new URLSearchParams({
+                    startDate: startDate,
+                    endDate: endDate,
+                    pspId: $('#pspSelector').val() || '',
+                    runId: $('#runId').val() || '',
+                    settlementFilter: $('#settlementFilter').val() || '0',
+                    matchStatus: $('#matchStatus').val() || '0'
+                });
+
+                // Create a hidden iframe to trigger download
+                var iframe = document.createElement('iframe');
+                iframe.style.display = 'none';
+                iframe.src = '@exportUrl?' + params.toString();
+                document.body.appendChild(iframe);
+
+                // Reset button after a delay (download should have started)
+                setTimeout(function() {
+                    $btn.html(originalHtml).prop('disabled', false);
+                    toastr.success('@_localizer["Export started. Check your downloads folder."]');
+                    // Clean up iframe
+                    setTimeout(function() {
+                        document.body.removeChild(iframe);
+                    }, 1000);
+                }, 2000);
+            });
+
+            // Window resize handler
+            $(window).on('resize', function() {
+                $dg.datagrid('resize', {
+                    height: (window.innerHeight - 450)
+                });
+            });
+
+            // Auto-load if RunId is specified (coming from Run Details page)
+            @if (Model.RunId.HasValue && Model.RunId.Value > 0)
+            {
+                <text>
+            // Automatically load data when filtered by run
+            setTimeout(function() {
+                loadData();
+            }, 100);
+                </text>
+            }
+        });
+    </script>
+}

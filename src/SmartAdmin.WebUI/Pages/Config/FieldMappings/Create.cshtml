@@ -1,0 +1,1027 @@
+﻿@page
+@using Microsoft.AspNetCore.Mvc.Localization
+@model SmartAdmin.WebUI.Pages.Config.FieldMappings.CreateModel
+@inject IStringLocalizer<CreateModel> _localizer
+
+@{
+    ViewData["Title"] = "Create Field Mapping";
+    ViewData["PageName"] = "config_fieldmappings_create";
+}
+
+@section HeadBlock {
+    <link rel="stylesheet" media="screen, print" href="~/css/fa-solid.css">
+    <style>
+        /* Drag and Drop Styles */
+        .csv-column {
+            padding: 0.5rem 0.75rem;
+            margin: 0.25rem;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border-radius: 0.375rem;
+            cursor: grab;
+            display: inline-flex;
+            align-items: center;
+            font-size: 0.875rem;
+            transition: all 0.2s ease;
+            user-select: none;
+        }
+        .csv-column:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+        }
+        .csv-column.dragging {
+            opacity: 0.5;
+            cursor: grabbing;
+        }
+        .csv-column.mapped {
+            background: linear-gradient(135deg, #a8edea 0%, #fed6e3 100%);
+            color: #333;
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+        .csv-column i {
+            margin-right: 0.5rem;
+        }
+
+        .target-field {
+            padding: 0.75rem 1rem;
+            margin: 0.375rem;
+            background: #f8f9fa;
+            border: 2px dashed #dee2e6;
+            border-radius: 0.5rem;
+            transition: all 0.2s ease;
+            min-height: 50px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        .target-field:hover {
+            border-color: #667eea;
+            background: #f0f4ff;
+        }
+        .target-field.drag-over {
+            border-color: #667eea;
+            border-style: solid;
+            background: #e8edff;
+            transform: scale(1.02);
+        }
+        .target-field.has-mapping {
+            border-style: solid;
+            border-color: #28a745;
+            background: #e8f5e9;
+        }
+        .target-field-name {
+            font-weight: 600;
+            color: #495057;
+        }
+        .target-field-group {
+            font-size: 0.7rem;
+            color: #6c757d;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        .target-field .mapping-info {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        .target-field .mapped-source {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 0.25rem 0.5rem;
+            border-radius: 0.25rem;
+            font-size: 0.8rem;
+        }
+        .target-field .arrow {
+            color: #28a745;
+            font-size: 1.2rem;
+        }
+        .target-field .remove-mapping {
+            color: #dc3545;
+            cursor: pointer;
+            margin-left: 0.5rem;
+            opacity: 0.7;
+        }
+        .target-field .remove-mapping:hover {
+            opacity: 1;
+        }
+
+        .drop-zone-placeholder {
+            color: #adb5bd;
+            font-size: 0.875rem;
+        }
+
+        #csvHeadersContainer {
+            min-height: 100px;
+            padding: 1rem;
+            background: #fafbfc;
+            border-radius: 0.5rem;
+            border: 1px dashed #dee2e6;
+        }
+        #csvHeadersContainer.empty {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .file-source-tabs .nav-link {
+            border-radius: 0.5rem 0.5rem 0 0;
+        }
+        .file-source-tabs .nav-link.active {
+            background: #667eea;
+            color: white;
+            border-color: #667eea;
+        }
+
+        .mapping-count-badge {
+            font-size: 1.5rem;
+            font-weight: 700;
+        }
+
+        #columnSearchInput {
+            border-left: none;
+        }
+        #columnSearchInput:focus {
+            border-color: #ced4da;
+            box-shadow: none;
+        }
+        #columnSearchWrapper .input-group-text {
+            border-right: none;
+        }
+        #columnFilterStatus {
+            font-size: 0.75rem;
+            margin-top: 0.25rem;
+            display: block;
+        }
+    </style>
+}
+
+<div class="row mb-3">
+    <div class="col-12 d-flex justify-content-between align-items-center">
+        <div>
+            <h1 class="subheader-title">
+                <i class="subheader-icon @(Settings.Theme.IconPrefix) fa-plus-circle"></i> @_localizer["Create Field Mapping"]
+            </h1>
+            <small class="text-muted">@_localizer["Define source-to-target field transformation using drag and drop"]</small>
+        </div>
+        <a asp-page="/Config/FieldMappings" class="btn btn-secondary waves-effect waves-themed">
+            <i class="@(Settings.Theme.IconPrefix) fa-arrow-left mr-1"></i>
+            @_localizer["Back"]
+        </a>
+    </div>
+</div>
+
+@if (!string.IsNullOrEmpty(Model.ErrorMessage))
+{
+    <div class="alert alert-danger alert-dismissible fade show" role="alert">
+        <i class="@(Settings.Theme.IconPrefix) fa-exclamation-triangle mr-2"></i>
+        @Model.ErrorMessage
+        <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+            <span aria-hidden="true">&times;</span>
+        </button>
+    </div>
+}
+
+<!-- Tabs for Single vs Bulk Mapping -->
+<ul class="nav nav-tabs" role="tablist">
+    <li class="nav-item">
+        <a class="nav-link active" data-toggle="tab" href="#bulk-mapping" role="tab">
+            <i class="@(Settings.Theme.IconPrefix) fa-layer-group mr-1"></i>
+            @_localizer["Bulk Mapping from CSV"]
+        </a>
+    </li>
+    <li class="nav-item">
+        <a class="nav-link" data-toggle="tab" href="#single-mapping" role="tab">
+            <i class="@(Settings.Theme.IconPrefix) fa-plus mr-1"></i>
+            @_localizer["Single Mapping"]
+        </a>
+    </li>
+</ul>
+
+<div class="tab-content p-3 border border-top-0 rounded-bottom bg-white mb-4">
+    <!-- Bulk Mapping Tab -->
+    <div class="tab-pane fade show active" id="bulk-mapping" role="tabpanel">
+        <form method="post" asp-page-handler="Bulk" id="bulkMappingForm">
+            @Html.AntiForgeryToken()
+            <input type="hidden" asp-for="BulkInput.MappingsJson" id="mappingsJsonInput" />
+
+            <div class="row">
+                <!-- Left Column: Source CSV -->
+                <div class="col-lg-5">
+                    <div class="panel">
+                        <div class="panel-hdr bg-primary-600 text-white">
+                            <h2 class="text-white">
+                                <i class="@(Settings.Theme.IconPrefix) fa-file-csv mr-2"></i>
+                                @_localizer["Source: CSV Columns"]
+                            </h2>
+                        </div>
+                        <div class="panel-container show">
+                            <div class="panel-content">
+                                <!-- File Source Selection -->
+                                <ul class="nav nav-tabs file-source-tabs mb-3" role="tablist">
+                                    <li class="nav-item">
+                                        <a class="nav-link active" data-toggle="tab" href="#upload-file" role="tab">
+                                            <i class="@(Settings.Theme.IconPrefix) fa-upload mr-1"></i>
+                                            @_localizer["Upload File"]
+                                        </a>
+                                    </li>
+                                    <li class="nav-item">
+                                        <a class="nav-link" data-toggle="tab" href="#existing-file" role="tab">
+                                            <i class="@(Settings.Theme.IconPrefix) fa-folder-open mr-1"></i>
+                                            @_localizer["Existing File"]
+                                        </a>
+                                    </li>
+                                </ul>
+
+                                <div class="tab-content">
+                                    <div class="tab-pane fade show active" id="upload-file" role="tabpanel">
+                                        <div class="custom-file mb-3">
+                                            <input type="file" class="custom-file-input" id="csvFileInput" accept=".csv">
+                                            <label class="custom-file-label" for="csvFileInput">@_localizer["Choose CSV file..."]</label>
+                                        </div>
+                                    </div>
+                                    <div class="tab-pane fade" id="existing-file" role="tabpanel">
+                                        <select id="existingFileSelect" class="form-control select2">
+                                            <option value="">-- @_localizer["Select an uploaded file"] --</option>
+                                            @foreach (var file in Model.UploadedFiles)
+                                            {
+                                                <option value="@file.Id">@file.FileName (@file.PspName)</option>
+                                            }
+                                        </select>
+                                    </div>
+                                </div>
+
+                                <div class="d-flex justify-content-between align-items-center mb-2 mt-3">
+                                    <span class="text-muted small">
+                                        <i class="@(Settings.Theme.IconPrefix) fa-info-circle mr-1"></i>
+                                        @_localizer["Drag columns to target fields on the right"]
+                                    </span>
+                                    <span id="loadedFileName" class="badge badge-info" style="display: none;"></span>
+                                </div>
+
+                                <!-- Search box for filtering columns -->
+                                <div id="columnSearchWrapper" class="mb-2" style="display: none;">
+                                    <div class="input-group input-group-sm">
+                                        <div class="input-group-prepend">
+                                            <span class="input-group-text bg-white">
+                                                <i class="@(Settings.Theme.IconPrefix) fa-search text-muted"></i>
+                                            </span>
+                                        </div>
+                                        <input type="text" id="columnSearchInput" class="form-control" placeholder="@_localizer["Search columns..."]" autocomplete="off">
+                                        <div class="input-group-append">
+                                            <button type="button" id="clearColumnSearch" class="btn btn-outline-secondary" style="display: none;">
+                                                <i class="@(Settings.Theme.IconPrefix) fa-times"></i>
+                                            </button>
+                                        </div>
+                                    </div>
+                                    <small class="text-muted" id="columnFilterStatus"></small>
+                                </div>
+
+                                <div id="csvHeadersContainer" class="empty">
+                                    <span class="text-muted">
+                                        <i class="@(Settings.Theme.IconPrefix) fa-cloud-upload-alt fa-2x d-block mb-2"></i>
+                                        @_localizer["Upload or select a CSV file to see columns"]
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Right Column: Target Fields -->
+                <div class="col-lg-7">
+                    <div class="panel">
+                        <div class="panel-hdr bg-success-600 text-white">
+                            <h2 class="text-white">
+                                <i class="@(Settings.Theme.IconPrefix) fa-bullseye mr-2"></i>
+                                @_localizer["Target: Canonical Fields"]
+                            </h2>
+                        </div>
+                        <div class="panel-container show">
+                            <div class="panel-content">
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <h6 class="text-muted mb-2">@_localizer["Transaction Identifiers"]</h6>
+                                        <div class="target-field" data-target="TransactionId" data-group="Identifiers">
+                                            <div>
+                                                <div class="target-field-name">TransactionId</div>
+                                                <div class="target-field-group">Primary identifier</div>
+                                            </div>
+                                            <span class="drop-zone-placeholder">@_localizer["Drop here"]</span>
+                                        </div>
+                                        <div class="target-field" data-target="ExternalTransactionId" data-group="Identifiers">
+                                            <div>
+                                                <div class="target-field-name">ExternalTransactionId</div>
+                                                <div class="target-field-group">External reference</div>
+                                            </div>
+                                            <span class="drop-zone-placeholder">@_localizer["Drop here"]</span>
+                                        </div>
+                                        <div class="target-field" data-target="Reference" data-group="Identifiers">
+                                            <div>
+                                                <div class="target-field-name">Reference</div>
+                                                <div class="target-field-group">Additional reference</div>
+                                            </div>
+                                            <span class="drop-zone-placeholder">@_localizer["Drop here"]</span>
+                                        </div>
+                                        <div class="target-field" data-target="AuthCode" data-group="Identifiers">
+                                            <div>
+                                                <div class="target-field-name">AuthCode</div>
+                                                <div class="target-field-group">Authorization code</div>
+                                            </div>
+                                            <span class="drop-zone-placeholder">@_localizer["Drop here"]</span>
+                                        </div>
+
+                                        <h6 class="text-muted mb-2 mt-4">@_localizer["Amounts & Currency"]</h6>
+                                        <div class="target-field" data-target="Amount" data-group="Amounts">
+                                            <div>
+                                                <div class="target-field-name">Amount</div>
+                                                <div class="target-field-group">Transaction amount</div>
+                                            </div>
+                                            <span class="drop-zone-placeholder">@_localizer["Drop here"]</span>
+                                        </div>
+                                        <div class="target-field" data-target="Currency" data-group="Amounts">
+                                            <div>
+                                                <div class="target-field-name">Currency</div>
+                                                <div class="target-field-group">ISO currency code</div>
+                                            </div>
+                                            <span class="drop-zone-placeholder">@_localizer["Drop here"]</span>
+                                        </div>
+                                        <div class="target-field" data-target="FeeAmount" data-group="Amounts">
+                                            <div>
+                                                <div class="target-field-name">FeeAmount</div>
+                                                <div class="target-field-group">Processing fee</div>
+                                            </div>
+                                            <span class="drop-zone-placeholder">@_localizer["Drop here"]</span>
+                                        </div>
+                                        <div class="target-field" data-target="NetAmount" data-group="Amounts">
+                                            <div>
+                                                <div class="target-field-name">NetAmount</div>
+                                                <div class="target-field-group">After fees</div>
+                                            </div>
+                                            <span class="drop-zone-placeholder">@_localizer["Drop here"]</span>
+                                        </div>
+                                    </div>
+
+                                    <div class="col-md-6">
+                                        <h6 class="text-muted mb-2">@_localizer["Dates & Times"]</h6>
+                                        <div class="target-field" data-target="TransactionDate" data-group="Dates">
+                                            <div>
+                                                <div class="target-field-name">TransactionDate</div>
+                                                <div class="target-field-group">When transaction occurred</div>
+                                            </div>
+                                            <span class="drop-zone-placeholder">@_localizer["Drop here"]</span>
+                                        </div>
+                                        <div class="target-field" data-target="SettlementDate" data-group="Dates">
+                                            <div>
+                                                <div class="target-field-name">SettlementDate</div>
+                                                <div class="target-field-group">When settled</div>
+                                            </div>
+                                            <span class="drop-zone-placeholder">@_localizer["Drop here"]</span>
+                                        </div>
+                                        <div class="target-field" data-target="ProcessedDate" data-group="Dates">
+                                            <div>
+                                                <div class="target-field-name">ProcessedDate</div>
+                                                <div class="target-field-group">Processing timestamp</div>
+                                            </div>
+                                            <span class="drop-zone-placeholder">@_localizer["Drop here"]</span>
+                                        </div>
+
+                                        <h6 class="text-muted mb-2 mt-4">@_localizer["Status & Type"]</h6>
+                                        <div class="target-field" data-target="Status" data-group="Status">
+                                            <div>
+                                                <div class="target-field-name">Status</div>
+                                                <div class="target-field-group">Transaction status</div>
+                                            </div>
+                                            <span class="drop-zone-placeholder">@_localizer["Drop here"]</span>
+                                        </div>
+                                        <div class="target-field" data-target="PaymentMethod" data-group="Status">
+                                            <div>
+                                                <div class="target-field-name">PaymentMethod</div>
+                                                <div class="target-field-group">Card, Bank, Wallet</div>
+                                            </div>
+                                            <span class="drop-zone-placeholder">@_localizer["Drop here"]</span>
+                                        </div>
+                                        <div class="target-field" data-target="TransactionType" data-group="Status">
+                                            <div>
+                                                <div class="target-field-name">TransactionType</div>
+                                                <div class="target-field-group">Sale, Refund, etc.</div>
+                                            </div>
+                                            <span class="drop-zone-placeholder">@_localizer["Drop here"]</span>
+                                        </div>
+
+                                        <h6 class="text-muted mb-2 mt-4">@_localizer["Other"]</h6>
+                                        <div class="target-field" data-target="CustomerId" data-group="Other">
+                                            <div>
+                                                <div class="target-field-name">CustomerId</div>
+                                                <div class="target-field-group">Customer identifier</div>
+                                            </div>
+                                            <span class="drop-zone-placeholder">@_localizer["Drop here"]</span>
+                                        </div>
+                                        <div class="target-field" data-target="MerchantId" data-group="Other">
+                                            <div>
+                                                <div class="target-field-name">MerchantId</div>
+                                                <div class="target-field-group">Merchant identifier</div>
+                                            </div>
+                                            <span class="drop-zone-placeholder">@_localizer["Drop here"]</span>
+                                        </div>
+                                        <div class="target-field" data-target="Description" data-group="Other">
+                                            <div>
+                                                <div class="target-field-name">Description</div>
+                                                <div class="target-field-group">Transaction description</div>
+                                            </div>
+                                            <span class="drop-zone-placeholder">@_localizer["Drop here"]</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Mapped Fields Section -->
+            <div class="panel" id="mappedFieldsPanel" style="display: none;">
+                <div class="panel-hdr">
+                    <h2>
+                        <i class="@(Settings.Theme.IconPrefix) fa-link mr-2"></i>
+                        @_localizer["Mapped Fields"]
+                        <span class="badge badge-success ml-2" id="mappingCount">0</span>
+                    </h2>
+                    <div class="panel-toolbar">
+                        <button type="button" class="btn btn-sm btn-outline-danger" id="clearAllMappings">
+                            <i class="@(Settings.Theme.IconPrefix) fa-trash mr-1"></i>
+                            @_localizer["Clear All"]
+                        </button>
+                    </div>
+                </div>
+                <div class="panel-container show">
+                    <div class="panel-content">
+                        <div class="table-responsive">
+                            <table class="table table-hover mb-0">
+                                <thead>
+                                    <tr>
+                                        <th style="width: 25%;">@_localizer["Source Field (CSV)"]</th>
+                                        <th style="width: 5%;"></th>
+                                        <th style="width: 25%;">@_localizer["Target Field"]</th>
+                                        <th>@_localizer["Transform Expression"] <small class="text-muted">(@_localizer["Optional"])</small></th>
+                                        <th style="width: 5%;"></th>
+                                    </tr>
+                                </thead>
+                                <tbody id="mappingsTableBody">
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Settings Row -->
+            <div class="row">
+                <div class="col-lg-8">
+                    <div class="panel">
+                        <div class="panel-hdr">
+                            <h2>
+                                <i class="@(Settings.Theme.IconPrefix) fa-cog mr-2"></i>
+                                @_localizer["Mapping Settings"]
+                            </h2>
+                        </div>
+                        <div class="panel-container show">
+                            <div class="panel-content">
+                                <div class="row">
+                                    <div class="col-md-4">
+                                        <div class="form-group">
+                                            <label class="form-label" asp-for="BulkInput.PspId">@_localizer["PSP Profile"] <span class="text-danger">*</span></label>
+                                            <select asp-for="BulkInput.PspId" class="form-control select2" required id="bulkPspSelect">
+                                                <option value="">-- @_localizer["Select PSP"] --</option>
+                                                @foreach (var profile in Model.PspProfiles)
+                                                {
+                                                    <option value="@profile.Id">@profile.Name (@profile.Code)</option>
+                                                }
+                                            </select>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-2">
+                                        <div class="form-group">
+                                            <label class="form-label" asp-for="BulkInput.Version">@_localizer["Version"] <span class="text-danger">*</span></label>
+                                            <input asp-for="BulkInput.Version" class="form-control" required />
+                                        </div>
+                                    </div>
+                                    <div class="col-md-3">
+                                        <div class="form-group">
+                                            <label class="form-label" asp-for="BulkInput.EffectiveFrom">@_localizer["Effective From"] <span class="text-danger">*</span></label>
+                                            <input asp-for="BulkInput.EffectiveFrom" type="date" class="form-control" required />
+                                        </div>
+                                    </div>
+                                    <div class="col-md-3">
+                                        <div class="form-group">
+                                            <label class="form-label" asp-for="BulkInput.EffectiveTo">@_localizer["Effective To"]</label>
+                                            <input asp-for="BulkInput.EffectiveTo" type="date" class="form-control" />
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="custom-control custom-checkbox">
+                                    <input asp-for="BulkInput.IsActive" type="checkbox" class="custom-control-input" id="bulkIsActiveCheck" checked />
+                                    <label class="custom-control-label" for="bulkIsActiveCheck">@_localizer["Active - Use these mappings during processing"]</label>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-lg-4">
+                    <div class="panel h-100">
+                        <div class="panel-container show h-100">
+                            <div class="panel-content d-flex flex-column justify-content-center align-items-center text-center h-100">
+                                <div class="mapping-count-badge text-primary" id="mappingCountLarge">0</div>
+                                <div class="text-muted mb-3">@_localizer["mappings defined"]</div>
+                                <button type="submit" class="btn btn-success btn-lg waves-effect waves-themed" id="saveBulkMappings" disabled>
+                                    <i class="@(Settings.Theme.IconPrefix) fa-save mr-2"></i>
+                                    @_localizer["Save All Mappings"]
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </form>
+    </div>
+
+    <!-- Single Mapping Tab -->
+    <div class="tab-pane fade" id="single-mapping" role="tabpanel">
+        <form method="post" class="needs-validation" novalidate>
+            @Html.AntiForgeryToken()
+
+            <div class="row">
+                <div class="col-xl-6">
+                    <div id="panel-mapping" class="panel">
+                        <div class="panel-hdr">
+                            <h2>
+                                <i class="@(Settings.Theme.IconPrefix) fa-cog mr-2"></i>
+                                @_localizer["Mapping Configuration"]
+                            </h2>
+                        </div>
+                        <div class="panel-container show">
+                            <div class="panel-content">
+                                <div class="form-group">
+                                    <label class="form-label" asp-for="Input.PspId">@_localizer["PSP Profile"] <span class="text-danger">*</span></label>
+                                    <select asp-for="Input.PspId" class="form-control select2" required>
+                                        <option value="">-- @_localizer["Select PSP Profile"] --</option>
+                                        @foreach (var profile in Model.PspProfiles)
+                                        {
+                                            <option value="@profile.Id">@profile.Name (@profile.Code)</option>
+                                        }
+                                    </select>
+                                    <span asp-validation-for="Input.PspId" class="invalid-feedback"></span>
+                                </div>
+
+                                <div class="form-group">
+                                    <label class="form-label" asp-for="Input.SourceField">@_localizer["Source Field"] <span class="text-danger">*</span></label>
+                                    <input asp-for="Input.SourceField" class="form-control" required placeholder="e.g., transaction_id" />
+                                    <small class="form-text text-muted">@_localizer["The field name as it appears in the source file"]</small>
+                                    <span asp-validation-for="Input.SourceField" class="invalid-feedback"></span>
+                                </div>
+
+                                <div class="form-group">
+                                    <label class="form-label" asp-for="Input.TargetField">@_localizer["Target Field"] <span class="text-danger">*</span></label>
+                                    <select asp-for="Input.TargetField" class="form-control select2" required>
+                                        <option value="">-- @_localizer["Select Target Field"] --</option>
+                                        <optgroup label="@_localizer["Transaction Identifiers"]">
+                                            <option value="TransactionId">TransactionId</option>
+                                            <option value="ExternalTransactionId">ExternalTransactionId</option>
+                                            <option value="Reference">Reference</option>
+                                            <option value="AuthCode">AuthCode</option>
+                                        </optgroup>
+                                        <optgroup label="@_localizer["Amounts & Currency"]">
+                                            <option value="Amount">Amount</option>
+                                            <option value="Currency">Currency</option>
+                                            <option value="FeeAmount">FeeAmount</option>
+                                            <option value="NetAmount">NetAmount</option>
+                                        </optgroup>
+                                        <optgroup label="@_localizer["Dates & Times"]">
+                                            <option value="TransactionDate">TransactionDate</option>
+                                            <option value="SettlementDate">SettlementDate</option>
+                                            <option value="ProcessedDate">ProcessedDate</option>
+                                        </optgroup>
+                                        <optgroup label="@_localizer["Status & Type"]">
+                                            <option value="Status">Status</option>
+                                            <option value="PaymentMethod">PaymentMethod</option>
+                                            <option value="TransactionType">TransactionType</option>
+                                        </optgroup>
+                                        <optgroup label="@_localizer["Other"]">
+                                            <option value="CustomerId">CustomerId</option>
+                                            <option value="MerchantId">MerchantId</option>
+                                            <option value="Description">Description</option>
+                                        </optgroup>
+                                    </select>
+                                    <span asp-validation-for="Input.TargetField" class="invalid-feedback"></span>
+                                </div>
+
+                                <div class="form-row">
+                                    <div class="col-md-6 mb-3">
+                                        <label class="form-label" asp-for="Input.Version">@_localizer["Version"] <span class="text-danger">*</span></label>
+                                        <input asp-for="Input.Version" class="form-control" required placeholder="1.0.0" />
+                                    </div>
+                                    <div class="col-md-6 mb-3">
+                                        <label class="form-label" asp-for="Input.EffectiveFrom">@_localizer["Effective From"] <span class="text-danger">*</span></label>
+                                        <input asp-for="Input.EffectiveFrom" type="date" class="form-control" required />
+                                    </div>
+                                </div>
+
+                                <div class="form-group">
+                                    <label class="form-label" asp-for="Input.EffectiveTo">@_localizer["Effective To"]</label>
+                                    <input asp-for="Input.EffectiveTo" type="date" class="form-control" />
+                                    <small class="form-text text-muted">@_localizer["Leave empty for no end date"]</small>
+                                </div>
+
+                                <div class="custom-control custom-checkbox">
+                                    <input asp-for="Input.IsActive" type="checkbox" class="custom-control-input" id="isActiveCheck" checked />
+                                    <label class="custom-control-label" for="isActiveCheck">@_localizer["Active"]</label>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-xl-6">
+                    <div id="panel-transform" class="panel">
+                        <div class="panel-hdr">
+                            <h2>
+                                <i class="@(Settings.Theme.IconPrefix) fa-code mr-2"></i>
+                                @_localizer["Transform Expression"] <small class="text-muted">(Optional)</small>
+                            </h2>
+                        </div>
+                        <div class="panel-container show">
+                            <div class="panel-content">
+                                <div class="form-group">
+                                    <textarea asp-for="Input.TransformExpression" class="form-control" rows="6" placeholder="@_localizer["Leave empty for direct mapping"]" style="font-family: 'Courier New', monospace;"></textarea>
+                                    <small class="form-text text-muted">@_localizer["C# expression for complex transformations"]</small>
+                                </div>
+                                <div class="alert alert-light border">
+                                    <strong>@_localizer["Examples:"]</strong>
+                                    <ul class="mb-0 mt-2" style="font-family: 'Courier New', monospace; font-size: 0.85rem;">
+                                        <li>DateTime.ParseExact(value, "dd/MM/yyyy", null)</li>
+                                        <li>decimal.Parse(value) / 100</li>
+                                        <li>value.ToUpper().Trim()</li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="row">
+                <div class="col-12">
+                    <button type="submit" class="btn btn-success waves-effect waves-themed float-right">
+                        <i class="@(Settings.Theme.IconPrefix) fa-check mr-1"></i>
+                        @_localizer["Create Mapping"]
+                    </button>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+
+@section ScriptsBlock {
+    <partial name="_ValidationScriptsPartial" />
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            var csvHeaders = [];
+            var mappings = {};
+            var draggedColumn = null;
+
+            var csvHeadersContainer = document.getElementById('csvHeadersContainer');
+            var mappingsTableBody = document.getElementById('mappingsTableBody');
+            var mappedFieldsPanel = document.getElementById('mappedFieldsPanel');
+            var mappingsJsonInput = document.getElementById('mappingsJsonInput');
+            var mappingCountBadge = document.getElementById('mappingCount');
+            var mappingCountLarge = document.getElementById('mappingCountLarge');
+            var saveBulkMappingsBtn = document.getElementById('saveBulkMappings');
+            var clearAllBtn = document.getElementById('clearAllMappings');
+            var loadedFileName = document.getElementById('loadedFileName');
+            var columnSearchWrapper = document.getElementById('columnSearchWrapper');
+            var columnSearchInput = document.getElementById('columnSearchInput');
+            var clearColumnSearch = document.getElementById('clearColumnSearch');
+            var columnFilterStatus = document.getElementById('columnFilterStatus');
+            var searchTerm = '';
+
+            // Fuzzy match function - checks if all characters in search appear in text in order
+            function fuzzyMatch(text, search) {
+                if (!search) return true;
+                text = text.toLowerCase();
+                search = search.toLowerCase();
+
+                var searchIdx = 0;
+                for (var i = 0; i < text.length && searchIdx < search.length; i++) {
+                    if (text[i] === search[searchIdx]) {
+                        searchIdx++;
+                    }
+                }
+                return searchIdx === search.length;
+            }
+
+            // Calculate fuzzy match score (lower is better)
+            function fuzzyScore(text, search) {
+                if (!search) return 0;
+                text = text.toLowerCase();
+                search = search.toLowerCase();
+
+                // Exact match gets best score
+                if (text === search) return 0;
+                // Starts with gets good score
+                if (text.startsWith(search)) return 1;
+                // Contains as substring
+                if (text.includes(search)) return 2;
+                // Fuzzy match - count gaps between matched characters
+                var score = 100;
+                var searchIdx = 0;
+                var lastMatchIdx = -1;
+                for (var i = 0; i < text.length && searchIdx < search.length; i++) {
+                    if (text[i] === search[searchIdx]) {
+                        if (lastMatchIdx >= 0) {
+                            score += (i - lastMatchIdx - 1); // Add penalty for gaps
+                        }
+                        lastMatchIdx = i;
+                        searchIdx++;
+                    }
+                }
+                return searchIdx === search.length ? score : 9999;
+            }
+
+            // Column search handler
+            columnSearchInput.addEventListener('input', function(e) {
+                searchTerm = e.target.value.trim();
+                clearColumnSearch.style.display = searchTerm ? 'block' : 'none';
+                renderCsvHeaders();
+            });
+
+            clearColumnSearch.addEventListener('click', function() {
+                columnSearchInput.value = '';
+                searchTerm = '';
+                clearColumnSearch.style.display = 'none';
+                columnFilterStatus.textContent = '';
+                renderCsvHeaders();
+            });
+
+            // File upload handler
+            document.getElementById('csvFileInput').addEventListener('change', function(e) {
+                var file = e.target.files[0];
+                if (!file) return;
+
+                document.querySelector('.custom-file-label').textContent = file.name;
+
+                var formData = new FormData();
+                formData.append('file', file);
+
+                fetch('/Api/CsvHeaders?handler=Upload', {
+                    method: 'POST',
+                    body: formData,
+                    headers: {
+                        'RequestVerificationToken': document.querySelector('input[name="__RequestVerificationToken"]').value
+                    }
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.error) {
+                        alert(data.error);
+                        return;
+                    }
+                    loadHeaders(data.headers, data.fileName);
+                })
+                .catch(err => alert('Error uploading file: ' + err));
+            });
+
+            // Existing file selection handler
+            document.getElementById('existingFileSelect').addEventListener('change', function(e) {
+                var fileId = e.target.value;
+                if (!fileId) return;
+
+                fetch('/Api/CsvHeaders?handler=FromFile&fileId=' + fileId)
+                .then(response => response.json())
+                .then(data => {
+                    if (data.error) {
+                        alert(data.error);
+                        return;
+                    }
+                    loadHeaders(data.headers, data.fileName);
+                })
+                .catch(err => alert('Error loading file: ' + err));
+            });
+
+            function loadHeaders(headers, fileName) {
+                csvHeaders = headers;
+                loadedFileName.textContent = fileName;
+                loadedFileName.style.display = 'inline';
+                // Show search box when we have columns
+                columnSearchWrapper.style.display = headers.length > 0 ? 'block' : 'none';
+                columnSearchInput.value = '';
+                searchTerm = '';
+                clearColumnSearch.style.display = 'none';
+                columnFilterStatus.textContent = '';
+                renderCsvHeaders();
+            }
+
+            function renderCsvHeaders() {
+                csvHeadersContainer.classList.remove('empty');
+                csvHeadersContainer.innerHTML = '';
+
+                // Filter and sort headers based on search term
+                var filteredHeaders = csvHeaders;
+                if (searchTerm) {
+                    filteredHeaders = csvHeaders
+                        .filter(function(h) { return fuzzyMatch(h, searchTerm); })
+                        .sort(function(a, b) { return fuzzyScore(a, searchTerm) - fuzzyScore(b, searchTerm); });
+
+                    // Update filter status
+                    if (filteredHeaders.length === 0) {
+                        columnFilterStatus.textContent = 'No columns match "' + searchTerm + '"';
+                    } else if (filteredHeaders.length < csvHeaders.length) {
+                        columnFilterStatus.textContent = 'Showing ' + filteredHeaders.length + ' of ' + csvHeaders.length + ' columns';
+                    } else {
+                        columnFilterStatus.textContent = '';
+                    }
+                } else {
+                    columnFilterStatus.textContent = '';
+                }
+
+                // Show message if no results
+                if (filteredHeaders.length === 0 && csvHeaders.length > 0) {
+                    csvHeadersContainer.innerHTML = '<span class="text-muted p-3"><i class="fal fa-search mr-2"></i>No columns match your search</span>';
+                    return;
+                }
+
+                filteredHeaders.forEach(function(header) {
+                    var isMapped = Object.values(mappings).some(m => m.sourceField === header);
+                    var el = document.createElement('div');
+                    el.className = 'csv-column' + (isMapped ? ' mapped' : '');
+                    el.draggable = !isMapped;
+                    el.dataset.column = header;
+                    el.innerHTML = '<i class="fal fa-columns"></i>' + escapeHtml(header);
+
+                    if (!isMapped) {
+                        el.addEventListener('dragstart', handleDragStart);
+                        el.addEventListener('dragend', handleDragEnd);
+                    }
+
+                    csvHeadersContainer.appendChild(el);
+                });
+            }
+
+            function handleDragStart(e) {
+                draggedColumn = e.target.dataset.column;
+                e.target.classList.add('dragging');
+                e.dataTransfer.effectAllowed = 'move';
+                e.dataTransfer.setData('text/plain', draggedColumn);
+            }
+
+            function handleDragEnd(e) {
+                e.target.classList.remove('dragging');
+                draggedColumn = null;
+            }
+
+            // Setup drop zones
+            document.querySelectorAll('.target-field').forEach(function(zone) {
+                zone.addEventListener('dragover', function(e) {
+                    e.preventDefault();
+                    if (!zone.classList.contains('has-mapping')) {
+                        zone.classList.add('drag-over');
+                    }
+                });
+
+                zone.addEventListener('dragleave', function(e) {
+                    zone.classList.remove('drag-over');
+                });
+
+                zone.addEventListener('drop', function(e) {
+                    e.preventDefault();
+                    zone.classList.remove('drag-over');
+
+                    var targetField = zone.dataset.target;
+                    var sourceField = e.dataTransfer.getData('text/plain');
+
+                    if (!sourceField || mappings[targetField]) return;
+
+                    createMapping(sourceField, targetField, zone);
+                });
+            });
+
+            function createMapping(sourceField, targetField, zone) {
+                mappings[targetField] = {
+                    sourceField: sourceField,
+                    targetField: targetField,
+                    transformExpression: ''
+                };
+
+                // Update target field visual
+                zone.classList.add('has-mapping');
+                zone.querySelector('.drop-zone-placeholder').style.display = 'none';
+
+                var mappingInfo = document.createElement('div');
+                mappingInfo.className = 'mapping-info';
+                mappingInfo.innerHTML =
+                    '<span class="mapped-source">' + escapeHtml(sourceField) + '</span>' +
+                    '<i class="fal fa-arrow-right arrow"></i>' +
+                    '<i class="fal fa-times remove-mapping" data-target="' + targetField + '"></i>';
+                zone.appendChild(mappingInfo);
+
+                mappingInfo.querySelector('.remove-mapping').addEventListener('click', function() {
+                    removeMapping(targetField, zone);
+                });
+
+                renderMappingsTable();
+                renderCsvHeaders();
+                updateMappingsJson();
+            }
+
+            function removeMapping(targetField, zone) {
+                delete mappings[targetField];
+
+                zone.classList.remove('has-mapping');
+                zone.querySelector('.drop-zone-placeholder').style.display = '';
+                var mappingInfo = zone.querySelector('.mapping-info');
+                if (mappingInfo) mappingInfo.remove();
+
+                renderMappingsTable();
+                renderCsvHeaders();
+                updateMappingsJson();
+            }
+
+            function renderMappingsTable() {
+                var keys = Object.keys(mappings);
+                mappedFieldsPanel.style.display = keys.length > 0 ? 'block' : 'none';
+                mappingCountBadge.textContent = keys.length;
+                mappingCountLarge.textContent = keys.length;
+                saveBulkMappingsBtn.disabled = keys.length === 0;
+
+                mappingsTableBody.innerHTML = '';
+
+                keys.forEach(function(targetField) {
+                    var m = mappings[targetField];
+                    var tr = document.createElement('tr');
+                    tr.innerHTML =
+                        '<td><span class="badge badge-primary">' + escapeHtml(m.sourceField) + '</span></td>' +
+                        '<td class="text-center"><i class="fal fa-long-arrow-alt-right text-success"></i></td>' +
+                        '<td><span class="fw-500">' + escapeHtml(m.targetField) + '</span></td>' +
+                        '<td><input type="text" class="form-control form-control-sm transform-input" data-target="' + targetField + '" value="' + escapeHtml(m.transformExpression || '') + '" placeholder="e.g., value.Trim()" style="font-family: monospace;"></td>' +
+                        '<td class="text-center"><button type="button" class="btn btn-xs btn-outline-danger remove-row" data-target="' + targetField + '"><i class="fal fa-trash"></i></button></td>';
+                    mappingsTableBody.appendChild(tr);
+                });
+
+                // Add transform input handlers
+                mappingsTableBody.querySelectorAll('.transform-input').forEach(function(input) {
+                    input.addEventListener('change', function() {
+                        var target = input.dataset.target;
+                        if (mappings[target]) {
+                            mappings[target].transformExpression = input.value;
+                            updateMappingsJson();
+                        }
+                    });
+                });
+
+                // Add remove button handlers
+                mappingsTableBody.querySelectorAll('.remove-row').forEach(function(btn) {
+                    btn.addEventListener('click', function() {
+                        var target = btn.dataset.target;
+                        var zone = document.querySelector('.target-field[data-target="' + target + '"]');
+                        if (zone) removeMapping(target, zone);
+                    });
+                });
+            }
+
+            function updateMappingsJson() {
+                var arr = Object.values(mappings);
+                mappingsJsonInput.value = JSON.stringify(arr);
+            }
+
+            clearAllBtn.addEventListener('click', function() {
+                if (!confirm('Are you sure you want to clear all mappings?')) return;
+
+                Object.keys(mappings).forEach(function(targetField) {
+                    var zone = document.querySelector('.target-field[data-target="' + targetField + '"]');
+                    if (zone) {
+                        zone.classList.remove('has-mapping');
+                        zone.querySelector('.drop-zone-placeholder').style.display = '';
+                        var mappingInfo = zone.querySelector('.mapping-info');
+                        if (mappingInfo) mappingInfo.remove();
+                    }
+                });
+
+                mappings = {};
+                renderMappingsTable();
+                renderCsvHeaders();
+                updateMappingsJson();
+            });
+
+            function escapeHtml(text) {
+                var div = document.createElement('div');
+                div.textContent = text;
+                return div.innerHTML;
+            }
+
+            // Custom file input label update
+            document.querySelector('.custom-file-input').addEventListener('change', function(e) {
+                var fileName = e.target.files[0] ? e.target.files[0].name : 'Choose CSV file...';
+                e.target.nextElementSibling.textContent = fileName;
+            });
+        });
+    </script>
+}

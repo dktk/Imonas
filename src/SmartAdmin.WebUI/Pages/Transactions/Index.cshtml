@@ -1,0 +1,292 @@
+﻿@page
+@using Microsoft.AspNetCore.Mvc.Localization
+@model SmartAdmin.WebUI.Pages.Transactions.IndexModel
+@inject IStringLocalizer<IndexModel> _localizer
+
+@{
+    ViewData["Title"] = "Transactions Listing";
+    ViewData["PageName"] = "transactions_index";
+    
+    ViewData["PreemptiveClass"] = "Default";
+
+    var searchDataUrl = Url.Page("/transactions/index") + "?handler=Data";
+    var reconcileDataUrl = Url.Page("/transactions/index") + "?handler=Reconcile";
+    var reconcileRedirectUrl = Url.Page("/psps/reconcile") + "?handler=Reconcile";
+}
+
+@section HeadBlock {
+
+    <link rel="stylesheet" media="screen, print" href="~/css/formplugins/bootstrap-daterangepicker/bootstrap-daterangepicker.css">
+    <link rel="stylesheet" media="screen, print" href="~/css/fa-solid.css">
+    <link rel="stylesheet" media="screen, print" href="~/css/theme-demo.css">
+    <link rel="stylesheet" media="screen, print" href="~/css/datagrid/datatables/datatables.bundle.css">
+    <link rel="stylesheet" media="screen, print" href="~/css/formplugins/select2/select2.bundle.css">
+    <link rel="stylesheet" media="screen,print" href="~/lib/easyui/themes/insdep/easyui.css">
+ }
+<div class="row">
+    <div class="col-xl-12">
+        <div id="panel-1" class="panel">
+            <div class="panel-hdr">
+                <h2>
+                    @_localizer["Transactions"]
+                </h2>
+                <div class="panel-toolbar">
+                    <button class="btn btn-panel waves-effect waves-themed" data-action="panel-collapse" data-toggle="tooltip" data-offset="0,10" data-original-title="Collapse"></button>
+                    <button class="btn btn-panel waves-effect waves-themed" data-action="panel-fullscreen" data-toggle="tooltip" data-offset="0,10" data-original-title="Fullscreen"></button>
+                </div>
+            </div>
+            <div class="panel-container show">
+                <div class="panel-content">
+                    <div class="panel-content" id="transaction-filters">
+                        <form id="transactions_form" class="needs-validation" novalidate="novalidate">
+                            @Html.AntiForgeryToken()
+
+                            <div class="form-row">
+                                <!-- PSP Selection -->
+                                <div class="col-md-12 mb-3">
+                                    <div class="form-group">
+                                        <label asp-for="SelectedPspId" class="form-label">@_localizer["Payment Service Provider"]</label>
+                                        <select asp-for="SelectedPspId" asp-items="Model.Psps" class="form-control select2" id="pspSelector">
+                                            <option value="">@_localizer["-- Select PSP --"]</option>
+                                        </select>
+                                        <span asp-validation-for="SelectedPspId" class="text-danger"></span>
+                                    </div>
+                                </div>
+
+                                <div class="col-md-6">
+                                    <div class="form-group">
+                                        <label class="form-label" for="StartDate">@_localizer["Start Date"] </label>
+                                        <input type="date" asp-for="StartDate" class="form-control" placeholder="StartDate" />
+                                        <span class="invalid-feedback" asp-validation-for="StartDate">Sorry, you missed this one.</span>
+                                    </div>
+                                </div>
+
+                                <div class="col-md-6">
+                                    <div class="form-group">
+                                        <label class="form-label" for="EndDate">@_localizer["End Date"] </label>
+                                        <input type="date" asp-for="EndDate" class="form-control" placeholder="EndDate" />
+                                        <span class="invalid-feedback" asp-validation-for="EndDate">Sorry, you missed this one.</span>
+                                    </div>
+                                </div>
+
+                                <div class="col-12 d-flex justify-content-end mt-2">
+                                    <button id="reconcileButton" type="submit" class="btn btn-sm btn-outline-primary mr-5 mt-2">
+                                        <span class="@(Settings.Theme.IconPrefix) fa-adjust mr-1"></span>
+                                        @_localizer["Reconcile"]
+                                    </button>
+                                
+                                    <button id="searchButton" type="submit" class="btn btn-sm btn-outline-primary mt-2">
+                                        <span class="@(Settings.Theme.IconPrefix) fa-plus mr-1"></span>
+                                        @_localizer["Search"]
+                                    </button>
+                                </div>
+                            </div>
+                        </form>
+
+                    </div>
+
+                    <table id="paymentsDataGrid"></table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section ScriptsBlock {
+    <partial name="_ValidationScriptsPartial" />
+    <script type="text/javascript" src="~/lib/easyui/jquery.easyui.min.js" asp-append-version="true"></script>
+    <script type="text/javascript" src="~/lib/easyui/plugins/datagrid-filter.js" asp-append-version="true"></script>
+    <script type="text/javascript" src="~/lib/easyui/jquery.easyui.component.js" asp-append-version="true"></script>
+
+    <script>jQuery.fn.tooltip = bootstrapTooltip;</script>
+    <script src="~/lib/axios/dist/axios.js"></script>
+    <script src="~/lib/jquery-form/jquery.jsonToForm.js"></script>
+    <script src="~/js/formplugins/select2/select2.bundle.js"></script>
+
+    <script>
+        const gridOptions = {
+            datagridContainerSelector: '#paymentsDataGrid',
+            sortName: 'TxDate',
+            onDblClickRow: function(index, row) {
+            
+            },
+            columns: [{
+                            field: 'TxDate',
+                            title: 'Date',
+                            sortable: true,
+                            width: 180,
+                            formatter: function (value) {
+                                if (value) {
+                                    return new Date(value).toLocaleString();
+                                }
+                                return '';
+                            }
+                        },
+                        {
+                            field: 'PspName',
+                            title: 'PSP',
+                            sortable: true,
+                            width: 100
+                        },                       
+                        {
+                            field: 'PlayerId',
+                            title: 'Player',
+                            sortable: true,
+                            width: 210
+                        },
+                        {
+                            field: 'Amount',
+                            title: 'Amount',
+                            sortable: true,
+                            width: 90,
+                            align: 'right',
+                            formatter: function (value, row) {
+                                if (value != null && row.currencyCode) {
+                                    return value.toFixed(2) + ' ' + row.currencyCode;
+                                }
+                                return value != null ? value.toFixed(2) : '';
+                            }
+                        },
+                        {
+                            field: 'CurrencyCode',
+                            title: 'Currency',
+                            sortable: true,
+                            width: 70
+                        },
+                        {
+                            field: 'Status',
+                            title: 'Status',
+                            sortable: true,
+                            width: 120,
+                            formatter: function (value, row, index) {
+                                const cssClass = value === 'completed' ? '' : 'bg-danger';
+                                return `<div class="${cssClass} text-center">${value}</div>`
+                            }
+                        },
+                        {
+                            field: 'Action',
+                            title: 'Action',
+                            sortable: true,
+                            width: 100
+                        },
+
+                        {
+                            field: 'SourceSystem',
+                            title: 'Source System',
+                            sortable: true,
+                            width: 150
+                        },
+                        {
+                            field: 'BrandId',
+                            title: 'Brand',
+                            sortable: true,
+                            width: 100
+                        },
+                        {
+                            field: 'TxId',
+                            title: 'Transaction Id',
+                            sortable: true,
+                            width: 130
+                        }],
+            loadDataUrl: '@searchDataUrl'
+        }
+    </script>
+    <script src="~/js/datagrid/data-grid.js"></script>
+    <script>
+        $(function () {
+            'use strict';
+
+            // Initialize Select2
+            $('.select2').select2({
+                placeholder: '@_localizer["-- Select PSP --"]',
+                allowClear: true
+            });
+
+            $('#transactions_form').submit(function (e) {
+                    e.preventDefault();
+                    e.stopPropagation();
+
+                    const form = document.querySelector('#transactions_form');
+
+                        if ($(form).valid() === false) {
+                            form.classList.add('was-validated');
+                            return false;
+                        }
+
+                    const submitterId = e.originalEvent.submitter.id;
+
+                    // Serialize form data including anti-forgery token and add pagination params
+                    let formData = $('#transactions_form').serialize();
+
+                    if (submitterId === 'searchButton') {
+                        
+                        // Get datagrid pagination options
+                        const dgOptions = $dg.datagrid('options');
+
+                        dgOptions.queryParams.StartDate = $("#StartDate").val();
+                        dgOptions.queryParams.EndDate = $("#EndDate").val();
+                        dgOptions.queryParams.SelectedPspId = parseInt($("#pspSelector").val());
+                    
+                        formData += '&page=' + (dgOptions.pageNumber || 1);
+                        formData += '&rows=' + (dgOptions.pageSize || 25);
+                        formData += '&sort=' + (dgOptions.sortName || 'TxDate');
+                        formData += '&order=' + (dgOptions.sortOrder || 'asc');
+
+                        axios.post('@searchDataUrl', formData, {
+                            headers: {
+                                'Content-Type': 'application/x-www-form-urlencoded'
+                            }
+                        }).then(res => {
+                            toastr["success"](res.data.message);
+
+                            // The response from OnPostSearchAsync has structure: { succeeded, data, message }
+                            // where data contains the PaginatedData with { rows, total }
+                            if (res.data && res.data.succeeded && res.data.data) {
+                                $dg.datagrid('loadData', res.data.data);
+                            }
+                        }).catch(error => {
+                            if (error.response && error.response.data && error.response.data.errors) {
+                                const errors = error.response.data.errors;
+                                for (let [key, value] of Object.entries(errors)) {
+                                    toastr["error"](`${key}: ${value.toString()}`);
+                                }
+                            } else {
+                                toastr["error"](`@_localizer["Search failed"]: ${error.message}`);
+                            }
+                        });
+                    }
+                    else {
+                         axios.post('@reconcileDataUrl', formData, {
+                            headers: {
+                                'Content-Type': 'application/x-www-form-urlencoded'
+                            }
+                        }).then(res => {
+                            toastr["success"](res.data.message);
+
+                            // The response from OnPostSearchAsync has structure: { succeeded, data, message }
+                            // where data contains the PaginatedData with { rows, total }
+                            if (res.data && res.data.succeeded && res.data.data) {
+                                window.location.href = '@reconcileRedirectUrl';
+                            }
+                        }).catch(error => {
+                            if (error.response && error.response.data && error.response.data.errors) {
+                                const errors = error.response.data.errors;
+                                for (let [key, value] of Object.entries(errors)) {
+                                    toastr["error"](`${key}: ${value.toString()}`);
+                                }
+                            } else {
+                                toastr["error"](`@_localizer["Failed to reconcile transactions"]: ${error.message}`);
+                            }
+                        });
+                    }
+                });
+
+            // Window resize handler
+            $(window).on('resize', function () {
+                $dg.datagrid('resize', {
+                    height: (window.innerHeight - 320)
+                });
+            });
+        });
+    </script>
+}

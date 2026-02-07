@@ -1,0 +1,26 @@
+@model Imonas.RuleEngine.Models.RuleGroup
+@using Imonas.RuleEngine.Models
+
+<div class="card bg-dark border mb-2">
+  <div class="card-body">
+    <div class="d-flex align-items-center gap-2">
+      <span class="badge text-bg-info">@Model.Name</span>
+      <small class="text-muted">op: <code>@Model.GroupOperator</code> | v@Model.Version</small>
+    </div>
+    <ul class="mb-1 mt-2">
+      @foreach (var r in Model.Rules.OrderBy(r => r.Order))
+      {
+        <li><code>@r.Field</code> @r.Operator <strong>@r.Value</strong></li>
+      }
+    </ul>
+    @if (Model.Children.Any())
+    {
+      <div class="ms-3">
+        @foreach (var c in Model.Children.OrderBy(c => c.Order))
+        {
+          @await Html.PartialAsync("_GroupView", c)
+        }
+      </div>
+    }
+  </div>
+</div>

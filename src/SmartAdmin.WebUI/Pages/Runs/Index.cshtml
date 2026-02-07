@@ -1,0 +1,259 @@
+@page
+@using Microsoft.AspNetCore.Mvc.Localization
+@using Domain.Enums
+@model SmartAdmin.WebUI.Pages.Runs.IndexModel
+@inject IStringLocalizer<IndexModel> _localizer
+
+@{
+    ViewData["Title"] = "Reconciliation Runs";
+    ViewData["PageName"] = "runs_index";
+}
+
+@section HeadBlock {
+    <link rel="stylesheet" media="screen, print" href="~/css/fa-solid.css">
+    <link rel="stylesheet" media="screen,print" href="~/lib/easyui/themes/insdep/easyui.css">
+}
+
+<div class="row mb-3">
+    <div class="col-12 d-flex justify-content-between align-items-center">
+        <div>
+            <h1 class="subheader-title">
+                <i class="subheader-icon @(Settings.Theme.IconPrefix) fa-play-circle"></i> @_localizer["Reconciliation Runs"]
+            </h1>
+            <small class="text-muted">@_localizer["View and manage reconciliation runs"]</small>
+        </div>
+        <a asp-page="Create" class="btn btn-primary waves-effect waves-themed">
+            <i class="@(Settings.Theme.IconPrefix) fa-rocket mr-1"></i>
+            @_localizer["Start New Run"]
+        </a>
+    </div>
+</div>
+
+@if (TempData["SuccessMessage"] != null)
+{
+    <div class="alert alert-success alert-dismissible fade show" role="alert">
+        <i class="@(Settings.Theme.IconPrefix) fa-check-circle mr-2"></i>
+        @TempData["SuccessMessage"]
+        <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+            <span aria-hidden="true">&times;</span>
+        </button>
+    </div>
+}
+
+<!-- Stats Cards -->
+<div class="row mb-4">
+    <div class="col-sm-6 col-xl-3">
+        <div class="p-3 bg-primary-300 rounded overflow-hidden position-relative text-white mb-g">
+            <div>
+                <h3 class="display-4 d-block l-h-n m-0 fw-500">
+                    @Model.Stats.TotalRuns
+                </h3>
+                <span class="opacity-70">@_localizer["Total Runs"]</span>
+            </div>
+            <i class="@(Settings.Theme.IconPrefix) fa-play-circle position-absolute pos-right pos-bottom opacity-15 mb-n1 mr-n1" style="font-size:6rem"></i>
+        </div>
+    </div>
+    <div class="col-sm-6 col-xl-3">
+        <div class="p-3 bg-success-500 rounded overflow-hidden position-relative text-white mb-g">
+            <div>
+                <h3 class="display-4 d-block l-h-n m-0 fw-500">
+                    @Model.Stats.CompletedRuns
+                </h3>
+                <span class="opacity-70">@_localizer["Completed"]</span>
+            </div>
+            <i class="@(Settings.Theme.IconPrefix) fa-check-circle position-absolute pos-right pos-bottom opacity-15 mb-n1 mr-n1" style="font-size:6rem"></i>
+        </div>
+    </div>
+    <div class="col-sm-6 col-xl-3">
+        <div class="p-3 bg-info-500 rounded overflow-hidden position-relative text-white mb-g">
+            <div>
+                <h3 class="display-4 d-block l-h-n m-0 fw-500">
+                    @Model.Stats.RunningRuns
+                </h3>
+                <span class="opacity-70">@_localizer["Running"]</span>
+            </div>
+            <i class="@(Settings.Theme.IconPrefix) fa-sync-alt position-absolute pos-right pos-bottom opacity-15 mb-n1 mr-n1" style="font-size:6rem"></i>
+        </div>
+    </div>
+    <div class="col-sm-6 col-xl-3">
+        <div class="p-3 bg-danger-400 rounded overflow-hidden position-relative text-white mb-g">
+            <div>
+                <h3 class="display-4 d-block l-h-n m-0 fw-500">
+                    @Model.Stats.FailedRuns
+                </h3>
+                <span class="opacity-70">@_localizer["Failed"]</span>
+            </div>
+            <i class="@(Settings.Theme.IconPrefix) fa-times-circle position-absolute pos-right pos-bottom opacity-15 mb-n1 mr-n1" style="font-size:6rem"></i>
+        </div>
+    </div>
+</div>
+
+<!-- Summary Statistics -->
+<div class="row mb-4">
+    <div class="col-xl-12">
+        <div id="panel-summary" class="panel">
+            <div class="panel-hdr">
+                <h2>
+                    <i class="@(Settings.Theme.IconPrefix) fa-chart-bar mr-2"></i>
+                    @_localizer["Summary Statistics"]
+                </h2>
+            </div>
+            <div class="panel-container show">
+                <div class="panel-content">
+                    <div class="row">
+                        <div class="col-md-3 text-center">
+                            <div class="p-3">
+                                <h4 class="text-muted mb-2">@_localizer["Average Match Rate"]</h4>
+                                @{
+                                    var avgBadgeClass = Model.Stats.AverageMatchRate >= 95 ? "badge-success" :
+                                                        Model.Stats.AverageMatchRate >= 80 ? "badge-info" : "badge-warning";
+                                }
+                                <span class="badge @avgBadgeClass" style="font-size: 1.5rem; padding: 0.5rem 1rem;">
+                                    @Model.Stats.AverageMatchRate.ToString("F1")%
+                                </span>
+                            </div>
+                        </div>
+                        <div class="col-md-3 text-center">
+                            <div class="p-3">
+                                <h4 class="text-muted mb-2">@_localizer["Total Processed"]</h4>
+                                <h2 class="fw-700 text-primary mb-0">@Model.Stats.TotalRecordsProcessed.ToString("N0")</h2>
+                                <small class="text-muted">@_localizer["records"]</small>
+                            </div>
+                        </div>
+                        <div class="col-md-3 text-center">
+                            <div class="p-3">
+                                <h4 class="text-muted mb-2">@_localizer["Total Matched"]</h4>
+                                <h2 class="fw-700 text-success mb-0">@Model.Stats.TotalMatched.ToString("N0")</h2>
+                                <small class="text-muted">@_localizer["records"]</small>
+                            </div>
+                        </div>
+                        <div class="col-md-3 text-center">
+                            <div class="p-3">
+                                <h4 class="text-muted mb-2">@_localizer["Total Unmatched"]</h4>
+                                <h2 class="fw-700 text-danger mb-0">@Model.Stats.TotalUnmatched.ToString("N0")</h2>
+                                <small class="text-muted">@_localizer["records"]</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-xl-12">
+        <div id="panel-runs" class="panel">
+            <div class="panel-hdr">
+                <h2>
+                    <i class="@(Settings.Theme.IconPrefix) fa-history mr-2"></i>
+                    @_localizer["Recent Runs"]
+                    <span class="fw-300"><i>(@Model.Runs.Count() @_localizer["total"])</i></span>
+                </h2>
+                <div class="panel-toolbar">
+                    <button class="btn btn-panel waves-effect waves-themed" data-action="panel-collapse" data-toggle="tooltip" data-offset="0,10" data-original-title="Collapse"></button>
+                    <button class="btn btn-panel waves-effect waves-themed" data-action="panel-fullscreen" data-toggle="tooltip" data-offset="0,10" data-original-title="Fullscreen"></button>
+                </div>
+            </div>
+            <div class="panel-container show">
+                <div class="panel-content">
+                    <div class="table-responsive">
+                        <table class="table table-bordered table-hover table-striped w-100">
+                            <thead class="bg-primary-600">
+                                <tr>
+                                    <th>@_localizer["Run Name"]</th>
+                                    <th>@_localizer["Status"]</th>
+                                    <th>@_localizer["Started"]</th>
+                                    <th>@_localizer["Completed"]</th>
+                                    <th class="text-right">@_localizer["Total Records"]</th>
+                                    <th class="text-right">@_localizer["Matched"]</th>
+                                    <th class="text-center">@_localizer["Match %"]</th>
+                                    <th class="text-center">@_localizer["Actions"]</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var run in Model.Runs)
+                                {
+                                    <tr>
+                                        <td>
+                                            <a asp-page="Details" asp-route-id="@run.Id" class="fw-500 text-primary">
+                                                @run.RunName
+                                            </a>
+                                        </td>
+                                        <td>
+                                            @if (run.Status == RunStatus.Completed)
+                                            {
+                                                <span class="badge badge-success">
+                                                    <i class="@(Settings.Theme.IconPrefix) fa-check mr-1"></i>@_localizer["Completed"]
+                                                </span>
+                                            }
+                                            else if (run.Status == RunStatus.Running)
+                                            {
+                                                <span class="badge badge-info">
+                                                    <i class="@(Settings.Theme.IconPrefix) fa-sync fa-spin mr-1"></i>@_localizer["Running"]
+                                                </span>
+                                            }
+                                            else if (run.Status == RunStatus.Failed)
+                                            {
+                                                <span class="badge badge-danger">
+                                                    <i class="@(Settings.Theme.IconPrefix) fa-times mr-1"></i>@_localizer["Failed"]
+                                                </span>
+                                            }
+                                            else if (run.Status == RunStatus.Pending)
+                                            {
+                                                <span class="badge badge-secondary">
+                                                    <i class="@(Settings.Theme.IconPrefix) fa-clock mr-1"></i>@_localizer["Pending"]
+                                                </span>
+                                            }
+                                            else
+                                            {
+                                                <span class="badge badge-warning">@run.Status</span>
+                                            }
+                                        </td>
+                                        <td>@run.StartedAt.ToString("yyyy-MM-dd HH:mm")</td>
+                                        <td>@(run.CompletedAt?.ToString("yyyy-MM-dd HH:mm") ?? "-")</td>
+                                        <td class="text-right">@run.TotalRecords.ToString("N0")</td>
+                                        <td class="text-right">@run.MatchedRecords.ToString("N0")</td>
+                                        <td class="text-center">
+                                            @{
+                                                var badgeClass = run.MatchPercentage >= 95 ? "badge-success" :
+                                                                 run.MatchPercentage >= 80 ? "badge-info" : "badge-warning";
+                                            }
+                                            <span class="badge @badgeClass">
+                                                @run.MatchPercentage.ToString("F1")%
+                                            </span>
+                                        </td>
+                                        <td class="text-center">
+                                            <a asp-page="Details" asp-route-id="@run.Id" class="btn btn-sm btn-outline-primary waves-effect waves-themed">
+                                                <i class="@(Settings.Theme.IconPrefix) fa-eye"></i>
+                                                @_localizer["View"]
+                                            </a>
+                                        </td>
+                                    </tr>
+                                }
+                                @if (!Model.Runs.Any())
+                                {
+                                    <tr>
+                                        <td colspan="8" class="text-center text-muted py-4">
+                                            <i class="@(Settings.Theme.IconPrefix) fa-inbox fa-3x mb-3 d-block"></i>
+                                            @_localizer["No reconciliation runs found. Start a new run to begin."]
+                                        </td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section ScriptsBlock {
+    <script>
+        $(function () {
+            'use strict';
+            // Any additional initialization can go here
+        });
+    </script>
+}

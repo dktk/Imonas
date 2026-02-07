@@ -1,0 +1,101 @@
+@page
+@model Imonas.RuleEngine.Pages.RuleGroups.CreateModel
+@using Imonas.RuleEngine.Models
+@{
+    ViewData["Title"] = "Create Rule Group (Nested)";
+    var previewCount = ViewData["PreviewCount"] as int?;
+}
+
+<h2>Create Rule Group</h2>
+
+@if (Model.ValidationErrors.Any())
+{
+  <div class="alert alert-danger">
+    <strong>Validation:</strong>
+    <ul class="mb-0">
+    @foreach (var err in Model.ValidationErrors)
+    {
+        <li>@err</li>
+    }
+    </ul>
+  </div>
+}
+
+@if (previewCount is not null)
+{
+    <div class="alert alert-info">Preview matches: <strong>@previewCount</strong></div>
+}
+
+<form method="post">
+  <partial name="_GroupEditor" model="Model.Root" />
+
+  <div class="mt-4 d-flex gap-2">
+    <button formaction="?handler=Preview" formmethod="post" class="btn btn-outline-info">Preview</button>
+    <button formaction="?handler=Save" formmethod="post" class="btn btn-success">Save</button>
+    <a asp-page="Index" class="btn btn-secondary">Cancel</a>
+  </div>
+</form>
+
+@section Scripts {
+  <partial name="_ValidationScriptsPartial" />
+  <script>
+    document.addEventListener('click', (e) => {
+      const btn = e.target.closest('[data-action]');
+      if (!btn) return;
+      const action = btn.dataset.action;
+
+      if (action === 'add-rule') {
+        const group = btn.closest('[data-group]');
+        const rules = group.querySelector('.rules');
+        const index = rules.querySelectorAll('[data-index]').length;
+        const tpl = group.querySelector('template.rule-template').content.cloneNode(true);
+        tpl.querySelectorAll('[name]').forEach(el => {
+          el.name = el.name.replace(/Rules\[0\]/, `Rules[${index}]`);
+        });
+        rules.appendChild(tpl);
+      }
+
+      if (action === 'add-group') {
+        const group = btn.closest('[data-group]');
+        const children = group.querySelector('.children');
+        const index = children.querySelectorAll('> div[data-index]').length;
+        const tpl = group.querySelector('template.group-template').content.cloneNode(true);
+        tpl.querySelectorAll('[name]').forEach(el => {
+          el.name = el.name.replace(/Children\[0\]/, `Children[${index}]`);
+        });
+        const wrapper = document.createElement('div');
+        wrapper.setAttribute('data-index', index.toString());
+        wrapper.appendChild(tpl);
+        children.appendChild(wrapper);
+      }
+
+      if (action === 'remove-row') {
+        const row = btn.closest('[data-index]');
+        row?.remove();
+      }
+
+      if (action === 'move-up' || action === 'move-down') {
+        const row = btn.closest('[data-index]');
+        const parent = row.parentElement;
+        if (action === 'move-up' && row.previousElementSibling) parent.insertBefore(row, row.previousElementSibling);
+        if (action === 'move-down' && row.nextElementSibling) parent.insertBefore(row.nextElementSibling, row);
+      }
+    });
+
+    document.addEventListener('change', (e) => {
+      const sel = e.target;
+      if (sel.matches('.rule-field')) {
+        const row = sel.closest('[data-index]');
+        const statusWrap = row.querySelector('.value-status-wrap');
+        const otherWrap = row.querySelector('.value-text-wrap');
+        if (parseInt(sel.value) === 1) {
+          statusWrap.classList.remove('d-none');
+          otherWrap.classList.add('d-none');
+        } else {
+          statusWrap.classList.add('d-none');
+          otherWrap.classList.remove('d-none');
+        }
+      }
+    });
+  </script>
+}

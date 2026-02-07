@@ -1,0 +1,366 @@
+﻿@page
+@using Microsoft.AspNetCore.Mvc.Localization
+@model SmartAdmin.WebUI.Pages.Config.NotificationsModel
+@inject IStringLocalizer<NotificationsModel> _localizer
+
+@{
+    ViewData["Title"] = "Notification Settings";
+    ViewData["PageName"] = "config_notifications";
+}
+
+@section HeadBlock {
+    <link rel="stylesheet" media="screen, print" href="~/css/fa-solid.css">
+}
+
+<div class="row mb-3">
+    <div class="col-12 d-flex justify-content-between align-items-center">
+        <div>
+            <h1 class="subheader-title">
+                <i class="subheader-icon @(Settings.Theme.IconPrefix) fa-bell"></i> @_localizer["Notification Settings"]
+            </h1>
+            <small class="text-muted">@_localizer["Configure alerts and notification channels"]</small>
+        </div>
+        <a asp-page="Index" class="btn btn-secondary waves-effect waves-themed">
+            <i class="@(Settings.Theme.IconPrefix) fa-arrow-left mr-1"></i>
+            @_localizer["Back"]
+        </a>
+    </div>
+</div>
+
+@if (TempData["SuccessMessage"] != null)
+{
+    <div class="alert alert-success alert-dismissible fade show" role="alert">
+        <i class="@(Settings.Theme.IconPrefix) fa-check-circle mr-2"></i>
+        @TempData["SuccessMessage"]
+        <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+            <span aria-hidden="true">&times;</span>
+        </button>
+    </div>
+}
+
+<div class="row">
+    <!-- Left Column - Integration Settings -->
+    <div class="col-xl-6">
+        <!-- Email Settings -->
+        <div id="panel-email" class="panel">
+            <div class="panel-hdr">
+                <h2>
+                    <i class="@(Settings.Theme.IconPrefix) fa-envelope mr-2"></i>
+                    @_localizer["Email Notifications"]
+                </h2>
+            </div>
+            <div class="panel-container show">
+                <div class="panel-content">
+                    <form method="post" asp-page-handler="SaveEmailSettings">
+                        @Html.AntiForgeryToken()
+                        <div class="form-group">
+                            <label class="form-label">@_localizer["SMTP Server"] <span class="text-danger">*</span></label>
+                            <input asp-for="NotificationInput.EmailSmtpServer" class="form-control" placeholder="smtp.example.com" />
+                        </div>
+                        <div class="form-row">
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">@_localizer["Port"] <span class="text-danger">*</span></label>
+                                <input asp-for="NotificationInput.EmailSmtpPort" type="number" class="form-control" placeholder="587" />
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">@_localizer["From Address"] <span class="text-danger">*</span></label>
+                                <input asp-for="NotificationInput.EmailFromAddress" type="email" class="form-control" placeholder="noreply@imonas.com" />
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <div class="custom-control custom-checkbox">
+                                <input asp-for="NotificationInput.EmailEnableSsl" type="checkbox" class="custom-control-input" id="enableSslCheck" />
+                                <label class="custom-control-label" for="enableSslCheck">@_localizer["Enable SSL/TLS"]</label>
+                            </div>
+                        </div>
+                        <div class="btn-group float-right" role="group">
+                            <button type="submit" class="btn btn-primary waves-effect waves-themed">
+                                <i class="@(Settings.Theme.IconPrefix) fa-save mr-1"></i>
+                                @_localizer["Save"]
+                            </button>
+                            <button type="submit" asp-page-handler="TestEmailConnection" class="btn btn-outline-primary waves-effect waves-themed">
+                                <i class="@(Settings.Theme.IconPrefix) fa-plug mr-1"></i>
+                                @_localizer["Test Connection"]
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <!-- Slack Settings -->
+        <div id="panel-slack" class="panel">
+            <div class="panel-hdr">
+                <h2>
+                    <i class="@(Settings.Theme.IconPrefix) fa-hashtag mr-2"></i>
+                    @_localizer["Slack Integration"]
+                </h2>
+            </div>
+            <div class="panel-container show">
+                <div class="panel-content">
+                    <form method="post" asp-page-handler="SaveSlackSettings">
+                        @Html.AntiForgeryToken()
+                        <div class="form-group">
+                            <label class="form-label">@_localizer["Webhook URL"]</label>
+                            <input asp-for="NotificationInput.SlackWebhookURL" class="form-control" placeholder="https://hooks.slack.com/services/..." />
+                            <small class="form-text text-muted">@_localizer["Create an Incoming Webhook in your Slack workspace"]</small>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">@_localizer["Default Channel"]</label>
+                            <input asp-for="NotificationInput.SlackDefaultChannel" class="form-control" placeholder="#reconciliation-alerts" />
+                        </div>
+                        <div class="btn-group float-right" role="group">
+                            <button type="submit" class="btn btn-primary waves-effect waves-themed">
+                                <i class="@(Settings.Theme.IconPrefix) fa-save mr-1"></i>
+                                @_localizer["Save"]
+                            </button>
+                            <button type="submit" asp-page-handler="TestSlackIntegration" class="btn btn-outline-primary waves-effect waves-themed">
+                                <i class="@(Settings.Theme.IconPrefix) fa-paper-plane mr-1"></i>
+                                @_localizer["Test Integration"]
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <!-- Microsoft Teams Settings -->
+        <div id="panel-teams" class="panel">
+            <div class="panel-hdr">
+                <h2>
+                    <i class="@(Settings.Theme.IconPrefix) fa-users mr-2"></i>
+                    @_localizer["Microsoft Teams Integration"]
+                </h2>
+            </div>
+            <div class="panel-container show">
+                <div class="panel-content">
+                    <form method="post" asp-page-handler="SaveTeamsSettings">
+                        @Html.AntiForgeryToken()
+                        <div class="form-group">
+                            <label class="form-label">@_localizer["Webhook URL"]</label>
+                            <input asp-for="NotificationInput.MicrosoftTeamsWebhookURL" class="form-control" placeholder="https://outlook.office.com/webhook/..." />
+                            <small class="form-text text-muted">@_localizer["Configure an Incoming Webhook connector in your Teams channel"]</small>
+                        </div>
+                        <div class="btn-group float-right" role="group">
+                            <button type="submit" class="btn btn-primary waves-effect waves-themed">
+                                <i class="@(Settings.Theme.IconPrefix) fa-save mr-1"></i>
+                                @_localizer["Save"]
+                            </button>
+                            <button type="submit" asp-page-handler="TestTeamsIntegration" class="btn btn-outline-primary waves-effect waves-themed">
+                                <i class="@(Settings.Theme.IconPrefix) fa-paper-plane mr-1"></i>
+                                @_localizer["Test Integration"]
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Right Column - Notification Rules -->
+    <div class="col-xl-6">
+        <div id="panel-rules" class="panel">
+            <div class="panel-hdr">
+                <h2>
+                    <i class="@(Settings.Theme.IconPrefix) fa-list-check mr-2"></i>
+                    @_localizer["Notification Rules"]
+                </h2>
+                <div class="panel-toolbar">
+                    <button class="btn btn-panel btn-success waves-effect waves-themed" data-toggle="modal" data-target="#addRuleModal">
+                        <i class="@(Settings.Theme.IconPrefix) fa-plus"></i>
+                    </button>
+                </div>
+            </div>
+            <div class="panel-container show">
+                <div class="panel-content">
+                    <!-- Run Completion Rule -->
+                    <div class="card border mb-3">
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between align-items-start mb-2">
+                                <div>
+                                    <h5 class="mb-1">
+                                        <i class="@(Settings.Theme.IconPrefix) fa-check-circle text-success mr-2"></i>
+                                        @_localizer["Run Completion"]
+                                    </h5>
+                                    <small class="text-muted">@_localizer["Notify when reconciliation run completes"]</small>
+                                </div>
+                                <div class="custom-control custom-switch">
+                                    <input type="checkbox" class="custom-control-input" asp-for="NotificationInput.ShouldNotifyOnRunToCompletion">
+                                    <label class="custom-control-label" asp-for="NotificationInput.ShouldNotifyOnRunToCompletion"></label>
+                                </div>
+                            </div>
+                            <div>
+                                <span class="badge badge-info mr-1"><i class="@(Settings.Theme.IconPrefix) fa-envelope mr-1"></i>@_localizer["Email"]</span>
+                                <span class="badge badge-info"><i class="@(Settings.Theme.IconPrefix) fa-hashtag mr-1"></i>@_localizer["Slack"]</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Run Failure Rule -->
+                    <div class="card border mb-3">
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between align-items-start mb-2">
+                                <div>
+                                    <h5 class="mb-1">
+                                        <i class="@(Settings.Theme.IconPrefix) fa-times-circle text-danger mr-2"></i>
+                                        @_localizer["Run Failure"]
+                                    </h5>
+                                    <small class="text-muted">@_localizer["Notify when reconciliation run fails"]</small>
+                                </div>
+                                <div class="custom-control custom-switch">
+                                    <input type="checkbox" class="custom-control-input" asp-for="NotificationInput.ShouldNotifyOnRunFailure">
+                                    <label class="custom-control-label" asp-for="NotificationInput.ShouldNotifyOnRunFailure"></label>
+                                </div>
+                            </div>
+                            <div>
+                                <span class="badge badge-info mr-1"><i class="@(Settings.Theme.IconPrefix) fa-envelope mr-1"></i>@_localizer["Email"]</span>
+                                <span class="badge badge-info mr-1"><i class="@(Settings.Theme.IconPrefix) fa-hashtag mr-1"></i>@_localizer["Slack"]</span>
+                                <span class="badge badge-info"><i class="@(Settings.Theme.IconPrefix) fa-users mr-1"></i>@_localizer["Teams"]</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Low Match Rate Rule -->
+                    <div class="card border mb-3">
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between align-items-start mb-2">
+                                <div>
+                                    <h5 class="mb-1">
+                                        <i class="@(Settings.Theme.IconPrefix) fa-chart-line text-warning mr-2"></i>
+                                        @_localizer["Low Match Rate"]
+                                    </h5>
+                                    <small class="text-muted">@_localizer["Notify when match rate falls below 80%"]</small>
+                                </div>
+                                <div class="custom-control custom-switch">
+                                    <input type="checkbox" class="custom-control-input" asp-for="NotificationInput.ShouldNotifyOnLowMatchRate">
+                                    <label class="custom-control-label" asp-for="NotificationInput.ShouldNotifyOnLowMatchRate"></label>
+                                </div>
+                            </div>
+                            <div>
+                                <span class="badge badge-info"><i class="@(Settings.Theme.IconPrefix) fa-envelope mr-1"></i>@_localizer["Email"]</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Case SLA Breach Rule -->
+                    <div class="card border mb-3">
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between align-items-start mb-2">
+                                <div>
+                                    <h5 class="mb-1">
+                                        <i class="@(Settings.Theme.IconPrefix) fa-clock text-warning mr-2"></i>
+                                        @_localizer["Case SLA Breach"]
+                                    </h5>
+                                    <small class="text-muted">@_localizer["Notify when case exceeds SLA deadline"]</small>
+                                </div>
+                                <div class="custom-control custom-switch">
+                                    <input type="checkbox" class="custom-control-input" asp-for="NotificationInput.ShouldNotifyOnCaseSLABreach">
+                                    <label class="custom-control-label" asp-for="NotificationInput.ShouldNotifyOnCaseSLABreach"></label>
+                                </div>
+                            </div>
+                            <div>
+                                <span class="badge badge-info mr-1"><i class="@(Settings.Theme.IconPrefix) fa-envelope mr-1"></i>@_localizer["Email"]</span>
+                                <span class="badge badge-info"><i class="@(Settings.Theme.IconPrefix) fa-hashtag mr-1"></i>@_localizer["Slack"]</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Critical Case Created Rule -->
+                    <div class="card border mb-3">
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between align-items-start mb-2">
+                                <div>
+                                    <h5 class="mb-1">
+                                        <i class="@(Settings.Theme.IconPrefix) fa-exclamation-triangle text-danger mr-2"></i>
+                                        @_localizer["Critical Case Created"]
+                                    </h5>
+                                    <small class="text-muted">@_localizer["Notify when critical severity case is created"]</small>
+                                </div>
+                                <div class="custom-control custom-switch">
+                                    <input type="checkbox" class="custom-control-input" asp-for="NotificationInput.ShouldNotifyOnCriticalCaseCreated">
+                                    <label class="custom-control-label" asp-for="NotificationInput.ShouldNotifyOnCriticalCaseCreated"></label>
+                                </div>
+                            </div>
+                            <div>
+                                <span class="badge badge-info mr-1"><i class="@(Settings.Theme.IconPrefix) fa-envelope mr-1"></i>@_localizer["Email"]</span>
+                                <span class="badge badge-info mr-1"><i class="@(Settings.Theme.IconPrefix) fa-hashtag mr-1"></i>@_localizer["Slack"]</span>
+                                <span class="badge badge-info"><i class="@(Settings.Theme.IconPrefix) fa-users mr-1"></i>@_localizer["Teams"]</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <button class="btn btn-success btn-block waves-effect waves-themed" data-toggle="modal" data-target="#addRuleModal">
+                        <i class="@(Settings.Theme.IconPrefix) fa-plus mr-1"></i>
+                        @_localizer["Add Notification Rule"]
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Add Rule Modal -->
+<div class="modal fade" id="addRuleModal" tabindex="-1" role="dialog" aria-labelledby="addRuleModalLabel" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="addRuleModalLabel">
+                    <i class="@(Settings.Theme.IconPrefix) fa-plus-circle mr-2"></i>@_localizer["Add Notification Rule"]
+                </h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label class="form-label">@_localizer["Rule Name"] <span class="text-danger">*</span></label>
+                    <input type="text" class="form-control" placeholder="@_localizer["Enter rule name"]" />
+                </div>
+                <div class="form-group">
+                    <label class="form-label">@_localizer["Event Type"] <span class="text-danger">*</span></label>
+                    <select class="form-control select2">
+                        <option value="">-- @_localizer["Select Event Type"] --</option>
+                        <option value="run_complete">@_localizer["Run Completion"]</option>
+                        <option value="run_failure">@_localizer["Run Failure"]</option>
+                        <option value="low_match_rate">@_localizer["Low Match Rate"]</option>
+                        <option value="sla_breach">@_localizer["Case SLA Breach"]</option>
+                        <option value="critical_case">@_localizer["Critical Case Created"]</option>
+                        <option value="file_processed">@_localizer["File Processed"]</option>
+                        <option value="file_failed">@_localizer["File Processing Failed"]</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">@_localizer["Notification Channels"]</label>
+                    <div class="custom-control custom-checkbox mb-2">
+                        <input type="checkbox" class="custom-control-input" id="channelEmail" checked>
+                        <label class="custom-control-label" for="channelEmail">
+                            <i class="@(Settings.Theme.IconPrefix) fa-envelope mr-1"></i>@_localizer["Email"]
+                        </label>
+                    </div>
+                    <div class="custom-control custom-checkbox mb-2">
+                        <input type="checkbox" class="custom-control-input" id="channelSlack">
+                        <label class="custom-control-label" for="channelSlack">
+                            <i class="@(Settings.Theme.IconPrefix) fa-hashtag mr-1"></i>@_localizer["Slack"]
+                        </label>
+                    </div>
+                    <div class="custom-control custom-checkbox">
+                        <input type="checkbox" class="custom-control-input" id="channelTeams">
+                        <label class="custom-control-label" for="channelTeams">
+                            <i class="@(Settings.Theme.IconPrefix) fa-users mr-1"></i>@_localizer["Microsoft Teams"]
+                        </label>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">@_localizer["Description"]</label>
+                    <textarea class="form-control" rows="2" placeholder="@_localizer["Optional description"]"></textarea>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary waves-effect waves-themed" data-dismiss="modal">@_localizer["Cancel"]</button>
+                <button type="button" class="btn btn-primary waves-effect waves-themed">
+                    <i class="@(Settings.Theme.IconPrefix) fa-check mr-1"></i>@_localizer["Create Rule"]
+                </button>
+            </div>
+        </div>
+    </div>
+</div>

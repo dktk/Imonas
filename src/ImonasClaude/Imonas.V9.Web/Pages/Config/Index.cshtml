@@ -1,0 +1,94 @@
+@page
+@model Imonas.V9.Web.Pages.Config.IndexModel
+@{
+    ViewData["Title"] = "Configuration";
+}
+
+<div class="page-title">System Configuration</div>
+<div class="page-subtitle">Manage PSP profiles, mappings, and system settings</div>
+
+<div class="grid grid-2">
+    <div class="card">
+        <div class="card-header">PSP Profiles</div>
+        <div class="card-body">
+            <p style="margin-bottom: 1rem; color: var(--text-secondary);">
+                Configure payment service provider settings including file formats, timezones, and merchant IDs.
+            </p>
+            <a asp-page="/Config/PspProfiles" class="btn btn-primary">Manage PSP Profiles</a>
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="card-header">Field Mappings</div>
+        <div class="card-body">
+            <p style="margin-bottom: 1rem; color: var(--text-secondary);">
+                Define declarative mappings from PSP/bank files to canonical schema with transforms.
+            </p>
+            <a asp-page="/Config/Mappings" class="btn btn-primary">Manage Mappings</a>
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="card-header">Status Dictionaries</div>
+        <div class="card-body">
+            <p style="margin-bottom: 1rem; color: var(--text-secondary);">
+                Map PSP-specific status codes to canonical statuses.
+            </p>
+            <a asp-page="/Config/StatusMappings" class="btn btn-primary">Manage Status Maps</a>
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="card-header">Fee Contracts</div>
+        <div class="card-body">
+            <p style="margin-bottom: 1rem; color: var(--text-secondary);">
+                Configure PSP fee structures including fixed, percentage, and tiered pricing.
+            </p>
+            <a asp-page="/Config/FeeContracts" class="btn btn-primary">Manage Contracts</a>
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="card-header">User Roles & Permissions</div>
+        <div class="card-body">
+            <p style="margin-bottom: 1rem; color: var(--text-secondary);">
+                Define roles, permissions, and row-level security policies.
+            </p>
+            <a asp-page="/Config/Roles" class="btn btn-primary">Manage Roles</a>
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="card-header">Notification Settings</div>
+        <div class="card-body">
+            <p style="margin-bottom: 1rem; color: var(--text-secondary);">
+                Configure email, Slack, and Teams notifications for alerts and SLA breaches.
+            </p>
+            <a asp-page="/Config/Notifications" class="btn btn-primary">Manage Notifications</a>
+        </div>
+    </div>
+</div>
+
+<div class="card mt-4">
+    <div class="card-header">System Health</div>
+    <div class="card-body">
+        <div class="grid grid-4">
+            <div>
+                <div style="font-size: 0.9rem; color: var(--text-muted); margin-bottom: 0.5rem;">Database</div>
+                <span class="badge badge-success">✓ Connected</span>
+            </div>
+            <div>
+                <div style="font-size: 0.9rem; color: var(--text-muted); margin-bottom: 0.5rem;">Version</div>
+                <span class="badge badge-info">v9.0.0</span>
+            </div>
+            <div>
+                <div style="font-size: 0.9rem; color: var(--text-muted); margin-bottom: 0.5rem;">Environment</div>
+                <span class="badge badge-warning">Development</span>
+            </div>
+            <div>
+                <div style="font-size: 0.9rem; color: var(--text-muted); margin-bottom: 0.5rem;">Uptime</div>
+                <span class="badge badge-secondary">@Model.Uptime</span>
+            </div>
+        </div>
+    </div>
+</div>

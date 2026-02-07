@@ -1,0 +1,454 @@
+﻿@page
+@using Microsoft.AspNetCore.Mvc.Localization
+@model SmartAdmin.WebUI.Pages.Config.CurrenciesModel
+@inject IStringLocalizer<CurrenciesModel> _localizer
+
+@{
+    ViewData["Title"] = "Currencies";
+    ViewData["PageName"] = "config_currencies";
+
+    var createUrl = Url.Page("/Config/Currencies", "Create");
+    var updateUrl = Url.Page("/Config/Currencies", "Update");
+    var deleteUrl = Url.Page("/Config/Currencies", "Delete");
+}
+
+@section HeadBlock {
+    <link rel="stylesheet" media="screen, print" href="~/css/fa-solid.css">
+    <style>
+        .currency-symbol {
+            font-size: 1.5rem;
+            min-width: 40px;
+            display: inline-block;
+            text-align: center;
+        }
+        .html-code-preview {
+            font-size: 1.2rem;
+            padding: 0.25rem 0.5rem;
+            background: #f8f9fa;
+            border-radius: 4px;
+            display: inline-block;
+            min-width: 50px;
+            text-align: center;
+        }
+    </style>
+}
+
+<div class="row mb-3">
+    <div class="col-12 d-flex justify-content-between align-items-center">
+        <div>
+            <h1 class="subheader-title">
+                <i class="subheader-icon @(Settings.Theme.IconPrefix) fa-coins"></i> @_localizer["Currencies"]
+            </h1>
+            <small class="text-muted">@_localizer["Manage currencies for transactions and reconciliation"]</small>
+        </div>
+        <div>
+            <button type="button" class="btn btn-success waves-effect waves-themed" data-toggle="modal" data-target="#createModal">
+                <i class="@(Settings.Theme.IconPrefix) fa-plus mr-1"></i>
+                @_localizer["Add Currency"]
+            </button>
+            <a asp-page="Index" class="btn btn-secondary waves-effect waves-themed">
+                <i class="@(Settings.Theme.IconPrefix) fa-arrow-left mr-1"></i>
+                @_localizer["Back"]
+            </a>
+        </div>
+    </div>
+</div>
+
+<!-- Summary Cards -->
+<div class="row mb-4">
+    <div class="col-sm-6 col-xl-4">
+        <div class="p-3 bg-primary-400 rounded overflow-hidden position-relative text-white mb-g">
+            <div class="">
+                <h3 class="display-4 d-block l-h-n m-0 fw-500">
+                    @Model.Currencies.Count
+                    <small class="m-0 l-h-n">@_localizer["Total Currencies"]</small>
+                </h3>
+            </div>
+            <i class="@(Settings.Theme.IconPrefix) fa-coins position-absolute pos-right pos-bottom opacity-15 mb-n1 mr-n1" style="font-size:6rem"></i>
+        </div>
+    </div>
+    <div class="col-sm-6 col-xl-4">
+        <div class="p-3 bg-success-400 rounded overflow-hidden position-relative text-white mb-g">
+            <div class="">
+                <h3 class="display-4 d-block l-h-n m-0 fw-500">
+                    @Model.Currencies.Count(c => !string.IsNullOrEmpty(c.HtmlCode))
+                    <small class="m-0 l-h-n">@_localizer["With Symbol"]</small>
+                </h3>
+            </div>
+            <i class="@(Settings.Theme.IconPrefix) fa-dollar-sign position-absolute pos-right pos-bottom opacity-15 mb-n1 mr-n1" style="font-size:6rem"></i>
+        </div>
+    </div>
+    <div class="col-sm-6 col-xl-4">
+        <div class="p-3 bg-info-400 rounded overflow-hidden position-relative text-white mb-g">
+            <div class="">
+                <h3 class="display-4 d-block l-h-n m-0 fw-500">
+                    @Model.Currencies.Select(c => c.Code.Length == 3 ? c.Code.Substring(0, 2) : c.Code).Distinct().Count()
+                    <small class="m-0 l-h-n">@_localizer["Regions"]</small>
+                </h3>
+            </div>
+            <i class="@(Settings.Theme.IconPrefix) fa-globe position-absolute pos-right pos-bottom opacity-15 mb-n1 mr-n1" style="font-size:6rem"></i>
+        </div>
+    </div>
+</div>
+
+<!-- Currencies Table -->
+<div class="row">
+    <div class="col-xl-12">
+        <div id="panel-currencies" class="panel">
+            <div class="panel-hdr">
+                <h2>
+                    @_localizer["Currencies"]
+                    <span class="fw-300"><i>(@Model.Currencies.Count @_localizer["total"])</i></span>
+                </h2>
+                <div class="panel-toolbar">
+                    <button class="btn btn-panel waves-effect waves-themed" data-action="panel-collapse" data-toggle="tooltip" data-original-title="Collapse"></button>
+                    <button class="btn btn-panel waves-effect waves-themed" data-action="panel-fullscreen" data-toggle="tooltip" data-original-title="Fullscreen"></button>
+                </div>
+            </div>
+            <div class="panel-container show">
+                <div class="panel-content">
+                    <div class="table-responsive">
+                        <table class="table table-bordered table-hover table-striped w-100" id="currenciesTable">
+                            <thead class="bg-primary-600">
+                                <tr>
+                                    <th style="width: 60px;">@_localizer["ID"]</th>
+                                    <th style="width: 100px;">@_localizer["Code"]</th>
+                                    <th>@_localizer["Name"]</th>
+                                    <th class="text-center" style="width: 120px;">@_localizer["Symbol"]</th>                                    
+                                    <th class="text-center" style="width: 150px;">@_localizer["Actions"]</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var currency in Model.Currencies)
+                                {
+                                    <tr>
+                                        <td>@currency.Id</td>
+                                        <td>
+                                            <span class="badge badge-primary" style="font-size: 0.9rem;">@currency.Code</span>
+                                        </td>
+                                        <td>
+                                            <i class="@(Settings.Theme.IconPrefix) fa-coins text-warning mr-2"></i>
+                                            <strong>@currency.Name</strong>
+                                        </td>
+                                        <td class="text-center">
+                                            @if (!string.IsNullOrEmpty(currency.HtmlCode))
+                                            {
+                                                <span class="html-code-preview">@Html.Raw(currency.HtmlCode)</span>
+                                            }
+                                            else
+                                            {
+                                                <span class="text-muted">-</span>
+                                            }
+                                        </td>
+                                        <td class="text-center">
+                                            <button class="btn btn-sm btn-outline-primary waves-effect waves-themed edit-btn"
+                                                    data-id="@currency.Id"
+                                                    data-name="@currency.Name"
+                                                    data-code="@currency.Code"
+                                                    data-htmlcode="@currency.HtmlCode"
+                                                    title="@_localizer["Edit"]">
+                                                <i class="@(Settings.Theme.IconPrefix) fa-edit"></i>
+                                            </button>
+                                            <button class="btn btn-sm btn-outline-danger waves-effect waves-themed delete-btn"
+                                                    data-id="@currency.Id"
+                                                    data-name="@currency.Name"
+                                                    data-code="@currency.Code"
+                                                    title="@_localizer["Delete"]">
+                                                <i class="@(Settings.Theme.IconPrefix) fa-trash"></i>
+                                            </button>
+                                        </td>
+                                    </tr>
+                                }
+                                @if (!Model.Currencies.Any())
+                                {
+                                    <tr>
+                                        <td colspan="6" class="text-center text-muted py-4">
+                                            <i class="@(Settings.Theme.IconPrefix) fa-inbox fa-3x mb-3 d-block"></i>
+                                            @_localizer["No currencies found."]
+                                            <div class="mt-2">
+                                                <button type="button" class="btn btn-success btn-sm" data-toggle="modal" data-target="#createModal">
+                                                    <i class="@(Settings.Theme.IconPrefix) fa-plus mr-1"></i>
+                                                    @_localizer["Add your first currency"]
+                                                </button>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Create Modal -->
+<div class="modal fade" id="createModal" tabindex="-1" role="dialog" aria-labelledby="createModalLabel" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header bg-success-600">
+                <h5 class="modal-title text-white" id="createModalLabel">
+                    <i class="@(Settings.Theme.IconPrefix) fa-plus mr-2"></i>
+                    @_localizer["Add Currency"]
+                </h5>
+                <button type="button" class="close text-white" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <form id="createForm">
+                @Html.AntiForgeryToken()
+                <div class="modal-body">
+                    <div class="form-group">
+                        <label class="form-label" for="createCode">@_localizer["Currency Code"] <span class="text-danger">*</span></label>
+                        <input type="text" class="form-control" id="createCode" name="Code" required
+                               placeholder="CODE" maxlength="3" style="text-transform: uppercase;" />
+                        <small class="text-muted">@_localizer["ISO 4217 currency code (e.g., USD, EUR, GBP)"]</small>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label" for="createName">@_localizer["Currency Name"] <span class="text-danger">*</span></label>
+                        <input type="text" class="form-control" id="createName" name="Name" required
+                               placeholder="@_localizer["Name"]" />
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label" for="createHtmlCode">@_localizer["HTML Symbol"]</label>
+                        <div class="input-group">
+                            <input type="text" class="form-control" id="createHtmlCode" name="HtmlCode"
+                                   placeholder="symbol" />
+                            <div class="input-group-append">
+                                <span class="input-group-text" id="createHtmlPreview" style="min-width: 50px; justify-content: center;">-</span>
+                            </div>
+                        </div>
+                        <small class="text-muted">@_localizer["HTML entity or symbol (e.g., &dollar; for $, &euro; for \u20ac)"]</small>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">@_localizer["Cancel"]</button>
+                    <button type="submit" class="btn btn-success" id="createSubmitBtn">
+                        <i class="@(Settings.Theme.IconPrefix) fa-save mr-1"></i>
+                        @_localizer["Create"]
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Edit Modal -->
+<div class="modal fade" id="editModal" tabindex="-1" role="dialog" aria-labelledby="editModalLabel" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header bg-primary-600">
+                <h5 class="modal-title text-white" id="editModalLabel">
+                    <i class="@(Settings.Theme.IconPrefix) fa-edit mr-2"></i>
+                    @_localizer["Edit Currency"]
+                </h5>
+                <button type="button" class="close text-white" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <form id="editForm">
+                @Html.AntiForgeryToken()
+                <input type="hidden" id="editId" name="EditId" />
+                <div class="modal-body">
+                    <div class="form-group">
+                        <label class="form-label" for="editCode">@_localizer["Currency Code"] <span class="text-danger">*</span></label>
+                        <input type="text" class="form-control" id="editCode" name="Code" required
+                               placeholder="USD" maxlength="3" style="text-transform: uppercase;" />
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label" for="editName">@_localizer["Currency Name"] <span class="text-danger">*</span></label>
+                        <input type="text" class="form-control" id="editName" name="Name" required
+                               placeholder="@_localizer["US Dollar"]" />
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label" for="editHtmlCode">@_localizer["HTML Symbol"]</label>
+                        <div class="input-group">
+                            <input type="text" class="form-control" id="editHtmlCode" name="HtmlCode"
+                                   placeholder="&dollar; or $" />
+                            <div class="input-group-append">
+                                <span class="input-group-text" id="editHtmlPreview" style="min-width: 50px; justify-content: center;">-</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">@_localizer["Cancel"]</button>
+                    <button type="submit" class="btn btn-primary" id="editSubmitBtn">
+                        <i class="@(Settings.Theme.IconPrefix) fa-save mr-1"></i>
+                        @_localizer["Save Changes"]
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- Delete Confirmation Modal -->
+<div class="modal fade" id="deleteModal" tabindex="-1" role="dialog" aria-labelledby="deleteModalLabel" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header bg-danger-600">
+                <h5 class="modal-title text-white" id="deleteModalLabel">
+                    <i class="@(Settings.Theme.IconPrefix) fa-exclamation-triangle mr-2"></i>
+                    @_localizer["Confirm Delete"]
+                </h5>
+                <button type="button" class="close text-white" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <p>@_localizer["Are you sure you want to delete the currency"] <strong id="deleteCurrencyName"></strong> (<code id="deleteCurrencyCode"></code>)?</p>
+                <p class="text-danger mb-0">
+                    <i class="@(Settings.Theme.IconPrefix) fa-exclamation-circle mr-1"></i>
+                    @_localizer["This action cannot be undone."]
+                </p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">@_localizer["Cancel"]</button>
+                <button type="button" class="btn btn-danger" id="confirmDeleteBtn">
+                    <i class="@(Settings.Theme.IconPrefix) fa-trash mr-1"></i>
+                    @_localizer["Delete"]
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section ScriptsBlock {
+    <script src="~/lib/axios/dist/axios.js"></script>
+    <script>
+        $(function () {
+            'use strict';
+
+            var deleteCurrencyId = null;
+
+            // Helper function to render HTML preview
+            function updateHtmlPreview(inputId, previewId) {
+                var val = $(inputId).val();
+                if (val) {
+                    $(previewId).html(val);
+                } else {
+                    $(previewId).text('-');
+                }
+            }
+
+            // Live preview for HTML code
+            $('#createHtmlCode').on('input', function() {
+                updateHtmlPreview('#createHtmlCode', '#createHtmlPreview');
+            });
+
+            $('#editHtmlCode').on('input', function() {
+                updateHtmlPreview('#editHtmlCode', '#editHtmlPreview');
+            });
+
+            // Create form submit
+            $('#createForm').on('submit', function (e) {
+                e.preventDefault();
+
+                var formData = $(this).serialize();
+
+                $('#createSubmitBtn').prop('disabled', true).html('<i class="fal fa-spinner fa-spin mr-1"></i> @_localizer["Creating..."]');
+
+                axios.post('@createUrl', formData, {
+                    headers: { 'Content-Type': 'application/x-www-form-urlencoded' }
+                }).then(function (res) {
+                    if (res.data.succeeded) {
+                        toastr.success(res.data.message);
+                        location.reload();
+                    } else {
+                        toastr.error(res.data.message);
+                        $('#createSubmitBtn').prop('disabled', false).html('<i class="fal fa-save mr-1"></i> @_localizer["Create"]');
+                    }
+                }).catch(function (err) {
+                    toastr.error('@_localizer["An error occurred while creating the currency."]');
+                    $('#createSubmitBtn').prop('disabled', false).html('<i class="fal fa-save mr-1"></i> @_localizer["Create"]');
+                });
+            });
+
+            // Edit button click
+            $('.edit-btn').on('click', function () {
+                var id = $(this).data('id');
+                var name = $(this).data('name');
+                var code = $(this).data('code');
+                var htmlcode = $(this).data('htmlcode');
+
+                $('#editId').val(id);
+                $('#editName').val(name);
+                $('#editCode').val(code);
+                $('#editHtmlCode').val(htmlcode);
+                updateHtmlPreview('#editHtmlCode', '#editHtmlPreview');
+
+                $('#editModal').modal('show');
+            });
+
+            // Edit form submit
+            $('#editForm').on('submit', function (e) {
+                e.preventDefault();
+
+                var formData = $(this).serialize();
+
+                $('#editSubmitBtn').prop('disabled', true).html('<i class="fal fa-spinner fa-spin mr-1"></i> @_localizer["Saving..."]');
+
+                axios.post('@updateUrl', formData, {
+                    headers: { 'Content-Type': 'application/x-www-form-urlencoded' }
+                }).then(function (res) {
+                    if (res.data.succeeded) {
+                        toastr.success(res.data.message);
+                        location.reload();
+                    } else {
+                        toastr.error(res.data.message);
+                        $('#editSubmitBtn').prop('disabled', false).html('<i class="fal fa-save mr-1"></i> @_localizer["Save Changes"]');
+                    }
+                }).catch(function (err) {
+                    toastr.error('@_localizer["An error occurred while updating the currency."]');
+                    $('#editSubmitBtn').prop('disabled', false).html('<i class="fal fa-save mr-1"></i> @_localizer["Save Changes"]');
+                });
+            });
+
+            // Delete button click
+            $('.delete-btn').on('click', function () {
+                deleteCurrencyId = $(this).data('id');
+                var name = $(this).data('name');
+                var code = $(this).data('code');
+                $('#deleteCurrencyName').text(name);
+                $('#deleteCurrencyCode').text(code);
+                $('#deleteModal').modal('show');
+            });
+
+            // Confirm delete
+            $('#confirmDeleteBtn').on('click', function () {
+                if (!deleteCurrencyId) return;
+
+                $(this).prop('disabled', true).html('<i class="fal fa-spinner fa-spin mr-1"></i> @_localizer["Deleting..."]');
+
+                axios.post('@deleteUrl', 'id=' + deleteCurrencyId + '&__RequestVerificationToken=' + $('input[name="__RequestVerificationToken"]').val(), {
+                    headers: { 'Content-Type': 'application/x-www-form-urlencoded' }
+                }).then(function (res) {
+                    if (res.data.succeeded) {
+                        toastr.success(res.data.message);
+                        location.reload();
+                    } else {
+                        toastr.error(res.data.message);
+                        $('#confirmDeleteBtn').prop('disabled', false).html('<i class="fal fa-trash mr-1"></i> @_localizer["Delete"]');
+                        $('#deleteModal').modal('hide');
+                    }
+                }).catch(function (err) {
+                    toastr.error('@_localizer["An error occurred while deleting the currency."]');
+                    $('#confirmDeleteBtn').prop('disabled', false).html('<i class="fal fa-trash mr-1"></i> @_localizer["Delete"]');
+                    $('#deleteModal').modal('hide');
+                });
+            });
+
+            // Reset modals on close
+            $('#createModal').on('hidden.bs.modal', function () {
+                $('#createForm')[0].reset();
+                $('#createHtmlPreview').text('-');
+            });
+
+            $('#deleteModal').on('hidden.bs.modal', function () {
+                deleteCurrencyId = null;
+            });
+        });
+    </script>
+}

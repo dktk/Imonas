@@ -1,0 +1,144 @@
+﻿@model Imonas.RuleEngine.Pages.RuleGroups.GroupVm
+@using Imonas.RuleEngine.Models
+
+<div class="card bg-dark border mb-3" data-group>
+  <div class="card-body">
+    <div class="row g-2 align-items-end">
+      <div class="col-md-4">
+        <label class="form-label">Group name</label>
+        <input name="Root.Name" value="@Model.Name" class="form-control" />
+      </div>
+      <div class="col-md-3">
+        <label class="form-label">Combine with</label>
+        <select name="Root.GroupOperator" class="form-select">
+          <option value="@LogicalOperator.And" selected="@(Model.GroupOperator == LogicalOperator.And)">AND</option>
+          <option value="@LogicalOperator.Or"  selected="@(Model.GroupOperator == LogicalOperator.Or)">OR</option>
+        </select>
+      </div>
+      <div class="col-md-5 text-end">
+        <button type="button" class="btn btn-outline-info me-2" data-action="add-rule">+ Rule</button>
+        <button type="button" class="btn btn-outline-warning" data-action="add-group">+ Subgroup</button>
+      </div>
+    </div>
+
+    <hr />
+
+    <h6 class="mb-2">Rules</h6>
+    <div class="rules">
+      @for (int i = 0; i < Model.Rules.Count; i++)
+      {
+        var r = Model.Rules[i];
+        <div class="row g-2 align-items-end mb-2" data-index="@i">
+          <div class="col-md-3">
+            <label class="form-label">Field</label>
+            <select name="Root.Rules[@i].Field" class="form-select rule-field">
+              <option value="@RuleField.Id"     selected="@(r.Field==RuleField.Id)">Id</option>
+              <option value="@RuleField.Status" selected="@(r.Field==RuleField.Status)">Status</option>
+              <option value="@RuleField.Amount" selected="@(r.Field==RuleField.Amount)">Amount</option>
+              <option value="@RuleField.Date"   selected="@(r.Field==RuleField.Date)">Date</option>
+            </select>
+          </div>
+          <div class="col-md-3">
+            <label class="form-label">Operator</label>
+            <select name="Root.Rules[@i].Operator" class="form-select">
+              <option value="@RuleOperator.Equal" selected="@(r.Operator==RuleOperator.Equal)">Equal</option>
+              <option value="@RuleOperator.LessThan" selected="@(r.Operator==RuleOperator.LessThan)">LessThan</option>
+              <option value="@RuleOperator.GreaterThan" selected="@(r.Operator==RuleOperator.GreaterThan)">GreaterThan</option>
+            </select>
+          </div>
+          <div class="col-md-4">
+            <div class="value-text-wrap @(r.Field==RuleField.Status ? "d-none" : "")">
+              <label class="form-label">Value</label>
+              <input name="Root.Rules[@i].ValueText" value="@r.ValueText" class="form-control" />
+            </div>
+            <div class="value-status-wrap @(r.Field==RuleField.Status ? "" : "d-none")">
+              <label class="form-label">Status</label>
+              <select name="Root.Rules[@i].ValueStatus" class="form-select">
+                @foreach (var s in Enum.GetValues(typeof(Imonas.RuleEngine.Models.Status)))
+                {
+                    <option value="@s" selected="@(r.ValueStatus==s!.ToString())">@s</option>
+                }
+              </select>
+            </div>
+          </div>
+          <div class="col-md-2 d-flex gap-2">
+            <button type="button" class="btn btn-outline-secondary" data-action="move-up">↑</button>
+            <button type="button" class="btn btn-outline-secondary" data-action="move-down">↓</button>
+            <button type="button" class="btn btn-outline-danger" data-action="remove-row">✕</button>
+          </div>
+        </div>
+      }
+    </div>
+
+    <h6 class="mt-3">Subgroups</h6>
+    <div class="children">
+      @for (int i = 0; i < Model.Children.Count; i++)
+      {
+        <div class="mb-2" data-index="@i">
+          <partial name="_GroupEditor" model="Model.Children[i]" />
+          <div class="d-flex gap-2 mt-2">
+            <button type="button" class="btn btn-outline-secondary" data-action="move-up">↑</button>
+            <button type="button" class="btn btn-outline-secondary" data-action="move-down">↓</button>
+            <button type="button" class="btn btn-outline-danger" data-action="remove-row">Remove subgroup</button>
+          </div>
+        </div>
+      }
+    </div>
+
+    <template class="rule-template">
+      <div class="row g-2 align-items-end mb-2" data-index="0">
+        <div class="col-md-3">
+          <label class="form-label">Field</label>
+          <select name="Root.Rules[0].Field" class="form-select rule-field">
+            <option value="@RuleField.Id">Id</option>
+            <option value="@RuleField.Status">Status</option>
+            <option value="@RuleField.Amount">Amount</option>
+            <option value="@RuleField.Date">Date</option>
+          </select>
+        </div>
+        <div class="col-md-3">
+          <label class="form-label">Operator</label>
+          <select name="Root.Rules[0].Operator" class="form-select">
+            <option value="@RuleOperator.Equal">Equal</option>
+            <option value="@RuleOperator.LessThan">LessThan</option>
+            <option value="@RuleOperator.GreaterThan">GreaterThan</option>
+          </select>
+        </div>
+        <div class="col-md-4">
+          <div class="value-text-wrap">
+            <label class="form-label">Value</label>
+            <input name="Root.Rules[0].ValueText" class="form-control" />
+          </div>
+          <div class="value-status-wrap d-none">
+            <label class="form-label">Status</label>
+            <select name="Root.Rules[0].ValueStatus" class="form-select">
+              @{
+                  var values = Enum.GetValues(typeof(Imonas.RuleEngine.Models.Status));
+
+                  foreach (var s in values)
+                  {
+                      <option value="@s">@s</option>
+                  }
+              }
+            </select>
+          </div>
+        </div>
+        <div class="col-md-2 d-flex gap-2">
+          <button type="button" class="btn btn-outline-secondary" data-action="move-up">↑</button>
+          <button type="button" class="btn btn-outline-secondary" data-action="move-down">↓</button>
+          <button type="button" class="btn btn-outline-danger" data-action="remove-row">✕</button>
+        </div>
+      </div>
+    </template>
+
+    <template class="group-template">
+      <div data-index="0">
+        @{
+            var groupEditorModel = new Imonas.RuleEngine.Pages.RuleGroups.GroupVm { Name = "Subgroup" };
+        }
+
+        @* todo: <partial name="_GroupEditor" model="groupEditorModel" /> *@
+      </div>
+    </template>
+  </div>
+</div>

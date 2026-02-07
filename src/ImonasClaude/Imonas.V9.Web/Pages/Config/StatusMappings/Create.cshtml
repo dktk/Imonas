@@ -1,0 +1,192 @@
+@page
+@model Imonas.V9.Web.Pages.Config.StatusMappings.CreateModel
+@{
+    ViewData["Title"] = "Create Status Mapping";
+}
+
+<div class="flex-between mb-4">
+    <div>
+        <div class="page-title">Create Status Mapping</div>
+        <div class="page-subtitle">Map PSP-specific status to canonical status</div>
+    </div>
+    <a asp-page="/Config/StatusMappings" class="btn btn-secondary">Back</a>
+</div>
+
+<div class="alert alert-info">
+    Status mappings normalize PSP-specific transaction statuses to a standard set of canonical statuses (Completed, Pending, Failed, etc.). This ensures consistent reporting and reconciliation across all payment providers.
+</div>
+
+<form method="post">
+    <div class="grid grid-2">
+        <div>
+            <div class="card">
+                <div class="card-header">Mapping Configuration</div>
+                <div class="card-body">
+                    <div class="form-group">
+                        <label asp-for="Input.PspProfileId"></label>
+                        <select asp-for="Input.PspProfileId" class="form-control" required>
+                            <option value="">-- Select PSP Profile --</option>
+                            @foreach (var profile in Model.PspProfiles)
+                            {
+                                <option value="@profile.Id">@profile.PspName (@profile.PspCode)</option>
+                            }
+                        </select>
+                        <span asp-validation-for="Input.PspProfileId" class="text-danger"></span>
+                    </div>
+
+                    <div class="form-group">
+                        <label asp-for="Input.PspStatus"></label>
+                        <input asp-for="Input.PspStatus" class="form-control" required placeholder="e.g., succeeded, requires_payment_method" />
+                        <small class="form-text">The status code as it appears in PSP files/API responses</small>
+                        <span asp-validation-for="Input.PspStatus" class="text-danger"></span>
+                    </div>
+
+                    <div class="form-group">
+                        <label asp-for="Input.CanonicalStatus"></label>
+                        <select asp-for="Input.CanonicalStatus" class="form-control" required>
+                            <option value="">-- Select Canonical Status --</option>
+                            <optgroup label="Success States">
+                                <option value="Completed">Completed</option>
+                                <option value="Settled">Settled</option>
+                                <option value="Refunded">Refunded</option>
+                            </optgroup>
+                            <optgroup label="Pending States">
+                                <option value="Pending">Pending</option>
+                                <option value="Processing">Processing</option>
+                                <option value="Authorized">Authorized</option>
+                                <option value="RequiresAction">Requires Action</option>
+                                <option value="RequiresCapture">Requires Capture</option>
+                            </optgroup>
+                            <optgroup label="Failed States">
+                                <option value="Failed">Failed</option>
+                                <option value="Declined">Declined</option>
+                                <option value="Cancelled">Cancelled</option>
+                                <option value="Expired">Expired</option>
+                            </optgroup>
+                            <optgroup label="Other">
+                                <option value="Unknown">Unknown</option>
+                                <option value="Disputed">Disputed</option>
+                                <option value="PartiallyRefunded">Partially Refunded</option>
+                            </optgroup>
+                        </select>
+                        <small class="form-text">The standardized status for reconciliation</small>
+                        <span asp-validation-for="Input.CanonicalStatus" class="text-danger"></span>
+                    </div>
+
+                    <div class="form-group">
+                        <label asp-for="Input.Description"></label>
+                        <textarea asp-for="Input.Description" class="form-control" rows="3" placeholder="Optional description or notes about this mapping"></textarea>
+                        <span asp-validation-for="Input.Description" class="text-danger"></span>
+                    </div>
+
+                    <div class="form-group">
+                        <label asp-for="Input.Version"></label>
+                        <input asp-for="Input.Version" class="form-control" required placeholder="1.0.0" />
+                        <small class="form-text">Semantic versioning for tracking changes</small>
+                        <span asp-validation-for="Input.Version" class="text-danger"></span>
+                    </div>
+
+                    <div class="form-group">
+                        <label style="display: flex; align-items: center; gap: 0.5rem;">
+                            <input asp-for="Input.IsActive" type="checkbox" />
+                            <span>Active</span>
+                        </label>
+                        <small class="form-text">Only active mappings are used during processing</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div>
+            <div class="card">
+                <div class="card-header">Status Categories</div>
+                <div class="card-body">
+                    <div style="margin-bottom: 1.5rem;">
+                        <div style="display: flex; align-items: center; gap: 0.75rem; margin-bottom: 0.5rem;">
+                            <div style="font-size: 1.5rem; color: var(--accent-secondary);">✓</div>
+                            <div>
+                                <div style="font-weight: 600; color: var(--text-primary);">Success States</div>
+                                <div style="font-size: 0.875rem; color: var(--text-muted);">Transactions completed successfully</div>
+                            </div>
+                        </div>
+                        <div style="background-color: var(--bg-tertiary); border-radius: 4px; padding: 0.75rem; font-size: 0.875rem;">
+                            <strong>Examples:</strong> Completed, Settled, Refunded
+                        </div>
+                    </div>
+
+                    <div style="margin-bottom: 1.5rem;">
+                        <div style="display: flex; align-items: center; gap: 0.75rem; margin-bottom: 0.5rem;">
+                            <div style="font-size: 1.5rem; color: var(--accent-warning);">⏳</div>
+                            <div>
+                                <div style="font-weight: 600; color: var(--text-primary);">Pending States</div>
+                                <div style="font-size: 0.875rem; color: var(--text-muted);">Transactions in progress</div>
+                            </div>
+                        </div>
+                        <div style="background-color: var(--bg-tertiary); border-radius: 4px; padding: 0.75rem; font-size: 0.875rem;">
+                            <strong>Examples:</strong> Pending, Processing, Authorized, Requires Action, Requires Capture
+                        </div>
+                    </div>
+
+                    <div style="margin-bottom: 1.5rem;">
+                        <div style="display: flex; align-items: center; gap: 0.75rem; margin-bottom: 0.5rem;">
+                            <div style="font-size: 1.5rem; color: var(--accent-danger);">✗</div>
+                            <div>
+                                <div style="font-weight: 600; color: var(--text-primary);">Failed States</div>
+                                <div style="font-size: 0.875rem; color: var(--text-muted);">Transactions that failed or were cancelled</div>
+                            </div>
+                        </div>
+                        <div style="background-color: var(--bg-tertiary); border-radius: 4px; padding: 0.75rem; font-size: 0.875rem;">
+                            <strong>Examples:</strong> Failed, Declined, Cancelled, Expired
+                        </div>
+                    </div>
+
+                    <div>
+                        <div style="display: flex; align-items: center; gap: 0.75rem; margin-bottom: 0.5rem;">
+                            <div style="font-size: 1.5rem; color: var(--text-muted);">⚠</div>
+                            <div>
+                                <div style="font-weight: 600; color: var(--text-primary);">Other States</div>
+                                <div style="font-size: 0.875rem; color: var(--text-muted);">Special cases and edge scenarios</div>
+                            </div>
+                        </div>
+                        <div style="background-color: var(--bg-tertiary); border-radius: 4px; padding: 0.75rem; font-size: 0.875rem;">
+                            <strong>Examples:</strong> Unknown, Disputed, Partially Refunded
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card mt-3">
+                <div class="card-header">Common PSP Status Examples</div>
+                <div class="card-body">
+                    <div style="font-size: 0.875rem;">
+                        <div style="margin-bottom: 0.75rem;">
+                            <strong>Stripe:</strong>
+                            <div style="color: var(--text-muted);">succeeded, pending, failed, requires_payment_method, requires_confirmation, requires_action, canceled</div>
+                        </div>
+                        <div style="margin-bottom: 0.75rem;">
+                            <strong>PayPal:</strong>
+                            <div style="color: var(--text-muted);">COMPLETED, PENDING, FAILED, REFUNDED, PARTIALLY_REFUNDED, CANCELLED</div>
+                        </div>
+                        <div style="margin-bottom: 0.75rem;">
+                            <strong>Adyen:</strong>
+                            <div style="color: var(--text-muted);">Authorised, Pending, Refused, Cancelled, Error, Expired</div>
+                        </div>
+                        <div>
+                            <strong>Bank Files:</strong>
+                            <div style="color: var(--text-muted);">SETTLED, PENDING, REJECTED, RETURNED</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="flex gap-2 mt-4">
+        <button type="submit" class="btn btn-primary">Create Mapping</button>
+        <a asp-page="/Config/StatusMappings" class="btn btn-secondary">Cancel</a>
+    </div>
+</form>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

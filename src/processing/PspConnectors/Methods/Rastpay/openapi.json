@@ -1,0 +1,2935 @@
+{
+  "openapi": "3.0.1",
+  "info": {
+    "title": "rastpay.com API",
+    "description": "RastPay API Specification\n",
+    "contact": {
+      "name": "Support",
+      "email": "support@rastpay.com"
+    },
+    "license": {
+      "name": "Apache 2.0",
+      "url": "http://www.apache.org/licenses/LICENSE-2.0.html"
+    },
+    "version": "1.0.2998"
+  },
+  "servers": [
+    {
+      "url": "https://app-demo.rastpay.com",
+      "description": "Sandbox"
+    },
+    {
+      "url": "https://app.rastpay.com",
+      "description": "Production"
+    }
+  ],
+  "tags": [
+    {
+      "name": "Payment API Specs",
+      "description": "Here you will find API Specifications, Request/Response Samples, Sandbox Details for all available endpoints and flows, to help you quickly and efficiently integrate our payment solution."
+    },
+    {
+      "name": "Custom Payment Routing Fields",
+      "description": "\nThis section contains fields that can influence payment routing configurations\n\n---\n#### **routingGroup**\n**Type:** string (maximum 64 characters)  \n**Description:** Identifies the customer as part of a specific group used for routing. This parameter enables segregating customers into different routing strategies for customized handling.\n\n---\n#### **kycStatus**\n**Type:** boolean  \n**Description:** Indicates whether the customer has successfully passed Know Your Customer (KYC) verification.  \n**Possible Values:**\n- `true`: KYC verification passed  \n- `false`: KYC verification not passed  \n\n---\n#### **paymentInstrumentKycStatus**\n**Type:** boolean  \n**Description:** Indicates whether the payment instrument (e.g., a credit card) associated with the customer has passed KYC verification.  \n**Possible Values:**\n- `true`: Payment instrument KYC verification passed  \n- `false`: Payment instrument KYC verification not passed  \n\n---\n#### **dateOfFirstDeposit**\n**Type:** string (ISO 8601 format: YYYY-MM-DD)  \n**Description:** Represents the date of the customer's first deposit. The format adheres to the ISO 8601 standard.  \n\n---\n#### **depositsAmount**\n**Type:** integer  \n**Description:** The total amount deposited by the customer, expressed in the base currency of the system (EUR).  \n\n---\n#### **withdrawalsAmount**\n**Type:** integer  \n**Description:** The total amount withdrawn by the customer, expressed in the base currency of the system (EUR).  \n\n---\n#### **depositsCnt**\n**Type:** integer  \n**Description:** The number of deposit transactions made by the customer.  \n\n---\n#### **withdrawalsCnt**\n**Type:** integer  \n**Description:** The number of withdrawal transactions made by the customer.  \n\n---\n#### **trustLevel**\n**Type:** string  \n**Description:** Used to classify customer traffic into primary or secondary streams.  \n**Possible Values:**\n- `ftd`: First-Time Deposit traffic  \n- `redep`: Redeposit traffic  \n\n---\n#### **btag**\n**Type:** boolean  \n**Description:** Determines a separation of customer traffic.  \n**Possible Values:**\n- `true`: Traffic marked as primary  \n- `false`: Traffic marked as secondary  \n\n---\n#### **affiliated**\n**Type:** string (maximum 3 characters)  \n**Description:** Specifies affiliate-related configurations for routing.  \n**Possible Values:**\n- `yes`: Indicates affiliate-based routing  \n- `no`: No affiliate-based routing\n"
+    },
+    {
+      "name": "Mandatory Required Params",
+      "description": "The list of mandatory required params may vary according to the paymentType used, see them attached below in the table:\nNote: please check all details with your Account Manager\n### Required params per paymentType\n| paymentType | List of mandatory Required Params                                                                                                                                                                                                                                              |  \n|-------------|--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|     \n| DEPOSIT     | paymentType, amount, currency, customer.firstName, customer.lastName, customer.email, customer.phone, billingAddress.addressLine1, billingAddress.city, billingAddress.countryCode, billingAddress.postalCode                                                                  |\n| WITHDRAWAL  | paymentType, amount, currency, customer.firstName, customer.lastName, customer.email, customer.phone, card.cardholderName, card.expiryMonth, card.expiryYear, billingAddress.addressLine1, billingAddress.city, billingAddress.countryCode, billingAddress.postalCode          |\n| REFUND      | paymentType, parentPaymentId, amount, currency                                                                                                                                                                                                                                 |\n| CARDVERIFY  | paymentType, amount, currency                                                                                                                                                                                                                                                  |\n"
+    },
+    {
+      "name": "API Processing URLs",
+      "description": "apiUrl for different environments should be the following:\n### apiUrl values\n| Environment         | Servers                                                        |\n|---------------------|----------------------------------------------------------------|\n| Sandbox             | https://app-demo.rastpay.com/api/v1/payments                  |\n| Production          | https://app.rastpay.com/api/v1/payments                       |\n"
+    },
+    {
+      "name": "Merchant Portal Access",
+      "description": "To get the detailed information about processing volumes, reports, transactions, active users i.e., please visit our Merchant Portal with credentials given to you during the integration process:\n### Merchant Portal URLs\n| Environment         | Merchant Portal URL                                            |\n|---------------------|----------------------------------------------------------------|\n| Sandbox             | https://merchant-demo.rastpay.com/                                  |\n| Production          | https://merchant.rastpay.com/                                       |\n"
+    },
+    {
+      "name": "Crypto Processing Payment Method",
+      "description": "In case if you want to use any specific blockchain under \"CRYPTO\" payment method, please specify the blockchain value via the payment request using \"additionalParameters\" object:\n\n  \"additionalParameters\":{\n  \"blockchain\": \"TRX\"}\n"
+    },
+    {
+      "name": "Callbacks",
+      "description": "In order to receive callbacks from our system, you need to specify 'Webhook Url' within website settings under Merchant Portal, or provide 'webhookUrl' parameter in createPayment request. In case if \"webhookUrl\" is passed within the payment request, it will override the static one configured in the system. <br/><br/>\nIn general, we do support both static and dynamic callbacks, and you can use whatever suits your business better.<br/>\nTo ensure that callbacks are sent from our system, you can generate a Signing Key in your website settings. If the Signing Key is specified, callbacks from our system will include 'Signature' header with HMAC256 hash generated from JSON body and Signing Key.<br/>\n<SchemaDefinition schemaRef=\"#/components/schemas/Result\" />\n"
+    },
+    {
+      "name": "Sandbox Tools",
+      "description": "To proceed with testing for all processing flows and cases, you can use our Sandbox environment, keep in mind that the amount should be less than 10000000. For withdrawals and refunds, the limit is 10000.\nUsing card 4000…0002 will emulate 3DSecure scenario, to complete the payment you must enter the expected 3DSecure One-time password.\n### Test cards\n| Card Number (PAN)   | 3DS Result                                               |\n|---------------------|----------------------------------------------------------|\n| 4000 0000 0000 0002 | 3DS enrolled, successful authorization                   |\n| 4242 4242 4242 4242 | 3DS enrolled, declined authorization                     |\n| 4000 0000 0000 0408 | Not enrolled for 3DS, successful authorization           |\n| 4000 0000 0000 0416 | Not enrolled for 3DS, declined authorization             |\n\nExpiration date - any future.<br/>\nCVV - any.<br/>\n3DSecure OTP: 12345\n\n### Alternative Payment Methods\n| Payment Method      | Username                   | Password                    |\n|---------------------|----------------------------|-----------------------------|\n| BANKTRANSFER        | banktransfer@emulator.test | banktransfertest            |\n| NETELLER            | neteller@emulator.test     | netellertest                |\n| SKRILL              | skrill@emulator.test       | skrilltest                  |\n| GIROPAY             | giropay@emulator.test      | giropaytest                 |\n| PAYID               | payid@emulator.test        | payidtest                   |\n| SOFORT              | sofort@emulator.test       | soforttest                  |\n| STRIPE              | stripe@emulator.test       | stripetest                  |\n"
+    },
+    {
+      "name": "Response Codes And Messages",
+      "description": "| Code | Response Message                                                              |\n|------|-------------------------------------------------------------------------------|\n| 1.00 | Illegal Workflow State                                                        |\n| 1.01 | Not Found                                                                     |\n| 1.02 | General Decline                                                               |\n| 1.03 | Internal Server Error                                                         |\n| 1.04 | Cancelled by Timeout                                                          |\n| 1.05 | No suitable provider found                                                    |\n| 1.06 | Recurring Token not Found                                                     |\n| 1.07 | Payer Unaccepted                                                              |\n| 1.08 | Invalid Amount                                                                |\n| 1.09 | Invalid Currency                                                              |\n| 1.10 | Velocity Limit Reached                                                        |\n| 2.00 | Cancelled by Customer                                                         |\n| 3.00 | Declined by Acquirer                                                          |\n| 3.01 | Declined by Acquirer: Anti-fraud                                              |\n| 3.02 | Declined by Acquirer: Request Validation                                      |\n| 3.03 | Acquirer Malfunction                                                          |\n| 3.04 | Acquirer Timeout                                                              |\n| 3.05 | Acquirer Limits Reached                                                       |\n| 3.06 | Declined by Acquirer: Card Scheme                                             |\n| 3.07 | Declined by Acquirer: Card Data                                               |\n| 3.08 | Declined by Acquirer: Business Rules                                          |\n| 3.09 | Not Fully 3DS                                                                 |\n| 3.10 | Unknown Error Code                                                            |\n| 3.11 | Payer cannot pay                                                              |\n| 4.00 | Declined by Issuer                                                            |\n| 4.01 | Insufficient Funds                                                            |\n| 4.02 | Stolen Card                                                                   |\n| 4.03 | Lost card                                                                     |\n| 4.04 | Pick up card                                                                  |\n| 4.05 | Card Expired                                                                  |\n| 4.06 | Card Inactive                                                                 |\n| 4.07 | Card Suspended                                                                |\n| 4.08 | Card Deleted                                                                  |\n| 4.09 | Invalid Card CVC/CVV                                                          |\n| 4.10 | Invalid Card or Account Details                                               |\n| 4.11 | Declined by Issuer: Restricted Card                                           |\n| 4.12 | Declined by Issuer: Processing Limits                                         |\n| 4.13 | Declined by Issuer: Blocked or Inactive Account                               |\n| 4.14 | Declined by Issuer: Invalid Customer Data                                     |\n| 4.15 | Invalid Phone Number                                                          |\n| 5.00 | Declined by 3DS                                                               |\n| 5.01 | 3DS Timeout                                                                   |\n| 6.00 | Declined by Internal Anti-fraud                                               |\n| 6.01 | Card PAN Blacklisted                                                          |\n| 6.02 | Customer Email Blacklisted                                                    |\n| 6.03 | Card Issuing Country Restricted                                               |\n| 6.04 | IP Country Restricted                                                         |\n| 6.05 | Restricted Currency                                                           |\n| 6.06 | Invalid Amount                                                                |\n| 6.07 | IP Country Must Be Equal to Billing Country                                   |\n| 6.08 | IP Country Must Be Equal to Card Issuing Country                              |\n| 6.09 | Billing Country Must Be Equal to Card Issuing Country                         |\n| 6.10 | Payment Created Within Closed Period of Day                                   |\n| 6.11 | Card PAN not Whitelisted                                                      |\n| 6.12 | Cardholder name is invalid                                                    |\n| 6.13 | CardPAN Masked Blacklisted                                                    |\n| 6.21 | Limit exceeded: Number of completed deposits                                  |\n| 6.22 | Limit exceeded: Number of completed deposits for card                         |\n| 6.23 | Limit exceeded: Number of declined deposits for card                          |\n| 6.24 | Limit exceeded: Number of cards for IP address                                |\n| 6.25 | Limit exceeded: Number of IP addresses for card                               |\n| 6.26 | Limit exceeded: IP country does not match card country                        |\n| 6.27 | Limit exceeded: Same amount and currency for card                             |\n| 6.28 | Limit exceeded: Amount of deposits in specified currency                      |\n| 6.29 | Limit exceeded: Amount of deposits for card and currency                      |\n| 6.30 | Limit exceeded: Amount of deposits in base currency                           |\n| 6.31 | Limit exceeded: Amount of deposits for card in base currency                  |\n| 6.32 | Limit exceeded: Number of IP countries for card                               |\n| 6.33 | Limit exceeded: Amount of deposits in base currency, for card                 |\n| 6.34 | Limit exceeded: Number of attempts with all statuses, times per card          |\n| 7.00 | Declined by External Anti-fraud                                               |\n| 7.01 | External Anti-fraud Communication Problem                                     |\n| 8.00 | Declined by Merchant                                                          |\n"
+    },
+    {
+      "name": "Transaction Statuses",
+      "description": "These states provide a comprehensive overview of the different stages a transaction may go through, allowing for better tracking, management, and resolution of any issues that may arise during the process.\n| State                  | Final TX State | Explanation                                                                                                                                                                          |\n|------------------------|----------------|--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|\n| COMPLETED              | **yes**        | The transaction has been successfully processed.                                                                                                                                     |\n| CHARGEBACK             | **yes**        | The transaction was marked as a chargeback, this process typically involves several states or stages, which may vary depending on the payment processor or bank.                     |\n| DECLINED               | **yes**        | The transaction has been rejected, often due to issues such as insufficient funds, security concerns, or other reasons preventing successful processing.                             |\n| CANCELLED              | **yes**        | The user or system has intentionally terminated the transaction before its completion or transaction got cancelled automatically due to timeout.                                     |\n| CHECKOUT               | no             | The transaction is in progress as the user is currently in the process of finalizing the payment or action.                                                                          |\n| RECONCILIATION         | no             | The transaction is under review or reconciliation, usually involving checkState request.                                                                                             |\n| PENDING                | no             | The transaction is awaiting further processing or approval. It is in a temporary state and has not been completed or declined.                                                       |\n| AWAITING_WEBHOOK       | no             | The transaction is waiting for a webhook notification.                                                                                                                               |\n| AWAITING_REDIRECT      | no             | The transaction is waiting for a redirect action, typically in scenarios involving online payments where users may need to be redirected to another page for additional information. |\n| AWAITING_APPROVAL      | no             | The transaction is pending approval, often in scenarios where additional authorization is required before completing the WITHDRAWAL transaction.                                     |\n| AWAITING_RETURN        | no             | The transaction is awaiting a customer return from the external API interface.                                                                                                       |\n| CASCADING_CONFIRMATION | no             | The transaction is undergoing customer approval for next provider within cascading list.                                                                                             |\n| ERROR                  | yes            | The transaction has encountered an error during processing, and further action or investigation is required to resolve the issue.                                                    |\n"
+    }
+  ],
+  "paths": {
+    "/api/v1/payments": {
+      "get": {
+        "tags": [
+          "Payment API Specs"
+        ],
+        "description": "Get a list of payments sorted by creation date (most recent first)",
+        "operationId": "getPayments",
+        "parameters": [
+          {
+            "name": "offset",
+            "in": "query",
+            "description": "The number of items to skip before starting to collect the result set. Default is 0.",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 1000000
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "description": "The numbers of items to return. Default is 50.",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 1000
+            }
+          },
+          {
+            "name": "created.gte",
+            "in": "query",
+            "description": "If passed, return only payments created at or after the specified time",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "format": "ISO 8601 (YYYY-MM-DD'T'HH24:MI:SS)",
+              "example": "2022-11-10T12:12:21"
+            }
+          },
+          {
+            "name": "created.lt",
+            "in": "query",
+            "description": "If passed, return only payments created strictly before the specified time",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "format": "ISO 8601 (YYYY-MM-DD'T'HH24:MI:SS)",
+              "example": "2022-11-10T12:12:21"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Payment List Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PaymentListResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid input",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              },
+              "status": {
+                "example": "error"
+              },
+              "code": {
+                "example": 400
+              },
+              "message": {
+                "example": "Bad Request"
+              }
+            }
+          },
+          "401": {
+            "description": "Invalid credentials",
+            "headers": {
+              "WWW_Authenticate": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UnauthorizedError"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearerAuthentication": []
+          }
+        ]
+      },
+      "post": {
+        "tags": [
+          "Payment API Specs"
+        ],
+        "description": "Payment request, used for DEPOSITS",
+        "operationId": "createPayment",
+        "requestBody": {
+          "description": "Payment Request - Request to initiate a transaction.<br/> The parameters are different in HPP and S2S integration.<br/> In order to specify the correct parameters when building a query, you can choose the appropriate schema, which is described below.",
+          "content": {
+            "application/json": {
+              "schema": {
+                "oneOf": [
+                  {
+                    "$ref": "#/components/schemas/PaymentRequestS2S"
+                  },
+                  {
+                    "$ref": "#/components/schemas/PaymentRequestHPP"
+                  }
+                ]
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Payment response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PaymentResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid input",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              },
+              "status": {
+                "example": "error"
+              },
+              "code": {
+                "example": 400
+              },
+              "message": {
+                "example": "Bad Request"
+              }
+            }
+          },
+          "401": {
+            "description": "Invalid credentials",
+            "headers": {
+              "WWW_Authenticate": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UnauthorizedError"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearerAuthentication": []
+          }
+        ],
+        "x-codegen-request-body-name": "body"
+      }
+    },
+    "/api/v1/payments/": {
+      "post": {
+        "tags": [
+          "Payment API Specs"
+        ],
+        "description": "Payment request, used for WITHDRAWALS",
+        "operationId": "createPayout",
+        "requestBody": {
+          "description": "Payout Request - Request to initiate a transaction.",
+          "content": {
+            "application/json": {
+              "schema": {
+                "oneOf": [
+                  {
+                    "$ref": "#/components/schemas/PayoutRequestS2S"
+                  },
+                  {
+                    "$ref": "#/components/schemas/PayoutRequestHPP"
+                  }
+                ]
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Payment response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PayoutResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid input",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              },
+              "status": {
+                "example": "error"
+              },
+              "code": {
+                "example": 400
+              },
+              "message": {
+                "example": "Bad Request"
+              }
+            }
+          },
+          "401": {
+            "description": "Invalid credentials",
+            "headers": {
+              "WWW_Authenticate": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UnauthorizedError"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearerAuthentication": []
+          }
+        ],
+        "x-codegen-request-body-name": "body"
+      }
+    },
+    "api/v1/payments/": {
+      "post": {
+        "tags": [
+          "Payment API Specs"
+        ],
+        "description": "Payment request, used for REFUNDS",
+        "operationId": "createRefund",
+        "requestBody": {
+          "description": "Refund Request - Request to initiate a transaction.",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RefundRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Payment response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RefundResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid input",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              },
+              "status": {
+                "example": "error"
+              },
+              "code": {
+                "example": 400
+              },
+              "message": {
+                "example": "Bad Request"
+              }
+            }
+          },
+          "401": {
+            "description": "Invalid credentials",
+            "headers": {
+              "WWW_Authenticate": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UnauthorizedError"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearerAuthentication": []
+          }
+        ],
+        "x-codegen-request-body-name": "body"
+      }
+    },
+    "/api/v1/payments/{id}": {
+      "get": {
+        "tags": [
+          "Payment API Specs"
+        ],
+        "description": "Payment - CheckStatus",
+        "operationId": "checkStatus",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "Payment Id or Payment referenceId",
+            "required": true,
+            "schema": {
+              "pattern": "/[a-zA-Z0-9]{32}/",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Payment Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PaymentResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Invalid credentials",
+            "headers": {
+              "WWW_Authenticate": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UnauthorizedError"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Payment not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": ""
+                }
+              },
+              "status": {
+                "example": "error"
+              },
+              "code": {
+                "example": 404
+              },
+              "message": {
+                "example": "Payment Not Found"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearerAuthentication": []
+          }
+        ],
+        "x-codegen-request-body-name": "body"
+      }
+    },
+    "/api/v1/payments/{id}/operations": {
+      "get": {
+        "tags": [
+          "Payment API Specs"
+        ],
+        "description": "Get a list of operations performed during payment processing sorted by time (most recent first)",
+        "operationId": "getOperations",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "Payment Id",
+            "required": true,
+            "schema": {
+              "pattern": "/[a-zA-Z0-9]{32}/",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Operation List Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OperationListResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Invalid credentials",
+            "headers": {
+              "WWW_Authenticate": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UnauthorizedError"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Payment not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": ""
+                }
+              },
+              "status": {
+                "example": "error"
+              },
+              "code": {
+                "example": 404
+              },
+              "message": {
+                "example": "Payment Not Found"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearerAuthentication": []
+          }
+        ],
+        "x-codegen-request-body-name": "body"
+      }
+    },
+    "/api/v1/terminals/getBalance/{terminalId}": {
+      "get": {
+        "tags": [
+          "Payment API Specs"
+        ],
+        "description": "Getting actual merchant's balance by terminalId for all processing currencies or any specific one. When sending a request with a particular terminalId, you will receive a list of balances for all currencies. You can add a currency as a get request parameter and get only the balance of the specified currency. For example, add ?currency=EUR to the endpoint and get the balance in EUR. When you try to get a balance for a terminal ID which doesn’t exist in the system, you will receive 404 error code.",
+        "operationId": "getBalance",
+        "parameters": [
+          {
+            "name": "terminalId",
+            "in": "path",
+            "description": "Terminal identifier",
+            "required": true,
+            "schema": {
+              "type": "integer"
+            }
+          },
+          {
+            "name": "currency",
+            "in": "query",
+            "description": "Terminal currency",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "GetBalance Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BalanceListResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Terminal not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TerminalNotFoundError"
+                }
+              },
+              "status": {
+                "example": "error"
+              },
+              "code": {
+                "example": 404
+              },
+              "message": {
+                "example": "Terminal Not Found"
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearerAuthentication": []
+          }
+        ],
+        "x-codegen-request-body-name": "body"
+      }
+    },
+    "/merch-api/oauth2/token": {
+      "get": {
+        "tags": [
+          "Payment API Specs"
+        ],
+        "description": "Generate OAuth2Token for authorization",
+        "operationId": "generateToken",
+        "parameters": [
+          {
+            "name": "Authorization",
+            "in": "header",
+            "description": "Bearer + base64(login password)",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OAuth2Token Response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OAuth2TokenResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Invalid credentials",
+            "headers": {
+              "WWW_Authenticate": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MerchApiUnauthorizedError"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearerBase64Authentication": []
+          }
+        ],
+        "x-codegen-request-body-name": "body"
+      }
+    },
+    "/api/v1/updateWhitelist": {
+      "post": {
+        "tags": [
+          "Payment API Specs"
+        ],
+        "description": "Request for whitelisting customers, cards and emails",
+        "operationId": "updateWhitelist",
+        "requestBody": {
+          "description": "Update Whitelist Request - Request to whitelist data.",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateWhitelistRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Update Whitelist response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UpdateWhitelistResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Invalid credentials",
+            "headers": {
+              "WWW_Authenticate": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UpdateWhitelistUnauthorizedError"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearerAuthentication": []
+          }
+        ],
+        "x-codegen-request-body-name": "body"
+      }
+    },
+    "/api/v1/updateBlacklist": {
+      "post": {
+        "tags": [
+          "Payment API Specs"
+        ],
+        "description": "Update Black List",
+        "operationId": "updateBlacklist",
+        "requestBody": {
+          "description": "Black List Request",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/BlacklistRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "Payment response",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BlackListResponses"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid input",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              },
+              "status": {
+                "example": "error"
+              },
+              "code": {
+                "example": 400
+              },
+              "message": {
+                "example": "Bad Request"
+              }
+            }
+          },
+          "401": {
+            "description": "Invalid credentials",
+            "headers": {
+              "WWW_Authenticate": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UnauthorizedError"
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "bearerAuthentication": []
+          }
+        ],
+        "x-codegen-request-body-name": "body"
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "BlackListResponse": {
+        "type": "object",
+        "properties": {
+          "merchantId": {
+            "type": "integer",
+            "example": 1
+          },
+          "cardMask": {
+            "type": "string",
+            "example": "4000000000000000"
+          },
+          "customerEmail": {
+            "type": "string",
+            "example": "VHx6M@example.com"
+          },
+          "customerPhone": {
+            "type": "string",
+            "example": "345 1234567"
+          },
+          "isAtLeastOneFieldProvided": {
+            "type": "boolean",
+            "example": true
+          }
+        }
+      },
+      "BlackListResponses": {
+        "type": "array",
+        "items": {
+          "$ref": "#/components/schemas/BlackListResponse"
+        }
+      },
+      "BlacklistRequest": {
+        "type": "array",
+        "items": {
+          "$ref": "#/components/schemas/BlacklistRequestItem"
+        }
+      },
+      "BlacklistRequestItem": {
+        "required": [
+          "merchantId"
+        ],
+        "type": "object",
+        "properties": {
+          "merchantId": {
+            "type": "integer",
+            "example": 1
+          },
+          "cardMask": {
+            "type": "string",
+            "example": "4000000000000000"
+          },
+          "customerEmail": {
+            "type": "string",
+            "example": "VHx6M@example.com"
+          },
+          "customerPhone": {
+            "type": "string",
+            "example": "345 1234567"
+          }
+        }
+      },
+      "OAuth2TokenResponse": {
+        "type": "object",
+        "properties": {
+          "token": {
+            "type": "string",
+            "example": "a694f527d516121d211dba7c52271d85"
+          },
+          "expires_in": {
+            "type": "integer",
+            "example": 60
+          }
+        }
+      },
+      "Balance": {
+        "type": "object",
+        "properties": {
+          "terminalId": {
+            "type": "integer",
+            "example": 621
+          },
+          "balance": {
+            "type": "object",
+            "properties": {
+              "amount": {
+                "type": "integer",
+                "example": 2000
+              },
+              "currency": {
+                "type": "string",
+                "example": "EUR"
+              }
+            }
+          }
+        }
+      },
+      "BalanceListResponse": {
+        "type": "object",
+        "properties": {
+          "timestamp": {
+            "type": "string",
+            "format": "ISO 8601",
+            "example": "2022-10-05T11:23:12.595+00:00"
+          },
+          "status": {
+            "type": "integer",
+            "description": "HTTP status code",
+            "example": 200
+          },
+          "result": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Balance"
+            }
+          }
+        }
+      },
+      "PaymentMethodDetails": {
+        "type": "object",
+        "properties": {
+          "customerAccountNumber": {
+            "maxLength": 256,
+            "type": "string",
+            "description": "Customer account Id in external system or masked card PAN",
+            "example": "400000***0002"
+          },
+          "cardholderName": {
+            "maxLength": 128,
+            "type": "string",
+            "description": "Cardholder name (applicable for BASIC_CARD payment method only)",
+            "example": "Harry Potter"
+          },
+          "cardExpiryMonth": {
+            "minLength": 2,
+            "maxLength": 2,
+            "type": "string",
+            "description": "Card expiration month (applicable for BASIC_CARD payment method only)",
+            "example": "07"
+          },
+          "cardExpiryYear": {
+            "minLength": 4,
+            "maxLength": 4,
+            "type": "string",
+            "description": "Card expiration year (applicable for BASIC_CARD payment method only)",
+            "example": "2028"
+          },
+          "cardBrand": {
+            "maxLength": 16,
+            "type": "string",
+            "description": "Card brand (applicable for BASIC_CARD payment method only)",
+            "example": "VISA"
+          },
+          "cardIssuingCountry": {
+            "minLength": 2,
+            "maxLength": 2,
+            "type": "string",
+            "description": "Card Issuing Country (applicable for BASIC_CARD payment method only)",
+            "example": "PL"
+          }
+        }
+      },
+      "BillingAddress": {
+        "type": "object",
+        "properties": {
+          "addressLine1": {
+            "maxLength": 128,
+            "type": "string",
+            "description": "Line 1 of the address (e.g., Number, street, etc)",
+            "example": "211, Victory street"
+          },
+          "addressLine2": {
+            "maxLength": 128,
+            "type": "string",
+            "description": "Line 2 of the address (e.g., Suite, apt)",
+            "example": "Office 7B"
+          },
+          "city": {
+            "maxLength": 50,
+            "type": "string",
+            "description": "City name",
+            "example": "Hogwarts"
+          },
+          "countryCode": {
+            "maxLength": 2,
+            "minLength": 2,
+            "pattern": "[A-Z]{2}",
+            "type": "string",
+            "description": "2-character IS0-3166-1 country code",
+            "example": "GB"
+          },
+          "postalCode": {
+            "maxLength": 20,
+            "type": "string",
+            "description": "Postal code",
+            "example": "01001"
+          },
+          "state": {
+            "maxLength": 40,
+            "type": "string",
+            "description": "State code",
+            "example": "CA"
+          }
+        },
+        "description": "Customer's billing address"
+      },
+      "Card": {
+        "type": "object",
+        "properties": {
+          "cardNumber": {
+            "maxLength": 23,
+            "type": "string",
+            "description": "Card primary account number (PAN). All non-numeric characters will be ignored and highlighted in case if our Payment Page is used.",
+            "example": "4000 0000 0000 0002"
+          },
+          "cardholderName": {
+            "maxLength": 128,
+            "type": "string",
+            "description": "Cardholder's name printed or embossed on the card",
+            "example": "Harry Potter"
+          },
+          "cardSecurityCode": {
+            "minLength": 3,
+            "maxLength": 4,
+            "type": "string",
+            "description": "Card security code (CVV2 / CVC2 / CAV2)",
+            "example": "130"
+          },
+          "expiryMonth": {
+            "minLength": 2,
+            "maxLength": 2,
+            "type": "string",
+            "description": "Card expiration month, 2 digits",
+            "example": "07"
+          },
+          "expiryYear": {
+            "minLength": 4,
+            "maxLength": 4,
+            "type": "string",
+            "description": "Card expiration year, 4 digits",
+            "example": "2028"
+          }
+        },
+        "description": "You must be PCI DSS compliant to collect card data on your side. If you are not certified, do not add this field to your request and we will collect the data on our Payment page. In case if you prefer working using s2s mode, make sure you've provided us with your latest PCI DSS certificate and AoC."
+      },
+      "PayoutCard": {
+        "type": "object",
+        "required": [
+          "cardholderName",
+          "expiryMonth",
+          "expiryYear"
+        ],
+        "properties": {
+          "cardNumber": {
+            "maxLength": 23,
+            "type": "string",
+            "description": "Card primary account number (PAN). All non-numeric characters will be ignored and highlighted in case if our Payment Page is used.",
+            "example": "4000 0000 0000 0002"
+          },
+          "cardholderName": {
+            "maxLength": 128,
+            "type": "string",
+            "description": "Cardholder's name printed or embossed on the card",
+            "example": "Harry Potter"
+          },
+          "expiryMonth": {
+            "minLength": 2,
+            "maxLength": 2,
+            "type": "string",
+            "description": "Card expiration month, 2 digits",
+            "example": "07"
+          },
+          "expiryYear": {
+            "minLength": 4,
+            "maxLength": 4,
+            "type": "string",
+            "description": "Card expiration year, 4 digits",
+            "example": "2028"
+          }
+        },
+        "description": "You must be PCI DSS compliant to collect card data on your side. If you are not certified, do not add this field to your request and we will collect the data on our Payment page. In case if you prefer working using s2s mode, make sure you've provided us with your latest PCI DSS certificate and AoC."
+      },
+      "CustomerHPP": {
+        "type": "object",
+        "required": [
+          "firstName",
+          "lastName",
+          "email",
+          "phone"
+        ],
+        "properties": {
+          "referenceId": {
+            "maxLength": 128,
+            "type": "string",
+            "description": "Id of the customer assigned by Merchant",
+            "example": "VIP_customer_12345"
+          },
+          "citizenshipCountryCode": {
+            "maxLength": 2,
+            "minLength": 2,
+            "type": "string",
+            "description": "Customer country of citizenship",
+            "example": "GB"
+          },
+          "firstName": {
+            "maxLength": 128,
+            "type": "string",
+            "example": "Harry"
+          },
+          "lastName": {
+            "maxLength": 128,
+            "type": "string",
+            "example": "Potter"
+          },
+          "dateOfBirth": {
+            "maxLength": 10,
+            "minLength": 10,
+            "type": "string",
+            "format": "ISO 8601 (YYYY-MM-DD)",
+            "example": "1996-01-05"
+          },
+          "email": {
+            "maxLength": 256,
+            "type": "string",
+            "description": "Email address of the customer",
+            "format": "email",
+            "example": "customer@email.com"
+          },
+          "phone": {
+            "maxLength": 18,
+            "type": "string",
+            "description": "International phone number of the customer, without the '+'. Use a space as a separator between the dialing country code and local phone number.",
+            "example": "357 123456789"
+          },
+          "locale": {
+            "maxLength": 2,
+            "minLength": 2,
+            "type": "string",
+            "description": "Customer preferred display language (locale)",
+            "example": "en"
+          },
+          "ip": {
+            "maxLength": 15,
+            "minLength": 8,
+            "type": "string",
+            "description": "IP address of the customer",
+            "example": "172.16.0.1"
+          },
+          "accountNumber": {
+            "minLength": 256,
+            "type": "string",
+            "description": "Customer account number in the provider's system. Used for some types of withdrawals to identify the customer's wallet/account i.e."
+          },
+          "accountName": {
+            "minLength": 64,
+            "type": "string",
+            "description": "Customer account name in the provider's system. Used for some types of withdrawals."
+          },
+          "bank": {
+            "minLength": 64,
+            "type": "string",
+            "description": "Customer bank. Used for some types of withdrawals."
+          },
+          "bankBranch": {
+            "minLength": 64,
+            "type": "string",
+            "description": "Customer bank branch. Used for some types of withdrawals."
+          },
+          "routingGroup": {
+            "maxLength": 64,
+            "type": "string",
+            "description": "Identify the customer as belonging to a specific group that is used for routing.\n[Learn more about Custom Payment Routing Fields](#tag/Custom-Payment-Routing-Fields).\n",
+            "example": "VIP_Campaign"
+          },
+          "kycStatus": {
+            "type": "boolean",
+            "description": "Indicates whether the customer has passed KYC verification or not.\n[Learn more about Custom Payment Routing Fields](#tag/Custom-Payment-Routing-Fields).\n",
+            "example": true
+          },
+          "paymentInstrumentKycStatus": {
+            "type": "boolean",
+            "description": "Indicates whether the payment instrument (usually the card number) has passed KYC verification\n[Learn more about Custom Payment Routing Fields](#tag/Custom-Payment-Routing-Fields).\n",
+            "example": true
+          },
+          "dateOfFirstDeposit": {
+            "type": "string",
+            "format": "ISO 8601 (YYYY-MM-DD)",
+            "description": "Date of the first deposit from the customer.\n[Learn more about Custom Payment Routing Fields](#tag/Custom-Payment-Routing-Fields).\n",
+            "example": "2021-02-23"
+          },
+          "depositsAmount": {
+            "type": "integer",
+            "description": "How much the customer has deposited already, in the base currency.\n[Learn more about Custom Payment Routing Fields](#tag/Custom-Payment-Routing-Fields).\n",
+            "example": 1000
+          },
+          "withdrawalsAmount": {
+            "type": "integer",
+            "description": "How much the customer has withdrawn already, in the base currency.\n[Learn more about Custom Payment Routing Fields](#tag/Custom-Payment-Routing-Fields).\n",
+            "example": 250
+          },
+          "depositsCnt": {
+            "type": "integer",
+            "description": "How many times the customer made a deposit.\n[Learn more about Custom Payment Routing Fields](#tag/Custom-Payment-Routing-Fields).\n",
+            "example": 12
+          },
+          "withdrawalsCnt": {
+            "type": "integer",
+            "description": "How many times the customer made a withdrawal.\n[Learn more about Custom Payment Routing Fields](#tag/Custom-Payment-Routing-Fields).\n",
+            "example": 3
+          },
+          "affiliated": {
+            "maxLength": 3,
+            "type": "string",
+            "description": "The affiliated param allows custom routing configurations specifically tailored for affiliates. By setting this parameter, the system can adjust routes based on affiliate-specific rules, ensuring personalized user experiences, targeted payment providers or connectors.\n[Learn more about Custom Payment Routing Fields](#tag/Custom-Payment-Routing-Fields).\n",
+            "example": "yes",
+            "enum": [
+              "yes",
+              "no"
+            ]
+          }
+        }
+      },
+      "CustomerS2S": {
+        "type": "object",
+        "required": [
+          "firstName",
+          "lastName",
+          "email",
+          "phone"
+        ],
+        "properties": {
+          "referenceId": {
+            "maxLength": 128,
+            "type": "string",
+            "description": "Id of the customer assigned by Merchant",
+            "example": "VIP_customer_12345"
+          },
+          "citizenshipCountryCode": {
+            "maxLength": 2,
+            "minLength": 2,
+            "type": "string",
+            "description": "Customer country of citizenship",
+            "example": "GB"
+          },
+          "firstName": {
+            "maxLength": 128,
+            "type": "string",
+            "example": "Harry"
+          },
+          "lastName": {
+            "maxLength": 128,
+            "type": "string",
+            "example": "Potter"
+          },
+          "dateOfBirth": {
+            "maxLength": 10,
+            "minLength": 10,
+            "type": "string",
+            "format": "ISO 8601 (YYYY-MM-DD)",
+            "example": "1996-01-05"
+          },
+          "email": {
+            "maxLength": 256,
+            "type": "string",
+            "description": "Email address of the customer",
+            "format": "email",
+            "example": "customer@email.com"
+          },
+          "phone": {
+            "maxLength": 18,
+            "type": "string",
+            "description": "International phone number of the customer, without the '+'. Use a space as a separator between the dialing country code and local phone number.",
+            "example": "357 123456789"
+          },
+          "locale": {
+            "maxLength": 2,
+            "minLength": 2,
+            "type": "string",
+            "description": "Customer preferred display language (locale)",
+            "example": "en"
+          },
+          "ip": {
+            "maxLength": 15,
+            "minLength": 8,
+            "type": "string",
+            "description": "IP address of the customer",
+            "example": "172.16.0.1"
+          },
+          "routingGroup": {
+            "maxLength": 64,
+            "type": "string",
+            "description": "Identify the customer as belonging to a specific group that is used for routing.\n[Learn more about Custom Payment Routing Fields](#tag/Custom-Payment-Routing-Fields).\n",
+            "example": "VIP_Campaign"
+          },
+          "kycStatus": {
+            "type": "boolean",
+            "description": "Indicates whether the customer has passed KYC verification or not.\n[Learn more about Custom Payment Routing Fields](#tag/Custom-Payment-Routing-Fields).\n",
+            "example": true
+          },
+          "paymentInstrumentKycStatus": {
+            "type": "boolean",
+            "description": "Indicates whether the payment instrument (usually the card number) has passed KYC verification\n[Learn more about Custom Payment Routing Fields](#tag/Custom-Payment-Routing-Fields).\n",
+            "example": true
+          },
+          "dateOfFirstDeposit": {
+            "type": "string",
+            "format": "ISO 8601 (YYYY-MM-DD)",
+            "description": "Date of the first deposit from the customer.\n[Learn more about Custom Payment Routing Fields](#tag/Custom-Payment-Routing-Fields).\n",
+            "example": "2021-02-23"
+          },
+          "depositsAmount": {
+            "type": "integer",
+            "description": "How much the customer has deposited already, in the base currency.\n[Learn more about Custom Payment Routing Fields](#tag/Custom-Payment-Routing-Fields).\n",
+            "example": 1000
+          },
+          "withdrawalsAmount": {
+            "type": "integer",
+            "description": "How much the customer has withdrawn already, in the base currency.\n[Learn more about Custom Payment Routing Fields](#tag/Custom-Payment-Routing-Fields).\n",
+            "example": 250
+          },
+          "depositsCnt": {
+            "type": "integer",
+            "description": "How many times the customer made a deposit.\n[Learn more about Custom Payment Routing Fields](#tag/Custom-Payment-Routing-Fields).\n",
+            "example": 12
+          },
+          "withdrawalsCnt": {
+            "type": "integer",
+            "description": "How many times the customer made a withdrawal.\n[Learn more about Custom Payment Routing Fields](#tag/Custom-Payment-Routing-Fields).\n",
+            "example": 3
+          },
+          "trustLevel": {
+            "type": "string",
+            "description": "Separates traffic into primary and secondary streams.\n[Learn more about Custom Payment Routing Fields](#tag/Custom-Payment-Routing-Fields).\n",
+            "example": "ftd",
+            "enum": [
+              "ftd",
+              "redep"
+            ]
+          },
+          "btag": {
+            "type": "Boolean",
+            "description": "Separates traffic.\n[Learn more about Custom Payment Routing Fields](#tag/Custom-Payment-Routing-Fields).\n",
+            "example": true,
+            "enum": [
+              true,
+              false
+            ]
+          },
+          "affiliated": {
+            "maxLength": 3,
+            "type": "string",
+            "description": "The affiliated param allows custom routing configurations specifically tailored for affiliates. By setting this parameter, the system can adjust routes based on affiliate-specific rules, ensuring personalized user experiences, targeted payment providers or connectors.\n[Learn more about Custom Payment Routing Fields](#tag/Custom-Payment-Routing-Fields).\n",
+            "example": "yes",
+            "enum": [
+              "yes",
+              "no"
+            ]
+          }
+        }
+      },
+      "Receiver": {
+        "type": "object",
+        "properties": {
+          "firstName": {
+            "maxLength": 128,
+            "type": "string",
+            "example": "Harry"
+          },
+          "lastName": {
+            "maxLength": 128,
+            "type": "string",
+            "example": "Potter"
+          }
+        },
+        "description": "Recipient's name when transferring P2P."
+      },
+      "ExternalRefs": {
+        "type": "object",
+        "properties": {
+          "orderId": {
+            "type": "string",
+            "example": 123456
+          }
+        },
+        "description": "This field serves as an identifier linking the system's records to corresponding records in the external provider's system."
+      },
+      "Result": {
+        "properties": {
+          "id": {
+            "maxLength": 32,
+            "type": "string",
+            "description": "Payment Id",
+            "example": "a0981ba1540d4062bc42d4019607sf94"
+          },
+          "referenceId": {
+            "maxLength": 256,
+            "type": "string",
+            "description": "referenceId from payment request",
+            "example": "payment-123"
+          },
+          "paymentType": {
+            "type": "string",
+            "description": "Payment Type",
+            "example": "DEPOSIT"
+          },
+          "state": {
+            "$ref": "#/components/schemas/PaymentState"
+          },
+          "description": {
+            "maxLength": 512,
+            "type": "string",
+            "description": "Description of the transaction",
+            "example": "Funding the account"
+          },
+          "parentPaymentId": {
+            "maxLength": 32,
+            "type": "string",
+            "description": "Initial transaction Id from payment request, usually is used to proceed with refund OR in case if card PAN needs to be used for payouts.",
+            "example": "a0981ba1540d4062bc42d4019607sf94"
+          },
+          "paymentMethod": {
+            "$ref": "#/components/schemas/PaymentMethod"
+          },
+          "paymentMethodDetails": {
+            "$ref": "#/components/schemas/PaymentMethodDetails"
+          },
+          "amount": {
+            "multipleOf": 1e-18,
+            "maximum": 999999.99,
+            "exclusiveMaximum": false,
+            "minimum": 1e-18,
+            "exclusiveMinimum": false,
+            "type": "number",
+            "description": "Processing amount",
+            "example": 11.12
+          },
+          "currency": {
+            "type": "string",
+            "description": "Processing currency",
+            "format": "ISO 4217 code for FIAT currencies or cryptocurrency symbol",
+            "example": "EUR"
+          },
+          "customerAmount": {
+            "type": "number",
+            "description": "Amount from payment request. Used only in case if the request currency differs from the currency sent to the payment provider.",
+            "example": 15
+          },
+          "customerCurrency": {
+            "type": "string",
+            "description": "Currency from payment request. Used only in case if it differs from the currency sent to the payment provider.",
+            "format": "ISO 4217 code for FIAT currencies or cryptocurrency symbol",
+            "example": "USD"
+          },
+          "redirectUrl": {
+            "maxLength": 256,
+            "type": "string",
+            "description": "URL to redirect the customer",
+            "example": "http://init/txid/a0981ba1540d4062bc42d4019607sf94"
+          },
+          "errorCode": {
+            "type": "string",
+            "description": "Check 'Response Codes and Messages' section for details",
+            "example": "1.01"
+          },
+          "externalResultCode": {
+            "type": "string",
+            "description": "Result code recieved from external provider",
+            "example": "03"
+          },
+          "externalRefs": {
+            "$ref": "#/components/schemas/ExternalRefs"
+          },
+          "customer": {
+            "$ref": "#/components/schemas/CustomerS2S"
+          },
+          "billingAddress": {
+            "$ref": "#/components/schemas/BillingAddress"
+          },
+          "startRecurring": {
+            "type": "boolean",
+            "description": "Indicates whether this payment has started a recurring flow"
+          },
+          "recurringToken": {
+            "type": "string",
+            "description": "Token that can be used to continue the recurring flow"
+          },
+          "terminalName": {
+            "type": "string",
+            "description": "The name of the processing terminal OR payment solution that was used to process this transaction"
+          }
+        }
+      },
+      "RefundResult": {
+        "properties": {
+          "id": {
+            "maxLength": 32,
+            "type": "string",
+            "description": "Payment Id",
+            "example": "a0981ba1540d4062bc42d4019607sf94"
+          },
+          "referenceId": {
+            "maxLength": 256,
+            "type": "string",
+            "description": "referenceId from payment request",
+            "example": "refund"
+          },
+          "paymentType": {
+            "type": "string",
+            "description": "Payment Type",
+            "example": "REFUND"
+          },
+          "state": {
+            "$ref": "#/components/schemas/PaymentState"
+          },
+          "description": {
+            "maxLength": 512,
+            "type": "string",
+            "description": "Description of the transaction",
+            "example": "Refund"
+          },
+          "parentPaymentId": {
+            "maxLength": 32,
+            "type": "string",
+            "description": "Initial transaction Id from payment request, usually is used to proceed with refund OR in case if card PAN needs to be used for payouts.",
+            "example": "a0981ba1540d4062bc42d4019607sf94"
+          },
+          "paymentMethod": {
+            "$ref": "#/components/schemas/PaymentMethod"
+          },
+          "paymentMethodDetails": {
+            "$ref": "#/components/schemas/PaymentMethodDetails"
+          },
+          "amount": {
+            "multipleOf": 1e-18,
+            "maximum": 999999.99,
+            "exclusiveMaximum": false,
+            "minimum": 1e-18,
+            "exclusiveMinimum": false,
+            "type": "number",
+            "description": "Processing amount",
+            "example": 11.12
+          },
+          "currency": {
+            "type": "string",
+            "description": "Processing currency",
+            "format": "ISO 4217 code for FIAT currencies or cryptocurrency symbol",
+            "example": "EUR"
+          },
+          "customerAmount": {
+            "type": "number",
+            "description": "Amount from payment request. Used only in case if the request currency differs from the currency sent to the payment provider.",
+            "example": 15
+          },
+          "customerCurrency": {
+            "type": "string",
+            "description": "Currency from payment request. Used only in case if it differs from the currency sent to the payment provider.",
+            "format": "ISO 4217 code for FIAT currencies or cryptocurrency symbol",
+            "example": "USD"
+          },
+          "redirectUrl": {
+            "maxLength": 256,
+            "type": "string",
+            "description": "URL to redirect the customer",
+            "example": "http://init/txid/a0981ba1540d4062bc42d4019607sf94"
+          },
+          "errorCode": {
+            "type": "string",
+            "description": "Check 'Response Codes and Messages' section for details",
+            "example": "1.01"
+          },
+          "externalResultCode": {
+            "type": "string",
+            "description": "Result code recieved from external provider",
+            "example": "03"
+          },
+          "terminalName": {
+            "type": "string",
+            "description": "The name of the processing terminal OR payment solution that was used to process this transaction"
+          }
+        }
+      },
+      "PayoutResult": {
+        "properties": {
+          "id": {
+            "maxLength": 32,
+            "type": "string",
+            "description": "Payment Id",
+            "example": "a0981ba1540d4062bc42d4019607sf94"
+          },
+          "referenceId": {
+            "maxLength": 256,
+            "type": "string",
+            "description": "referenceId from payment request",
+            "example": "payout-123"
+          },
+          "paymentType": {
+            "$ref": "#/components/schemas/PaymentType"
+          },
+          "state": {
+            "$ref": "#/components/schemas/PaymentState"
+          },
+          "description": {
+            "maxLength": 512,
+            "type": "string",
+            "description": "Description of the transaction",
+            "example": "Payout for the account"
+          },
+          "parentPaymentId": {
+            "maxLength": 32,
+            "type": "string",
+            "description": "Initial transaction Id from payment request, usually is used to proceed with refund OR in case if card PAN needs to be used for payouts.",
+            "example": "a0981ba1540d4062bc42d4019607sf94"
+          },
+          "paymentMethod": {
+            "$ref": "#/components/schemas/PaymentMethod"
+          },
+          "paymentMethodDetails": {
+            "$ref": "#/components/schemas/PaymentMethodDetails"
+          },
+          "amount": {
+            "multipleOf": 1e-18,
+            "maximum": 999999.99,
+            "exclusiveMaximum": false,
+            "minimum": 1e-18,
+            "exclusiveMinimum": false,
+            "type": "number",
+            "description": "Processing amount",
+            "example": 12.12
+          },
+          "currency": {
+            "type": "string",
+            "description": "Processing currency",
+            "format": "ISO 4217 code for FIAT currencies or cryptocurrency symbol",
+            "example": "EUR"
+          },
+          "customerAmount": {
+            "type": "number",
+            "description": "Amount from payment request. Used only in case if the request currency differs from the currency sent to the payment provider.",
+            "example": 15
+          },
+          "customerCurrency": {
+            "type": "string",
+            "description": "Currency from payment request. Used only in case if it differs from the currency sent to the payment provider.",
+            "format": "ISO 4217 code for FIAT currencies or cryptocurrency symbol",
+            "example": "USD"
+          },
+          "errorCode": {
+            "type": "string",
+            "description": "Check 'Response Codes and Messages' section for details",
+            "example": "1.01"
+          },
+          "externalResultCode": {
+            "type": "string",
+            "description": "Result code recieved from external provider",
+            "example": "03"
+          },
+          "customer": {
+            "$ref": "#/components/schemas/CustomerS2S"
+          },
+          "billingAddress": {
+            "$ref": "#/components/schemas/BillingAddress"
+          },
+          "terminalName": {
+            "type": "string",
+            "description": "The name of the processing terminal OR payment solution that was used to process this transaction"
+          }
+        }
+      },
+      "PaymentOperation": {
+        "properties": {
+          "id": {
+            "type": "integer",
+            "description": "Operation Id"
+          },
+          "operation": {
+            "$ref": "#/components/schemas/Operation"
+          },
+          "started": {
+            "type": "string",
+            "format": "ISO 8601",
+            "description": "Operation start time",
+            "example": "2022-11-08T12:31:41.595+00:00"
+          },
+          "completed": {
+            "type": "string",
+            "format": "ISO 8601",
+            "description": "Operation end time",
+            "example": "2022-11-08T12:37:12.595+00:00"
+          },
+          "paymentState": {
+            "$ref": "#/components/schemas/PaymentState"
+          },
+          "outgoingMessages": {
+            "type": "string",
+            "description": "List of messages sent to external APIs during payment processing"
+          },
+          "incomingMessages": {
+            "type": "string",
+            "description": "List of messages received from external APIs during payment processing"
+          }
+        }
+      },
+      "PayoutRequestS2S": {
+        "required": [
+          "currency",
+          "paymentType",
+          "amount"
+        ],
+        "type": "object",
+        "properties": {
+          "referenceId": {
+            "maxLength": 256,
+            "type": "string",
+            "description": "Reference assigned by Merchant (referenceId is used ONLY internally and not sent to the payment provider OR acquiring bank) Will be sent unchanged within the PaymentResponse.",
+            "example": "payout_id=45768;custom_ref=123"
+          },
+          "paymentType": {
+            "type": "string",
+            "description": "Payment Type",
+            "example": "WITHDRAWAL"
+          },
+          "paymentMethod": {
+            "$ref": "#/components/schemas/PaymentMethod"
+          },
+          "amount": {
+            "multipleOf": 1e-18,
+            "maximum": 999999.99,
+            "exclusiveMaximum": false,
+            "minimum": 1e-18,
+            "exclusiveMinimum": false,
+            "type": "number",
+            "description": "Payment amount",
+            "example": 12.12
+          },
+          "currency": {
+            "type": "string",
+            "description": "Payment currency",
+            "format": "ISO 4217 code for FIAT currencies or cryptocurrency symbol",
+            "example": "EUR"
+          },
+          "parentPaymentId": {
+            "maxLength": 32,
+            "type": "string",
+            "description": "Initial transaction Id",
+            "example": "a0611ba1540d4062bc42d40196071f94"
+          },
+          "description": {
+            "maxLength": 512,
+            "type": "string",
+            "description": "Description of the transaction shown to the Customer. Can be sent outside of the system, to the payment provider or acquiring bank.",
+            "example": "Payout for the account number 12345"
+          },
+          "card": {
+            "$ref": "#/components/schemas/PayoutCard"
+          },
+          "customer": {
+            "$ref": "#/components/schemas/CustomerS2S"
+          },
+          "billingAddress": {
+            "$ref": "#/components/schemas/BillingAddress"
+          },
+          "receiver": {
+            "$ref": "#/components/schemas/Receiver"
+          },
+          "webhookUrl": {
+            "type": "string",
+            "description": "Url to receive payment status notifications (callbacks)",
+            "example": "https://yourwebsite.com/callbacks/rastpay"
+          },
+          "websiteUrl": {
+            "type": "string",
+            "description": "Merchant Website Processing URL reference",
+            "example": "https://yourwebsite.com"
+          },
+          "additionalParameters": {
+            "type": "object",
+            "description": "Additional parameters may be required by some payment providers or banks. Contact our Support or your personal Account Manager for more details.",
+            "additionalProperties": {
+              "type": "string"
+            },
+            "example": {
+              "blockchain": "TRX"
+            }
+          }
+        }
+      },
+      "PayoutRequestHPP": {
+        "required": [
+          "currency",
+          "paymentType",
+          "amount"
+        ],
+        "type": "object",
+        "properties": {
+          "referenceId": {
+            "maxLength": 256,
+            "type": "string",
+            "description": "Reference assigned by Merchant (referenceId is used ONLY internally and not sent to the payment provider OR acquiring bank) Will be sent unchanged within the PaymentResponse.",
+            "example": "payout_id=45768;custom_ref=123"
+          },
+          "paymentType": {
+            "type": "string",
+            "description": "Payment Type",
+            "example": "WITHDRAWAL"
+          },
+          "paymentMethod": {
+            "$ref": "#/components/schemas/PaymentMethod"
+          },
+          "amount": {
+            "multipleOf": 1e-18,
+            "maximum": 999999.99,
+            "exclusiveMaximum": false,
+            "minimum": 1e-18,
+            "exclusiveMinimum": false,
+            "type": "number",
+            "description": "Payment amount",
+            "example": 12.12
+          },
+          "currency": {
+            "type": "string",
+            "description": "Payment currency",
+            "format": "ISO 4217 code for FIAT currencies or cryptocurrency symbol",
+            "example": "EUR"
+          },
+          "parentPaymentId": {
+            "maxLength": 32,
+            "type": "string",
+            "description": "Initial transaction Id",
+            "example": "a0611ba1540d4062bc42d40196071f94"
+          },
+          "description": {
+            "maxLength": 512,
+            "type": "string",
+            "description": "Description of the transaction shown to the Customer. Can be sent outside of the system, to the payment provider or acquiring bank.",
+            "example": "Payout for the account number 12345"
+          },
+          "customer": {
+            "$ref": "#/components/schemas/CustomerS2S"
+          },
+          "billingAddress": {
+            "$ref": "#/components/schemas/BillingAddress"
+          },
+          "receiver": {
+            "$ref": "#/components/schemas/Receiver"
+          },
+          "webhookUrl": {
+            "type": "string",
+            "description": "Url to receive payment status notifications (callbacks)",
+            "example": "https://yourwebsite.com/callbacks/payadmit"
+          },
+          "websiteUrl": {
+            "type": "string",
+            "description": "Merchant Website Processing URL reference",
+            "example": "https://yourwebsite.com"
+          },
+          "additionalParameters": {
+            "type": "object",
+            "description": "Additional parameters may be required by some payment providers or banks. Contact our Support or your personal Account Manager for more details.",
+            "additionalProperties": {
+              "type": "string"
+            },
+            "example": {
+              "blockchain": "TRX"
+            }
+          }
+        }
+      },
+      "RefundRequest": {
+        "required": [
+          "currency",
+          "paymentType",
+          "parentPaymentId",
+          "amount"
+        ],
+        "type": "object",
+        "properties": {
+          "referenceId": {
+            "maxLength": 256,
+            "type": "string",
+            "description": "Reference assigned by Merchant (referenceId is used ONLY internally and not sent to the payment provider OR acquiring bank) Will be sent unchanged within the PaymentResponse.",
+            "example": "payment_id=45768;custom_ref=123"
+          },
+          "paymentType": {
+            "type": "string",
+            "description": "Payment Type",
+            "example": "REFUND"
+          },
+          "paymentMethod": {
+            "$ref": "#/components/schemas/PaymentMethod"
+          },
+          "amount": {
+            "multipleOf": 1e-18,
+            "maximum": 999999.99,
+            "exclusiveMaximum": false,
+            "minimum": 1e-18,
+            "exclusiveMinimum": false,
+            "type": "number",
+            "description": "Payment amount",
+            "example": 11.12
+          },
+          "currency": {
+            "type": "string",
+            "description": "Payment currency",
+            "format": "ISO 4217 code for FIAT currencies or cryptocurrency symbol",
+            "example": "EUR"
+          },
+          "parentPaymentId": {
+            "maxLength": 32,
+            "type": "string",
+            "description": "Initial transaction Id",
+            "example": "a0611ba1540d4062bc42d40196071f94"
+          },
+          "description": {
+            "maxLength": 512,
+            "type": "string",
+            "description": "Description of the transaction shown to the Customer. Can be sent outside of the system, to the payment provider or acquiring bank.",
+            "example": "Funding the account number 12345"
+          },
+          "returnUrl": {
+            "maxLength": 256,
+            "type": "string",
+            "description": "URL to redirect the Customer after TX processing",
+            "example": "https://yourwebsite.com/{id}/{referenceId}/{state}/{type}"
+          },
+          "pendingReturnUrl": {
+            "maxLength": 256,
+            "type": "string",
+            "description": "URL to redirect the Customer during TX processing. Overrides static value from Shop.",
+            "example": "https://yourwebsite.com/{id}/{referenceId}/{state}/{type}"
+          },
+          "successReturnUrl": {
+            "maxLength": 256,
+            "type": "string",
+            "description": "URL to redirect the Customer after TX processing in case of success",
+            "example": "https://yourwebsite.com/{id}/{referenceId}/{state}/{type}"
+          },
+          "declineReturnUrl": {
+            "maxLength": 256,
+            "type": "string",
+            "description": "URL to redirect the Customer after TX processing in case of decline",
+            "example": "https://yourwebsite.com/{id}/{referenceId}/{state}/{type}"
+          },
+          "webhookUrl": {
+            "type": "string",
+            "description": "Url to receive payment status notifications (callbacks)",
+            "example": "https://yourwebsite.com/callbacks/rastpay"
+          },
+          "websiteUrl": {
+            "type": "string",
+            "description": "Merchant Website Processing URL reference",
+            "example": "https://yourwebsite.com"
+          }
+        }
+      },
+      "PaymentRequestS2S": {
+        "required": [
+          "currency",
+          "paymentType",
+          "amount"
+        ],
+        "type": "object",
+        "properties": {
+          "referenceId": {
+            "maxLength": 256,
+            "type": "string",
+            "description": "Reference assigned by Merchant (referenceId is used ONLY internally and not sent to the payment provider OR acquiring bank) Will be sent unchanged within the PaymentResponse.",
+            "example": "payment_id=45768;custom_ref=123"
+          },
+          "paymentType": {
+            "type": "string",
+            "description": "Payment Type",
+            "example": "DEPOSIT"
+          },
+          "paymentMethod": {
+            "$ref": "#/components/schemas/PaymentMethod"
+          },
+          "amount": {
+            "multipleOf": 1e-18,
+            "maximum": 999999.99,
+            "exclusiveMaximum": false,
+            "minimum": 1e-18,
+            "exclusiveMinimum": false,
+            "type": "number",
+            "description": "Payment amount",
+            "example": 11.12
+          },
+          "currency": {
+            "type": "string",
+            "description": "Payment currency",
+            "format": "ISO 4217 code for FIAT currencies or cryptocurrency symbol",
+            "example": "EUR"
+          },
+          "description": {
+            "maxLength": 512,
+            "type": "string",
+            "description": "Description of the transaction shown to the Customer. Can be sent outside of the system, to the payment provider or acquiring bank.",
+            "example": "Funding the account number 12345"
+          },
+          "card": {
+            "$ref": "#/components/schemas/Card"
+          },
+          "customer": {
+            "$ref": "#/components/schemas/CustomerS2S"
+          },
+          "billingAddress": {
+            "$ref": "#/components/schemas/BillingAddress"
+          },
+          "returnUrl": {
+            "maxLength": 256,
+            "type": "string",
+            "description": "URL to redirect the Customer after TX processing",
+            "example": "https://yourwebsite.com/{id}/{referenceId}/{state}/{type}"
+          },
+          "pendingReturnUrl": {
+            "maxLength": 256,
+            "type": "string",
+            "description": "URL to redirect the Customer during TX processing. Overrides static value from Shop.",
+            "example": "https://yourwebsite.com/{id}/{referenceId}/{state}/{type}"
+          },
+          "successReturnUrl": {
+            "maxLength": 256,
+            "type": "string",
+            "description": "URL to redirect the Customer after TX processing in case of success",
+            "example": "https://yourwebsite.com/{id}/{referenceId}/{state}/{type}"
+          },
+          "declineReturnUrl": {
+            "maxLength": 256,
+            "type": "string",
+            "description": "URL to redirect the Customer after TX processing in case of decline",
+            "example": "https://yourwebsite.com/{id}/{referenceId}/{state}/{type}"
+          },
+          "webhookUrl": {
+            "type": "string",
+            "description": "Url to receive payment status notifications (callbacks)",
+            "example": "https://yourwebsite.com/callbacks/rastpay"
+          },
+          "websiteUrl": {
+            "type": "string",
+            "description": "Merchant Website Processing URL reference",
+            "example": "https://yourwebsite.com"
+          },
+          "startRecurring": {
+            "type": "boolean",
+            "description": "Send 'true' if you want this payment to initiate recurring flow. Default value is 'false'."
+          },
+          "recurringToken": {
+            "type": "string",
+            "description": "To continue recurring flow, send a token from a previously initiated recurring payment."
+          },
+          "additionalParameters": {
+            "type": "object",
+            "description": "Additional parameters may be required by some payment providers or banks. Contact our Support or your personal Account Manager for more details.",
+            "additionalProperties": {
+              "type": "string"
+            },
+            "example": {
+              "bankCode": "ABCD1234567",
+              "countryOfBirth": "GB"
+            }
+          }
+        }
+      },
+      "PaymentRequestHPP": {
+        "required": [
+          "currency",
+          "paymentType",
+          "amount"
+        ],
+        "type": "object",
+        "properties": {
+          "referenceId": {
+            "maxLength": 256,
+            "type": "string",
+            "description": "Reference assigned by Merchant (referenceId is used ONLY internally and not sent to the payment provider OR acquiring bank) Will be sent unchanged within the PaymentResponse.",
+            "example": "payment_id=45768;custom_ref=123"
+          },
+          "paymentType": {
+            "type": "string",
+            "description": "Payment Type",
+            "example": "DEPOSIT"
+          },
+          "paymentMethod": {
+            "$ref": "#/components/schemas/PaymentMethod"
+          },
+          "amount": {
+            "multipleOf": 1e-18,
+            "maximum": 999999.99,
+            "exclusiveMaximum": false,
+            "minimum": 1e-18,
+            "exclusiveMinimum": false,
+            "type": "number",
+            "description": "Payment amount",
+            "example": 11.12
+          },
+          "currency": {
+            "type": "string",
+            "description": "Payment currency",
+            "format": "ISO 4217 code for FIAT currencies or cryptocurrency symbol",
+            "example": "EUR"
+          },
+          "description": {
+            "maxLength": 512,
+            "type": "string",
+            "description": "Description of the transaction shown to the Customer. Can be sent outside of the system, to the payment provider or acquiring bank.",
+            "example": "Funding the account number 12345"
+          },
+          "customer": {
+            "$ref": "#/components/schemas/CustomerHPP"
+          },
+          "billingAddress": {
+            "$ref": "#/components/schemas/BillingAddress"
+          },
+          "returnUrl": {
+            "maxLength": 256,
+            "type": "string",
+            "description": "URL to redirect the Customer after TX processing",
+            "example": "https://yourwebsite.com/{id}/{referenceId}/{state}/{type}"
+          },
+          "pendingReturnUrl": {
+            "maxLength": 256,
+            "type": "string",
+            "description": "URL to redirect the Customer during TX processing. Overrides static value from Shop.",
+            "example": "https://yourwebsite.com/{id}/{referenceId}/{state}/{type}"
+          },
+          "successReturnUrl": {
+            "maxLength": 256,
+            "type": "string",
+            "description": "URL to redirect the Customer after TX processing in case of success",
+            "example": "https://yourwebsite.com/{id}/{referenceId}/{state}/{type}"
+          },
+          "declineReturnUrl": {
+            "maxLength": 256,
+            "type": "string",
+            "description": "URL to redirect the Customer after TX processing in case of decline",
+            "example": "https://yourwebsite.com/{id}/{referenceId}/{state}/{type}"
+          },
+          "webhookUrl": {
+            "type": "string",
+            "description": "Url to receive payment status notifications (callbacks)",
+            "example": "https://yourwebsite.com/callbacks/rastpay"
+          },
+          "websiteUrl": {
+            "type": "string",
+            "description": "Merchant Website Processing URL reference",
+            "example": "https://yourwebsite.com"
+          },
+          "startRecurring": {
+            "type": "boolean",
+            "description": "Send 'true' if you want this payment to initiate recurring flow. Default value is 'false'."
+          },
+          "recurringToken": {
+            "type": "string",
+            "description": "To continue recurring flow, send a token from a previously initiated recurring payment."
+          },
+          "additionalParameters": {
+            "type": "object",
+            "description": "Additional parameters may be required by some payment providers or banks. Contact our Support or your personal Account Manager for more details.",
+            "additionalProperties": {
+              "type": "string"
+            },
+            "example": {
+              "bankCode": "ABCD1234567",
+              "countryOfBirth": "GB"
+            }
+          }
+        }
+      },
+      "UpdateWhitelistRequest": {
+        "required": [
+          "merchantId",
+          "terminalId"
+        ],
+        "type": "object",
+        "properties": {
+          "merchantId": {
+            "type": "number",
+            "description": "Id of Merchant.",
+            "example": 123
+          },
+          "terminalId": {
+            "type": "number",
+            "description": "Id of Terminal.",
+            "example": 123
+          },
+          "customerEmail": {
+            "type": "string",
+            "description": "Email address of the customer for whitelisting",
+            "format": "email",
+            "example": "customer@email.com"
+          },
+          "customerId": {
+            "type": "string",
+            "description": "Customer Id for whitelisting",
+            "example": "customer_1"
+          },
+          "cardMask": {
+            "type": "string",
+            "description": "Card mask for whitelisting.",
+            "example": "400000***0002"
+          }
+        }
+      },
+      "PaymentListResponse": {
+        "type": "object",
+        "properties": {
+          "timestamp": {
+            "type": "string",
+            "format": "ISO 8601",
+            "example": "2022-10-05T11:23:12.595+00:00"
+          },
+          "status": {
+            "type": "integer",
+            "description": "HTTP status code",
+            "example": 200
+          },
+          "hasMore": {
+            "type": "boolean",
+            "description": "Indicates if there are more pages to return"
+          },
+          "result": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Result"
+            }
+          }
+        }
+      },
+      "PaymentResponse": {
+        "type": "object",
+        "properties": {
+          "timestamp": {
+            "type": "string",
+            "format": "ISO 8601",
+            "example": "2022-11-06T10:16:11.595+00:00"
+          },
+          "status": {
+            "type": "integer",
+            "description": "HTTP status code",
+            "example": 200
+          },
+          "result": {
+            "$ref": "#/components/schemas/Result"
+          }
+        }
+      },
+      "PayoutResponse": {
+        "type": "object",
+        "properties": {
+          "timestamp": {
+            "type": "string",
+            "format": "ISO 8601",
+            "example": "2022-11-06T10:16:11.595+00:00"
+          },
+          "status": {
+            "type": "integer",
+            "description": "HTTP status code",
+            "example": 200
+          },
+          "result": {
+            "$ref": "#/components/schemas/PayoutResult"
+          }
+        }
+      },
+      "RefundResponse": {
+        "type": "object",
+        "properties": {
+          "timestamp": {
+            "type": "string",
+            "format": "ISO 8601",
+            "example": "2022-11-06T10:16:11.595+00:00"
+          },
+          "status": {
+            "type": "integer",
+            "description": "HTTP status code",
+            "example": 200
+          },
+          "result": {
+            "$ref": "#/components/schemas/RefundResult"
+          }
+        }
+      },
+      "UpdateWhitelistResponse": {
+        "type": "object",
+        "properties": {
+          "timestamp": {
+            "type": "string",
+            "format": "ISO 8601",
+            "example": "2022-11-06T10:16:11.595+00:00"
+          },
+          "status": {
+            "type": "integer",
+            "description": "HTTP status code",
+            "example": 200
+          }
+        }
+      },
+      "OperationListResponse": {
+        "type": "object",
+        "properties": {
+          "timestamp": {
+            "type": "string",
+            "format": "ISO 8601",
+            "example": "2022-11-06T10:16:11.595+00:00"
+          },
+          "status": {
+            "type": "integer",
+            "description": "HTTP status code",
+            "example": 200
+          },
+          "result": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PaymentOperation"
+            }
+          }
+        }
+      },
+      "UnauthorizedError": {
+        "required": [
+          "status",
+          "error",
+          "message",
+          "timestamp",
+          "path"
+        ],
+        "type": "object",
+        "properties": {
+          "status": {
+            "type": "integer",
+            "example": 401
+          },
+          "error": {
+            "type": "string",
+            "example": "Unauthorized"
+          },
+          "message": {
+            "type": "string",
+            "example": "Invalid token"
+          },
+          "timestamp": {
+            "type": "string",
+            "format": "ISO 8601",
+            "example": "2022-11-06T10:16:11.595+00:00"
+          },
+          "path": {
+            "type": "string",
+            "example": "/api/v1/payments"
+          }
+        },
+        "example": {
+          "status": 401,
+          "error": "Unauthorized",
+          "message": "Invalid token",
+          "timestamp": "2022-11-06T10:16:11.595+00:00",
+          "path": "/api/v1/payments"
+        }
+      },
+      "MerchApiUnauthorizedError": {
+        "required": [
+          "status",
+          "error",
+          "message",
+          "timestamp",
+          "path"
+        ],
+        "type": "object",
+        "properties": {
+          "status": {
+            "type": "integer",
+            "example": 401
+          },
+          "error": {
+            "type": "string",
+            "example": "Unauthorized"
+          },
+          "timestamp": {
+            "type": "string",
+            "format": "ISO 8601",
+            "example": "2022-11-06T10:16:11.595+00:00"
+          },
+          "path": {
+            "type": "string",
+            "example": "/merch-api/oauth2/token"
+          }
+        },
+        "example": {
+          "timestamp": "2022-11-06T10:16:11.595+00:00",
+          "status": 401,
+          "error": "Unauthorized",
+          "path": "/merch-api/oauth2/token"
+        }
+      },
+      "UpdateWhitelistUnauthorizedError": {
+        "required": [
+          "status",
+          "error",
+          "message",
+          "timestamp",
+          "path"
+        ],
+        "type": "object",
+        "properties": {
+          "status": {
+            "type": "integer",
+            "example": 401
+          },
+          "error": {
+            "type": "string",
+            "example": "Unauthorized"
+          },
+          "timestamp": {
+            "type": "string",
+            "format": "ISO 8601",
+            "example": "2022-11-06T10:16:11.595+00:00"
+          },
+          "path": {
+            "type": "string",
+            "example": "/merch-api/oauth2/token"
+          }
+        },
+        "example": {
+          "timestamp": "2022-11-06T10:16:11.595+00:00",
+          "status": 401,
+          "error": "Unauthorized",
+          "path": "/api/v1/updateWhitelist"
+        }
+      },
+      "TerminalNotFoundError": {
+        "required": [
+          "status",
+          "error",
+          "message",
+          "timestamp",
+          "path"
+        ],
+        "type": "object",
+        "properties": {
+          "status": {
+            "type": "integer",
+            "example": 404
+          },
+          "error": {
+            "type": "string",
+            "example": "Not found"
+          },
+          "timestamp": {
+            "type": "string",
+            "format": "ISO 8601",
+            "example": "2022-11-06T10:16:11.595+00:00"
+          },
+          "path": {
+            "type": "string",
+            "example": "/api/v1/terminals/getBalance/62"
+          }
+        },
+        "example": {
+          "timestamp": "2022-11-06T10:16:11.595+00:00",
+          "status": 404,
+          "error": "Not Found",
+          "message": "Terminal not found: 62",
+          "path": "/api/v1/terminals/getBalance/62"
+        }
+      },
+      "PaymentType": {
+        "type": "string",
+        "description": "Payment Type",
+        "example": "DEPOSIT",
+        "enum": [
+          "DEPOSIT",
+          "WITHDRAWAL",
+          "REFUND"
+        ]
+      },
+      "PaymentMethod": {
+        "type": "string",
+        "description": "Payment Method",
+        "example": "BASIC_CARD",
+        "enum": [
+          "ACTIVE",
+          "ADVCASH",
+          "ALFABANK_P2P",
+          "ALIPAY",
+          "ALTEL",
+          "ALYCEPAY",
+          "APPLEPAY",
+          "APPLEPAYTOKEN",
+          "ASTROPAY",
+          "ASUPAY",
+          "B2BINPAY",
+          "BANCONTACT",
+          "BANKTRANSFER",
+          "BANK_TRANSFER_ARG",
+          "BANK_TRANSFER_IND",
+          "BANK_TRANSFER_JPY",
+          "BANK_TRANSFER_KRW",
+          "BANK_TRANSFER_PHP",
+          "BANK_TRANSFER_PIX",
+          "BANK_TRANSFER_PKR",
+          "BANK_TRANSFER_SEPA",
+          "BANK_TRANSFER_SWIFT",
+          "BANK_TRANSFER_TRY",
+          "BANK_TRANSFER_UK",
+          "BASIC_CARD",
+          "BCA",
+          "BEELINE",
+          "BILLLINE",
+          "BILLPLZ",
+          "BINANCEPAY",
+          "BITEXPRO",
+          "BITEXPRO_ADVCARD",
+          "BITEXPRO_ADVWALLET",
+          "BITEXPRO_APPLEPAY",
+          "BITEXPRO_BANCONTACT",
+          "BITEXPRO_BANKTRANSFER",
+          "BITEXPRO_BKASH",
+          "BITEXPRO_BLIK",
+          "BITEXPRO_BPWALLET",
+          "BITEXPRO_CASH,",
+          "BITEXPRO_CREDITCARD",
+          "BITEXPRO_CRYPTO",
+          "BITEXPRO_EUROAPM",
+          "BITEXPRO_EWALLET",
+          "BITEXPRO_EXPAY",
+          "BITEXPRO_GIROPAY",
+          "BITEXPRO_GPAY",
+          "BITEXPRO_HSP",
+          "BITEXPRO_IDEAL",
+          "BITEXPRO_MBWAY",
+          "BITEXPRO_MEEZAQR,",
+          "BITEXPRO_MEEZAR2P,",
+          "BITEXPRO_MOBILEMONEY",
+          "BITEXPRO_MULTIBANCO",
+          "BITEXPRO_NAGAD",
+          "BITEXPRO_NEOSURF",
+          "BITEXPRO_NETBANKING",
+          "BITEXPRO_NETELLER",
+          "BITEXPRO_OPENBANK",
+          "BITEXPRO_OPENBANKING",
+          "BITEXPRO_P24",
+          "BITEXPRO_P2P",
+          "BITEXPRO_PAPARA",
+          "BITEXPRO_PAYEER",
+          "BITEXPRO_PAYSAFECARD",
+          "BITEXPRO_PAYSAFECASH",
+          "BITEXPRO_PAYTM",
+          "BITEXPRO_PIX",
+          "BITEXPRO_QRPAYMENT",
+          "BITEXPRO_RAPID",
+          "BITEXPRO_RN,",
+          "BITEXPRO_ROCKET",
+          "BITEXPRO_SBERPAY",
+          "BITEXPRO_SBP",
+          "BITEXPRO_SKRILL",
+          "BITEXPRO_SOFORT",
+          "BITEXPRO_SPEI",
+          "BITEXPRO_STICPAY",
+          "BITEXPRO_TRUSTLY",
+          "BITEXPRO_UPI",
+          "BITEXPRO_VODAFONE,",
+          "BITEXPRO_WALLET",
+          "BKASH",
+          "BLACK_RABBIT",
+          "BLIK",
+          "BNC",
+          "BNI",
+          "BOLETO",
+          "BRI",
+          "BSI",
+          "CARDS",
+          "CARDSHPP",
+          "CARD_TO_CARD",
+          "CASH",
+          "CHEK",
+          "CIMB",
+          "CLICK",
+          "CLICKQR",
+          "COMMUNITYBANKING",
+          "CRYPTO",
+          "CRYPTO2CRYPTO",
+          "CRYPTO2FIAT",
+          "DANA",
+          "DANAMON",
+          "DEBITWAY",
+          "DINO",
+          "EFECTY",
+          "EFT",
+          "EMPAYRE",
+          "EPAY",
+          "EPS",
+          "EUPAGO",
+          "EUTELLER",
+          "EWALLET",
+          "EZPAY",
+          "FAWRY",
+          "FIAT2CRYPTO",
+          "FINRAX",
+          "FLEXEPIN",
+          "FPS",
+          "FYST",
+          "GATE8TRANSACT",
+          "GATEEXPRESS",
+          "GCASH",
+          "GIROPAY",
+          "GOOGLEPAY",
+          "GOOGLEPAYTOKEN",
+          "GOPAY",
+          "HAVALE",
+          "HAYHAY",
+          "HITES",
+          "HUMO",
+          "IBAN",
+          "IDEAL",
+          "IMPS",
+          "INSTANTQR",
+          "INTERAC",
+          "INTERKASSA",
+          "KAKAOPAY",
+          "KCELL",
+          "KESSPAY",
+          "KHIPU",
+          "KHIPUBANKTRANSFER",
+          "KLARNA",
+          "LATAM_BANKING",
+          "LATAM_CASH",
+          "LINKAJA",
+          "LINK_AJA",
+          "LOCALP2P",
+          "LOCALPAYMENT",
+          "LOCAL_BRAZIL",
+          "LOCAL_CHILE",
+          "LOCAL_MEXICO",
+          "LOCAL_PERU",
+          "LOTÉRICA",
+          "M10",
+          "M10_TO_M10",
+          "MACH",
+          "MACROPAY",
+          "MANDIRI",
+          "MAYBANK",
+          "MB",
+          "MBWAY",
+          "MISTERCASH",
+          "MOBILE",
+          "MOBILEMONEY",
+          "MOBILEMONEY_AIRTEL",
+          "MOBILEMONEY_BANKTRANSFER",
+          "MOBILEMONEY_MPESA",
+          "MOBILEMONEY_MTN",
+          "MOBILEMONEY_OPAY",
+          "MOBILEMONEY_ORANGE",
+          "MOBILEMONEY_OZOW",
+          "MOBILEMONEY_PALMPAY",
+          "MOBILEMONEY_PAYATTITUDE",
+          "MOBILEMONEY_SNAPSCAN",
+          "MOBILEMONEY_VODAFONE",
+          "MOBILEMONEY_WAVE",
+          "MOBILEMONEY_ZAMTEL",
+          "MONETIX",
+          "MONNET",
+          "MOOV",
+          "MPESA",
+          "MTN",
+          "MULTIBANCO",
+          "NEFT",
+          "NEOSURF",
+          "NETBANKING",
+          "NETELLER",
+          "NGENIUS",
+          "NUMIPAY_HPP",
+          "NUMIPAY_VOUCHER",
+          "ONLINEBANKING",
+          "ONLINEBANKINGBTV",
+          "OPENBANKING",
+          "ORANGEMONEY",
+          "OVO",
+          "OXXO",
+          "P24",
+          "P2C",
+          "P2P",
+          "PAGOEFECTIVОCASH",
+          "PAGOEFECTIVОONLINE",
+          "PAGO_EFECTIVO",
+          "PAG_SMILE",
+          "PAPARA",
+          "PAPARAPOOL",
+          "PAPAZULA",
+          "PAYBOL",
+          "PAYCELL",
+          "PAYCO",
+          "PAYCOS",
+          "PAYFIX",
+          "PAYHERE",
+          "PAYID",
+          "PAYLER",
+          "PAYMATRIX",
+          "PAYMAXIS",
+          "PAYMAYA",
+          "PAYME",
+          "PAYMEMOBILE",
+          "PAYMOMENTUM",
+          "PAYPAL",
+          "PAYPORT",
+          "PAYRETAILERS",
+          "PAYRIVER",
+          "PAYSAFECARD",
+          "PAYSAFECASH",
+          "PAYSCROW",
+          "PAYTM",
+          "PAYU",
+          "PAY_BY_BANK",
+          "PAY_SHOP",
+          "PAY_U",
+          "PEP",
+          "PERFECTMONEY",
+          "PERMATA",
+          "PHONEPE",
+          "PICPAY",
+          "PID",
+          "PIX",
+          "POLI",
+          "POPYPARA",
+          "PRISMA_LINK",
+          "PRZELEWY24",
+          "PSEBANKTRANSFER",
+          "PSPARK",
+          "QBIT",
+          "QRCODE",
+          "QRIS",
+          "RAIFFEISEN_P2P",
+          "RAPIDTRANSFER",
+          "RAPID_TRANSFER",
+          "RAPYD",
+          "RAZORPAY",
+          "RETAILCARD",
+          "REVOLUTPAY",
+          "RTGS",
+          "SAFETYPAY",
+          "SAMSUNGPAY",
+          "SBER",
+          "SBERBANK_P2P",
+          "SBERPAY",
+          "SBP",
+          "SBP_P2P",
+          "SBP_TRANSFER",
+          "SEPA",
+          "SEPAP2P",
+          "SHOPEEPAY",
+          "SIRU_MOBILE",
+          "SKRILL",
+          "SLYSE",
+          "SMILE_PAY",
+          "SOFORT",
+          "SPEI",
+          "SPELL",
+          "SPOYNT",
+          "STRIPE",
+          "SWIFT",
+          "SWIPELUX",
+          "TELE2",
+          "TINK",
+          "TODITO",
+          "TPAGA",
+          "TRANSFER_BCA",
+          "TRUEMONEY",
+          "TRUSTLY",
+          "TRUSTPAYMENTS",
+          "TUNZER",
+          "UNIONPAYCARDS",
+          "UPI",
+          "UZCARD",
+          "VIETQR",
+          "VIETTELPAY",
+          "VIRTUALACCOUNT",
+          "VOLT",
+          "VOUCHERS",
+          "VOUCHSTAR",
+          "WEBPAY",
+          "WECHATWALLET",
+          "YOUGANDA",
+          "ZALO",
+          "ZIRAAT"
+        ]
+      },
+      "PaymentState": {
+        "type": "string",
+        "description": "Payment State",
+        "example": "COMPLETED or PENDING",
+        "enum": [
+          "CHECKOUT",
+          "PENDING",
+          "CANCELLED",
+          "DECLINED",
+          "COMPLETED"
+        ]
+      },
+      "Operation": {
+        "type": "string",
+        "description": "Operation performed during payment processing",
+        "example": "CREATE_PAYMENT",
+        "enum": [
+          "CREATE_PAYMENT",
+          "CHECKOUT",
+          "CANCEL",
+          "CONFIRMATION",
+          "REDIRECT",
+          "CONTINUE",
+          "DETECT_FRAUD",
+          "DEPOSIT",
+          "WITHDRAWAL",
+          "REFUND",
+          "CHECK_STATE",
+          "HANDLE_WEBHOOK",
+          "MANUAL_UPDATE"
+        ]
+      },
+      "Error": {
+        "type": "object",
+        "example": {
+          "timestamp": "2022-11-06T11:11:19.110+00:00",
+          "status": 400,
+          "error": "Bad Request",
+          "message": "Validation failed for object='paymentRequest'. Error count: 1",
+          "errors": [
+            {
+              "codes": [
+                "NotNull.paymentRequest.currency",
+                "NotNull.currency",
+                "NotNull.java.util.Currency",
+                "NotNull"
+              ],
+              "arguments": [
+                {
+                  "codes": [
+                    "paymentRequest.currency",
+                    "currency"
+                  ],
+                  "defaultMessage": "currency"
+                }
+              ],
+              "defaultMessage": "must not be null",
+              "objectName": "paymentRequest",
+              "field": "currency",
+              "bindingFailure": false
+            }
+          ],
+          "path": "/api/v1/payments"
+        },
+        "properties": {
+          "timestamp": {
+            "type": "string"
+          },
+          "status": {
+            "type": "number"
+          },
+          "error": {
+            "type": "string"
+          },
+          "message": {
+            "type": "string"
+          },
+          "errors": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "codes": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                },
+                "arguments": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "codes": {
+                        "type": "array",
+                        "items": {
+                          "type": "string"
+                        }
+                      },
+                      "defaultMessage": {
+                        "type": "string"
+                      }
+                    }
+                  }
+                },
+                "defaultMessage": {
+                  "type": "string"
+                },
+                "objectName": {
+                  "type": "string"
+                },
+                "field": {
+                  "type": "string"
+                },
+                "bindingFailure": {
+                  "type": "boolean"
+                }
+              }
+            }
+          },
+          "path": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "securitySchemes": {
+      "bearerAuthentication": {
+        "type": "http",
+        "description": "The client sends HTTP requests with the Authorization header that contains the word Bearer followed by a space and the Shop Api Key.",
+        "scheme": "bearer"
+      },
+      "bearerBase64Authentication": {
+        "type": "http",
+        "description": "The client sends HTTP requests with the Authorization header that contains the word Bearer followed by a space and the base64(merchant portal login+space+merchant portal password).",
+        "scheme": "bearer"
+      }
+    }
+  }
+}

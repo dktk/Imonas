@@ -1,0 +1,353 @@
+﻿@page
+@using Microsoft.AspNetCore.Mvc.Localization
+@model SmartAdmin.WebUI.Pages.Calendar.IndexModel
+@inject IStringLocalizer<IndexModel> _localizer
+
+@{
+    ViewData["Title"] = "Calendar";
+    ViewData["PageName"] = "calendar_index";
+}
+
+@section HeadBlock {
+    <link rel="stylesheet" media="screen, print" href="~/css/fa-solid.css">
+    <link rel="stylesheet" media="screen, print" href="~/css/miscellaneous/fullcalendar/fullcalendar.bundle.css">
+    <style>
+        .fc-event {
+            cursor: pointer;
+        }
+        .fc-event-case {
+            border-left: 4px solid;
+        }
+        .fc-event-schedule {
+            border-left: 4px solid #007bff;
+        }
+        .fc-event-run {
+            border-left: 4px solid #28a745;
+        }
+        .legend-item {
+            display: inline-flex;
+            align-items: center;
+            margin-right: 15px;
+            font-size: 0.875rem;
+        }
+        .legend-color {
+            width: 16px;
+            height: 16px;
+            border-radius: 3px;
+            margin-right: 6px;
+        }
+        #eventDetailsModal .modal-body {
+            max-height: 60vh;
+            overflow-y: auto;
+        }
+    </style>
+}
+
+<div class="row mb-3">
+    <div class="col-12 d-flex justify-content-between align-items-center">
+        <div>
+            <h1 class="subheader-title">
+                <i class="subheader-icon @(Settings.Theme.IconPrefix) fa-calendar-alt"></i> @_localizer["Calendar"]
+            </h1>
+            <small class="text-muted">@_localizer["View reconciliation schedules and case due dates"]</small>
+        </div>
+    </div>
+</div>
+
+<!-- Filters -->
+<div class="row mb-4">
+    <div class="col-12">
+        <div id="panel-filters" class="panel">
+            <div class="panel-hdr">
+                <h2>
+                    <i class="@(Settings.Theme.IconPrefix) fa-filter mr-2"></i>
+                    @_localizer["Filters"]
+                </h2>
+                <div class="panel-toolbar">
+                    <button class="btn btn-panel" data-action="panel-collapse" data-toggle="tooltip" data-offset="0,10" data-original-title="Collapse"></button>
+                </div>
+            </div>
+            <div class="panel-container show">
+                <div class="panel-content">
+                    <div class="row">
+                        <div class="col-md-3">
+                            <div class="form-group">
+                                <label for="pspFilter">@_localizer["PSP"]</label>
+                                <select id="pspFilter" class="form-control select2" asp-items="Model.PspOptions">
+                                </select>
+                            </div>
+                        </div>
+                        @if (Model.IsAdmin)
+                        {
+                            <div class="col-md-3">
+                                <div class="form-group">
+                                    <label for="userFilter">@_localizer["Assigned To"]</label>
+                                    <select id="userFilter" class="form-control select2" asp-items="Model.UserOptions">
+                                    </select>
+                                </div>
+                            </div>
+                        }
+                        <div class="col-md-3">
+                            <div class="form-group">
+                                <label>@_localizer["Event Types"]</label>
+                                <div class="mt-2">
+                                    <div class="custom-control custom-checkbox custom-control-inline">
+                                        <input type="checkbox" class="custom-control-input" id="showCases" checked>
+                                        <label class="custom-control-label" for="showCases">@_localizer["Cases"]</label>
+                                    </div>
+                                    <div class="custom-control custom-checkbox custom-control-inline">
+                                        <input type="checkbox" class="custom-control-input" id="showSchedules" checked>
+                                        <label class="custom-control-label" for="showSchedules">@_localizer["Schedules"]</label>
+                                    </div>
+                                    <div class="custom-control custom-checkbox custom-control-inline">
+                                        <input type="checkbox" class="custom-control-input" id="showRuns" checked>
+                                        <label class="custom-control-label" for="showRuns">@_localizer["Runs"]</label>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-3 d-flex align-items-end">
+                            <button type="button" class="btn btn-primary waves-effect waves-themed" onclick="applyFilters()">
+                                <i class="@(Settings.Theme.IconPrefix) fa-sync mr-1"></i>
+                                @_localizer["Apply Filters"]
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Legend -->
+<div class="row mb-3">
+    <div class="col-12">
+        <div class="p-3 bg-white rounded shadow-sm">
+            <strong class="mr-3">@_localizer["Legend"]:</strong>
+            <span class="legend-item">
+                <span class="legend-color" style="background-color: #dc3545;"></span>
+                @_localizer["Critical/High Severity Case"]
+            </span>
+            <span class="legend-item">
+                <span class="legend-color" style="background-color: #ffc107;"></span>
+                @_localizer["Medium Severity Case"]
+            </span>
+            <span class="legend-item">
+                <span class="legend-color" style="background-color: #28a745;"></span>
+                @_localizer["Low Severity Case / Completed Run"]
+            </span>
+            <span class="legend-item">
+                <span class="legend-color" style="background-color: #007bff;"></span>
+                @_localizer["Scheduled Reconciliation"]
+            </span>
+            <span class="legend-item">
+                <span class="legend-color" style="background-color: #6c757d;"></span>
+                @_localizer["Cancelled/Failed"]
+            </span>
+        </div>
+    </div>
+</div>
+
+<!-- Calendar -->
+<div class="row">
+    <div class="col-12">
+        <div id="panel-calendar" class="panel">
+            <div class="panel-hdr">
+                <h2>
+                    <i class="@(Settings.Theme.IconPrefix) fa-calendar mr-2"></i>
+                    @_localizer["Reconciliation Calendar"]
+                </h2>
+            </div>
+            <div class="panel-container show">
+                <div class="panel-content">
+                    <div id="calendar"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Event Details Modal -->
+<div class="modal fade" id="eventDetailsModal" tabindex="-1" role="dialog" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="eventModalTitle"></h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body" id="eventModalBody">
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">@_localizer["Close"]</button>
+                <a href="#" id="eventModalLink" class="btn btn-primary" style="display: none;">
+                    <i class="@(Settings.Theme.IconPrefix) fa-external-link-alt mr-1"></i>
+                    @_localizer["View Details"]
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section ScriptsBlock {
+    <script src="~/js/dependency/moment/moment.js"></script>
+    <script src="~/js/miscellaneous/fullcalendar/fullcalendar.bundle.js"></script>
+    <script>
+        var calendar;
+        var isAdmin = @(Model.IsAdmin ? "true" : "false");
+
+        document.addEventListener('DOMContentLoaded', function () {
+            var calendarEl = document.getElementById('calendar');
+
+            calendar = new FullCalendar.Calendar(calendarEl, {
+                plugins: ['dayGrid', 'list', 'timeGrid', 'interaction', 'bootstrap'],
+                themeSystem: 'bootstrap',
+                defaultView: 'dayGridMonth',
+                header: {
+                    left: 'prev,next today',
+                    center: 'title',
+                    right: 'dayGridMonth,timeGridWeek,timeGridDay,listWeek'
+                },
+                navLinks: true,
+                editable: false,
+                eventLimit: true,
+                events: function(info, successCallback, failureCallback) {
+                    fetchEvents(info.start, info.end, successCallback, failureCallback);
+                },
+                eventClick: function(info) {
+                    info.jsEvent.preventDefault();
+                    showEventDetails(info.event);
+                },
+                eventRender: function(info) {
+                    // Add tooltip using jQuery
+                    $(info.el).tooltip({
+                        title: info.event.extendedProps.description || info.event.title,
+                        placement: 'top',
+                        trigger: 'hover',
+                        container: 'body'
+                    });
+                },
+                loading: function(isLoading) {
+                    if (isLoading) {
+                        $('#calendar').addClass('loading');
+                    } else {
+                        $('#calendar').removeClass('loading');
+                    }
+                }
+            });
+
+            calendar.render();
+        });
+
+        function fetchEvents(start, end, successCallback, failureCallback) {
+            var pspId = $('#pspFilter').val() || '';
+            var userId = isAdmin ? ($('#userFilter').val() || '') : '';
+            var showCases = $('#showCases').is(':checked');
+            var showSchedules = $('#showSchedules').is(':checked');
+            var showRuns = $('#showRuns').is(':checked');
+
+            $.ajax({
+                url: '/Calendar?handler=Events',
+                data: {
+                    start: start.toISOString(),
+                    end: end.toISOString(),
+                    pspId: pspId || null,
+                    userId: userId || null
+                },
+                success: function(data) {
+                    // Filter events based on checkboxes
+                    var filteredData = data.filter(function(event) {
+                        var eventType = event.extendedProps.eventType;
+                        if (eventType === 'CaseDueDate' && !showCases) return false;
+                        if (eventType === 'ReconciliationSchedule' && !showSchedules) return false;
+                        if (eventType === 'ReconciliationRun' && !showRuns) return false;
+                        return true;
+                    });
+                    successCallback(filteredData);
+                },
+                error: function(xhr, status, error) {
+                    console.error('Error fetching events:', error);
+                    failureCallback(error);
+                }
+            });
+        }
+
+        function applyFilters() {
+            calendar.refetchEvents();
+        }
+
+        function showEventDetails(event) {
+            var props = event.extendedProps;
+            var title = event.title;
+            var body = '';
+
+            if (props.eventType === 'CaseDueDate') {
+                body = `
+                    <table class="table table-bordered mb-0">
+                        <tr><td class="fw-500" style="width: 35%;">@_localizer["Case Number"]</td><td>${props.caseNumber || '-'}</td></tr>
+                        <tr><td class="fw-500">@_localizer["Status"]</td><td><span class="badge badge-${getStatusBadgeClass(props.caseStatus)}">${props.caseStatus || '-'}</span></td></tr>
+                        <tr><td class="fw-500">@_localizer["Severity"]</td><td><span class="badge badge-${getSeverityBadgeClass(props.caseSeverity)}">${props.caseSeverity || '-'}</span></td></tr>
+                        <tr><td class="fw-500">@_localizer["Due Date"]</td><td>${formatDate(event.start)}</td></tr>
+                        <tr><td class="fw-500">@_localizer["Description"]</td><td>${props.description || '-'}</td></tr>
+                    </table>
+                `;
+            } else if (props.eventType === 'ReconciliationSchedule') {
+                body = `
+                    <table class="table table-bordered mb-0">
+                        <tr><td class="fw-500" style="width: 35%;">@_localizer["PSP"]</td><td>${props.pspName || '-'}</td></tr>
+                        <tr><td class="fw-500">@_localizer["Schedule Type"]</td><td>${props.recurrenceType || '-'}</td></tr>
+                        <tr><td class="fw-500">@_localizer["Scheduled Time"]</td><td>${formatDateTime(event.start)}</td></tr>
+                        <tr><td class="fw-500">@_localizer["Description"]</td><td>${props.description || '-'}</td></tr>
+                    </table>
+                `;
+            } else if (props.eventType === 'ReconciliationRun') {
+                body = `
+                    <table class="table table-bordered mb-0">
+                        <tr><td class="fw-500" style="width: 35%;">@_localizer["Run Time"]</td><td>${formatDateTime(event.start)}</td></tr>
+                        <tr><td class="fw-500">@_localizer["Details"]</td><td>${props.description || '-'}</td></tr>
+                    </table>
+                `;
+            }
+
+            $('#eventModalTitle').text(title);
+            $('#eventModalBody').html(body);
+
+            if (event.url) {
+                $('#eventModalLink').attr('href', event.url).show();
+            } else {
+                $('#eventModalLink').hide();
+            }
+
+            $('#eventDetailsModal').modal('show');
+        }
+
+        function getStatusBadgeClass(status) {
+            switch (status) {
+                case 'Open': return 'warning';
+                case 'InProgress': return 'info';
+                case 'PendingReview': return 'primary';
+                case 'Closed': return 'success';
+                default: return 'secondary';
+            }
+        }
+
+        function getSeverityBadgeClass(severity) {
+            switch (severity) {
+                case 'Critical': return 'danger';
+                case 'High': return 'warning';
+                case 'Medium': return 'info';
+                case 'Low': return 'success';
+                default: return 'secondary';
+            }
+        }
+
+        function formatDate(date) {
+            return date ? new Date(date).toLocaleDateString() : '-';
+        }
+
+        function formatDateTime(date) {
+            return date ? new Date(date).toLocaleString() : '-';
+        }
+    </script>
+}

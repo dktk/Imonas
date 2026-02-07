@@ -1,0 +1,148 @@
+@page
+@model IndexModel
+@{
+    ViewData["Title"] = "Dashboard";
+}
+
+<div class="page-title">Reconciliation Dashboard</div>
+<div class="page-subtitle">Monitor reconciliation health and performance metrics</div>
+
+<div class="grid grid-4 mb-4">
+    <div class="stat-card">
+        <div class="stat-value">@Model.TotalRuns</div>
+        <div class="stat-label">Total Runs</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-value">@Model.MatchPercentage%</div>
+        <div class="stat-label">Match Rate</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-value">@Model.OpenCases</div>
+        <div class="stat-label">Open Cases</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-value">@Model.ProcessedToday</div>
+        <div class="stat-label">Processed Today</div>
+    </div>
+</div>
+
+<div class="grid grid-2">
+    <div class="card">
+        <div class="card-header">Recent Runs</div>
+        <div class="card-body">
+            <div class="table-container">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Run Name</th>
+                            <th>Status</th>
+                            <th>Match %</th>
+                            <th>Started</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var run in Model.RecentRuns)
+                        {
+                            <tr>
+                                <td>
+                                    <a asp-page="/Runs/Details" asp-route-id="@run.Id" style="color: var(--accent-primary); text-decoration: none;">
+                                        @run.RunName
+                                    </a>
+                                </td>
+                                <td>
+                                    @if (run.Status == Imonas.V9.Domain.Enums.RunStatus.Completed)
+                                    {
+                                        <span class="badge badge-success">Completed</span>
+                                    }
+                                    else if (run.Status == Imonas.V9.Domain.Enums.RunStatus.Running)
+                                    {
+                                        <span class="badge badge-info">Running</span>
+                                    }
+                                    else if (run.Status == Imonas.V9.Domain.Enums.RunStatus.Failed)
+                                    {
+                                        <span class="badge badge-danger">Failed</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="badge badge-secondary">@run.Status</span>
+                                    }
+                                </td>
+                                <td>@run.MatchPercentage.ToString("F1")%</td>
+                                <td>@run.StartedAt.ToString("yyyy-MM-dd HH:mm")</td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="card-header">Recent Cases</div>
+        <div class="card-body">
+            <div class="table-container">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Case #</th>
+                            <th>Title</th>
+                            <th>Severity</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var caseItem in Model.RecentCases)
+                        {
+                            <tr>
+                                <td>
+                                    <a asp-page="/Cases/Details" asp-route-id="@caseItem.Id" style="color: var(--accent-primary); text-decoration: none;">
+                                        @caseItem.CaseNumber
+                                    </a>
+                                </td>
+                                <td>@caseItem.Title</td>
+                                <td>
+                                    @if (caseItem.Severity == Imonas.V9.Domain.Enums.CaseSeverity.Critical)
+                                    {
+                                        <span class="badge badge-danger">Critical</span>
+                                    }
+                                    else if (caseItem.Severity == Imonas.V9.Domain.Enums.CaseSeverity.High)
+                                    {
+                                        <span class="badge badge-warning">High</span>
+                                    }
+                                    else if (caseItem.Severity == Imonas.V9.Domain.Enums.CaseSeverity.Medium)
+                                    {
+                                        <span class="badge badge-info">Medium</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="badge badge-secondary">Low</span>
+                                    }
+                                </td>
+                                <td>
+                                    @if (caseItem.Status == Imonas.V9.Domain.Enums.CaseStatus.Closed)
+                                    {
+                                        <span class="badge badge-secondary">Closed</span>
+                                    }
+                                    else if (caseItem.Status == Imonas.V9.Domain.Enums.CaseStatus.InProgress)
+                                    {
+                                        <span class="badge badge-info">In Progress</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="badge badge-warning">@caseItem.Status</span>
+                                    }
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="mt-4">
+    <a asp-page="/Runs/Create" class="btn btn-primary">🚀 Start New Run</a>
+    <a asp-page="/Files/Upload" class="btn btn-success">📤 Upload Files</a>
+    <a asp-page="/Cases/Create" class="btn btn-secondary">➕ Create Case</a>
+</div>

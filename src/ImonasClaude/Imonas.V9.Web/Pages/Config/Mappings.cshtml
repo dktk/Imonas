@@ -1,0 +1,114 @@
+@page
+@model Imonas.V9.Web.Pages.Config.MappingsModel
+@{
+    ViewData["Title"] = "Field Mappings";
+}
+
+<div class="flex-between mb-4">
+    <div>
+        <div class="page-title">Field Mappings</div>
+        <div class="page-subtitle">Configure source-to-target field transformations</div>
+    </div>
+    <div>
+        <a asp-page="/Config/Mappings/Create" class="btn btn-primary">➕ Add Mapping</a>
+    </div>
+</div>
+
+@if (!string.IsNullOrEmpty((string?)TempData["SuccessMessage"]))
+{
+    <div class="alert alert-success">
+        @TempData["SuccessMessage"]
+    </div>
+}
+
+<div class="alert alert-info">
+    Field mappings define how PSP/bank file fields are transformed and mapped to the canonical schema.
+    Versioning allows you to rollback mappings if needed.
+</div>
+
+<div class="card">
+    <div class="card-body">
+        <div class="form-group" style="max-width: 300px;">
+            <label>Filter by PSP</label>
+            <select class="form-control">
+                <option value="">All PSPs</option>
+                <option value="STRIPE">Stripe</option>
+                <option value="PAYPAL">PayPal</option>
+                <option value="ADYEN">Adyen</option>
+                <option value="WORLDPAY">Worldpay</option>
+            </select>
+        </div>
+
+        <div class="table-container mt-3">
+            <table>
+                <thead>
+                    <tr>
+                        <th>PSP</th>
+                        <th>Source Field</th>
+                        <th>→</th>
+                        <th>Target Field</th>
+                        <th>Transform</th>
+                        <th>Version</th>
+                        <th>Status</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @if (!Model.Mappings.Any())
+                    {
+                        <tr>
+                            <td colspan="8" class="text-center" style="padding: 2rem; color: var(--text-muted);">
+                                No field mappings configured yet.
+                            </td>
+                        </tr>
+                    }
+                    else
+                    {
+                        @foreach (var mapping in Model.Mappings)
+                        {
+                            <tr>
+                                <td>
+                                    @if (Model.PspProfileNames.ContainsKey(mapping.PspProfileId))
+                                    {
+                                        <span class="badge badge-secondary">@Model.PspProfileNames[mapping.PspProfileId]</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="badge badge-secondary">Unknown</span>
+                                    }
+                                </td>
+                                <td><code>@mapping.SourceField</code></td>
+                                <td style="text-align: center;">→</td>
+                                <td><code>@mapping.TargetField</code></td>
+                                <td>
+                                    @if (!string.IsNullOrEmpty(mapping.TransformExpression))
+                                    {
+                                        <span class="badge badge-info" title="@mapping.TransformExpression">Transform</span>
+                                    }
+                                    else
+                                    {
+                                        <span style="color: var(--text-muted);">Direct</span>
+                                    }
+                                </td>
+                                <td>@mapping.Version</td>
+                                <td>
+                                    @if (mapping.IsActive)
+                                    {
+                                        <span class="badge badge-success">Active</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="badge badge-secondary">Inactive</span>
+                                    }
+                                </td>
+                                <td>
+                                    <button class="btn btn-secondary" style="padding: 0.5rem 1rem;">Edit</button>
+                                </td>
+                            </tr>
+                        }
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>

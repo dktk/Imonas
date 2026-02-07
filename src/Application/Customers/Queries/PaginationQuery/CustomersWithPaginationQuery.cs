@@ -1,0 +1,43 @@
+// Licensed to the .NET Foundation under one or more agreements.
+// The .NET Foundation licenses this file to you under the MIT license.
+
+using Application.Customers.DTOs;
+using Application.Customers.Caching;
+
+namespace Application.Customers.Queries.PaginationQuery
+{
+    public class CustomersWithPaginationQuery : PaginationRequest,IRequest<PaginatedData<CustomerDto>>
+    {
+        public string CacheKey => CustomerCacheKey.GetPaginationCacheKey(this.ToString());
+
+        public MemoryCacheEntryOptions Options => new MemoryCacheEntryOptions().AddExpirationToken(new CancellationChangeToken(CustomerCacheTokenSource.ResetCacheToken.Token));
+
+    }
+    public class CustomersWithPaginationQueryHandler : IRequestHandler<CustomersWithPaginationQuery, PaginatedData<CustomerDto>>
+    {
+
+        private readonly IApplicationDbContext _context;
+        private readonly IMapper _mapper;
+
+        public CustomersWithPaginationQueryHandler(
+        
+            IApplicationDbContext context,
+            IMapper mapper
+            )
+        {
+    
+            _context = context;
+            _mapper = mapper;
+        }
+        public async Task<PaginatedData<CustomerDto>> Handle(CustomersWithPaginationQuery request, CancellationToken cancellationToken)
+        {
+            var filters = PredicateBuilder.FromFilter<Customer>(request.FilterRules);
+            var data = await _context.Customers.Where(filters)
+                .OrderBy($"{request.Sort} {request.Order}")
+                .ProjectTo<CustomerDto>(_mapper.ConfigurationProvider)
+                .PaginatedDataAsync(request.Page, request.Rows);
+
+            return data;
+        }
+    }
+}

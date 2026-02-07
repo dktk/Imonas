@@ -1,0 +1,258 @@
+@page
+@model Imonas.V9.Web.Pages.Rules.CreateModel
+@{
+    ViewData["Title"] = "Create Matching Rule";
+}
+
+<div class="page-title">Create Matching Rule</div>
+<div class="page-subtitle">Define a new reconciliation matching strategy</div>
+
+<div class="card">
+    <div class="card-header">Rule Configuration</div>
+    <div class="card-body">
+        <form method="post">
+            <div class="grid grid-2 gap-3">
+                <div class="form-group">
+                    <label asp-for="Input.RuleName">Rule Name</label>
+                    <input asp-for="Input.RuleName" class="form-control" placeholder="e.g., Exact Transaction ID Match" />
+                    <span asp-validation-for="Input.RuleName" class="text-danger"></span>
+                </div>
+
+                <div class="form-group">
+                    <label asp-for="Input.RuleType">Rule Type</label>
+                    <select asp-for="Input.RuleType" class="form-control" id="ruleTypeSelect">
+                        <option value="1">Equality - Exact field matching</option>
+                        <option value="2">Composite - Multi-field matching</option>
+                        <option value="3">Tolerance Window - Amount/date ranges</option>
+                        <option value="4">Fuzzy - Similarity scoring</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label asp-for="Input.Description">Description</label>
+                <textarea asp-for="Input.Description" class="form-control" rows="3" placeholder="Describe how this rule works..."></textarea>
+                <span asp-validation-for="Input.Description" class="text-danger"></span>
+            </div>
+
+            <div class="grid grid-3 gap-3">
+                <div class="form-group">
+                    <label asp-for="Input.Priority">Priority</label>
+                    <input asp-for="Input.Priority" type="number" class="form-control" min="1" />
+                    <div style="font-size: 0.875rem; color: var(--text-muted); margin-top: 0.5rem;">
+                        Lower number = higher priority
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label asp-for="Input.Version">Version</label>
+                    <input asp-for="Input.Version" class="form-control" placeholder="e.g., 1.0.0" />
+                </div>
+
+                <div class="form-group">
+                    <label asp-for="Input.EffectiveFrom">Effective From</label>
+                    <input asp-for="Input.EffectiveFrom" type="date" class="form-control" />
+                </div>
+            </div>
+
+            <div class="card" style="background-color: var(--bg-tertiary); margin-bottom: 1.5rem;">
+                <div class="card-body">
+                    <h4 style="font-size: 1rem; margin-bottom: 1rem;">Rule Definition</h4>
+
+                    <div id="equalityFields" style="display: none;">
+                        <div class="form-group">
+                            <label>Match Field</label>
+                            <select class="form-control">
+                                <option value="">-- Select Field --</option>
+                                <option value="TransactionId">Transaction ID</option>
+                                <option value="ExternalTransactionId">External Transaction ID</option>
+                                <option value="Reference">Reference</option>
+                                <option value="AuthCode">Authorization Code</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div id="compositeFields" style="display: none;">
+                        <div class="form-group">
+                            <label>
+                                <input type="checkbox" value="Amount" style="margin-right: 0.5rem;" />
+                                Amount
+                            </label>
+                        </div>
+                        <div class="form-group">
+                            <label>
+                                <input type="checkbox" value="Currency" style="margin-right: 0.5rem;" />
+                                Currency
+                            </label>
+                        </div>
+                        <div class="form-group">
+                            <label>
+                                <input type="checkbox" value="AuthCode" style="margin-right: 0.5rem;" />
+                                Authorization Code
+                            </label>
+                        </div>
+                        <div class="form-group">
+                            <label>
+                                <input type="checkbox" value="TransactionDate" style="margin-right: 0.5rem;" />
+                                Transaction Date
+                            </label>
+                        </div>
+                    </div>
+
+                    <div id="toleranceFields" style="display: none;">
+                        <div class="grid grid-2 gap-3">
+                            <div class="form-group">
+                                <label asp-for="Input.ToleranceAmount">Amount Tolerance</label>
+                                <input asp-for="Input.ToleranceAmount" type="number" step="0.01" class="form-control" placeholder="0.00" />
+                                <div style="font-size: 0.875rem; color: var(--text-muted); margin-top: 0.5rem;">
+                                    Allow ± this amount variance
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label asp-for="Input.ToleranceWindowDays">Time Window (Days)</label>
+                                <input asp-for="Input.ToleranceWindowDays" type="number" class="form-control" placeholder="0" />
+                                <div style="font-size: 0.875rem; color: var(--text-muted); margin-top: 0.5rem;">
+                                    Allow ± this many days variance
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div id="fuzzyFields" style="display: none;">
+                        <div class="form-group">
+                            <label asp-for="Input.MinimumScore">Minimum Match Score (%)</label>
+                            <input asp-for="Input.MinimumScore" type="number" step="0.01" class="form-control" min="0" max="100" placeholder="80.00" />
+                            <div style="font-size: 0.875rem; color: var(--text-muted); margin-top: 0.5rem;">
+                                Threshold for fuzzy match acceptance (0-100)
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label asp-for="Input.RuleDefinition">Rule Definition (JSON)</label>
+                        <textarea asp-for="Input.RuleDefinition" class="form-control" rows="8" placeholder='{"field": "TransactionId", "operator": "equals"}'></textarea>
+                        <div style="font-size: 0.875rem; color: var(--text-muted); margin-top: 0.5rem;">
+                            Advanced: Define rule logic as JSON
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card" style="background-color: var(--bg-tertiary); margin-bottom: 1.5rem;">
+                <div class="card-body">
+                    <h4 style="font-size: 1rem; margin-bottom: 1rem;">Options</h4>
+
+                    <div class="form-group">
+                        <label>
+                            <input type="checkbox" asp-for="Input.IsActive" style="margin-right: 0.5rem;" checked />
+                            Active (enable this rule immediately)
+                        </label>
+                    </div>
+
+                    <div class="form-group" style="margin-bottom: 0;">
+                        <label>
+                            <input type="checkbox" asp-for="Input.StopAtFirstMatch" style="margin-right: 0.5rem;" />
+                            Stop at First Match (don't check other rules after this one matches)
+                        </label>
+                    </div>
+                </div>
+            </div>
+
+            @if (!string.IsNullOrEmpty(Model.ErrorMessage))
+            {
+                <div class="alert alert-danger">
+                    @Model.ErrorMessage
+                </div>
+            }
+
+            <div class="flex gap-2">
+                <button type="submit" class="btn btn-primary">✓ Create Rule</button>
+                <button type="button" class="btn btn-success" onclick="testRule()">🧪 Test Rule</button>
+                <a asp-page="Index" class="btn btn-secondary">Cancel</a>
+            </div>
+        </form>
+    </div>
+</div>
+
+<div class="card mt-4">
+    <div class="card-header">Rule Examples</div>
+    <div class="card-body">
+        <div class="grid grid-2 gap-3">
+            <div style="background-color: var(--bg-tertiary); border-radius: 8px; padding: 1rem;">
+                <strong style="color: var(--accent-primary);">Equality Rule</strong>
+                <pre style="background-color: var(--bg-primary); padding: 0.75rem; border-radius: 4px; margin-top: 0.5rem; overflow-x: auto;"><code>{
+  "field": "TransactionId",
+  "operator": "equals"
+}</code></pre>
+            </div>
+
+            <div style="background-color: var(--bg-tertiary); border-radius: 8px; padding: 1rem;">
+                <strong style="color: var(--accent-primary);">Composite Rule</strong>
+                <pre style="background-color: var(--bg-primary); padding: 0.75rem; border-radius: 4px; margin-top: 0.5rem; overflow-x: auto;"><code>{
+  "fields": ["Amount", "Currency", "AuthCode"],
+  "operator": "all_equal"
+}</code></pre>
+            </div>
+
+            <div style="background-color: var(--bg-tertiary); border-radius: 8px; padding: 1rem;">
+                <strong style="color: var(--accent-primary);">Tolerance Rule</strong>
+                <pre style="background-color: var(--bg-primary); padding: 0.75rem; border-radius: 4px; margin-top: 0.5rem; overflow-x: auto;"><code>{
+  "field": "Amount",
+  "tolerance": 0.01,
+  "time_window_days": 1
+}</code></pre>
+            </div>
+
+            <div style="background-color: var(--bg-tertiary); border-radius: 8px; padding: 1rem;">
+                <strong style="color: var(--accent-primary);">Fuzzy Rule</strong>
+                <pre style="background-color: var(--bg-primary); padding: 0.75rem; border-radius: 4px; margin-top: 0.5rem; overflow-x: auto;"><code>{
+  "fields": ["Reference", "MerchantId"],
+  "algorithm": "levenshtein",
+  "threshold": 0.85
+}</code></pre>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+    <script>
+        const ruleTypeSelect = document.getElementById('ruleTypeSelect');
+        const equalityFields = document.getElementById('equalityFields');
+        const compositeFields = document.getElementById('compositeFields');
+        const toleranceFields = document.getElementById('toleranceFields');
+        const fuzzyFields = document.getElementById('fuzzyFields');
+
+        function updateFieldVisibility() {
+            const ruleType = parseInt(ruleTypeSelect.value);
+
+            equalityFields.style.display = 'none';
+            compositeFields.style.display = 'none';
+            toleranceFields.style.display = 'none';
+            fuzzyFields.style.display = 'none';
+
+            switch(ruleType) {
+                case 1: // Equality
+                    equalityFields.style.display = 'block';
+                    break;
+                case 2: // Composite
+                    compositeFields.style.display = 'block';
+                    break;
+                case 3: // Tolerance
+                    toleranceFields.style.display = 'block';
+                    break;
+                case 4: // Fuzzy
+                    fuzzyFields.style.display = 'block';
+                    break;
+            }
+        }
+
+        ruleTypeSelect.addEventListener('change', updateFieldVisibility);
+        updateFieldVisibility();
+
+        function testRule() {
+            alert('Rule testing interface coming soon. This will allow you to test the rule against sample data.');
+        }
+    </script>
+}
