@@ -87,7 +87,7 @@ namespace Application.Features.ReconciliationRuns.Commands
 
             var statusMessage = run.Status switch
             {
-                RunStatus.Completed => $"Reconciliation run '{request.RunName}' completed. Matched: {run.MatchedRecords}, Unmatched: {run.UnmatchedRecords}",
+                RunStatus.Completed => $"Reconciliation run '{request.RunName}' completed. Matched: {run.ExternalMatchedRecordsCount}, Unmatched: {run.ExternalUnmatchedRecordsCount}",
                 RunStatus.Failed => $"Reconciliation run '{request.RunName}' failed: {run.ErrorMessage}",
                 _ => $"Reconciliation run '{request.RunName}' started successfully."
             };

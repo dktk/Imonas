@@ -115,7 +115,7 @@ else
                 <div class="p-3 bg-primary-300 rounded overflow-hidden position-relative text-white mb-g stats-card-link">
                     <div class="">
                         <h3 class="display-4 d-block l-h-n m-0 fw-500">
-                            @Model.Run.TotalRecords.ToString("N0")
+                            @Model.Run.TotalRecordsCount.ToString("N0")
                         </h3>
                         <span class="opacity-70">@_localizer["Total Records"]</span>
                         <small class="d-block mt-1 opacity-50"><i class="@(Settings.Theme.IconPrefix) fa-external-link-alt mr-1"></i>@_localizer["View in Reports"]</small>
@@ -129,7 +129,7 @@ else
                 <div class="p-3 bg-success-500 rounded overflow-hidden position-relative text-white mb-g stats-card-link">
                     <div class="">
                         <h3 class="display-4 d-block l-h-n m-0 fw-500">
-                            @Model.Run.MatchedRecords.ToString("N0")
+                            @Model.Run.MatchedRecordsCount.ToString("N0")
                         </h3>
                         <span class="opacity-70">@_localizer["Matched"]</span>
                         <small class="d-block mt-1 opacity-50"><i class="@(Settings.Theme.IconPrefix) fa-external-link-alt mr-1"></i>@_localizer["View in Reports"]</small>
@@ -143,7 +143,7 @@ else
                 <div class="p-3 bg-danger-500 rounded overflow-hidden position-relative text-white mb-g stats-card-link">
                     <div class="">
                         <h3 class="display-4 d-block l-h-n m-0 fw-500">
-                            @Model.Run.UnmatchedRecords.ToString("N0")
+                            @Model.Run.UnmatchedRecordsCount.ToString("N0")
                         </h3>
                         <span class="opacity-70">@_localizer["Unmatched"]</span>
                         <small class="d-block mt-1 opacity-50"><i class="@(Settings.Theme.IconPrefix) fa-external-link-alt mr-1"></i>@_localizer["View in Reports"]</small>
@@ -157,7 +157,7 @@ else
                 <div class="p-3 bg-warning-500 rounded overflow-hidden position-relative text-white mb-g stats-card-link">
                     <div class="">
                         <h3 class="display-4 d-block l-h-n m-0 fw-500">
-                            @Model.Run.PartialMatchRecords.ToString("N0")
+                            @Model.Run.PartialMatchRecordsCount.ToString("N0")
                         </h3>
                         <span class="opacity-70">@_localizer["Partial Match"]</span>
                         <small class="d-block mt-1 opacity-50"><i class="@(Settings.Theme.IconPrefix) fa-external-link-alt mr-1"></i>@_localizer["View in Reports"]</small>
@@ -182,7 +182,21 @@ else
                     <div class="panel-content">
                         <table class="table table-bordered table-hover">
                             <tbody>
-                                <tr>
+                                @{
+                                    var statusStyle = "";
+
+                                    var status = Model.Run.Status;
+                                    if (status == RunStatus.Completed)
+                                    {
+                                        statusStyle = "background:032b03;";
+                                    }
+
+                                    if (status == RunStatus.Failed ||status == RunStatus.Cancelled)
+                                    {
+                                        statusStyle = "background:#570000;";
+                                    }
+                                }
+                                <tr style="@statusStyle">
                                     <td class="fw-500" style="width: 40%;">@_localizer["Status"]</td>
                                     <td>
                                         @if (Model.Run.Status == RunStatus.Completed)
@@ -337,27 +351,27 @@ else
                             <div class="col-md-4 text-center">
                                 <div class="p-3 bg-success-50 rounded mb-3">
                                     <h4 class="text-muted mb-2">@_localizer["Matched Records"]</h4>
-                                    <h2 class="text-success fw-700 mb-1">@Model.Run.MatchedRecords.ToString("N0")</h2>
+                                    <h2 class="text-success fw-700 mb-1">@Model.Run.TotalRecordsCount.ToString("N0")</h2>
                                     <span class="text-muted">
-                                        @((Model.Run.TotalRecords > 0 ? (Model.Run.MatchedRecords * 100.0 / Model.Run.TotalRecords) : 0).ToString("F1"))% @_localizer["of total"]
+                                        @((Model.Run.TotalRecordsCount > 0 ? (Model.Run.TotalRecordsCount * 100.0 / Model.Run.TotalRecordsCount) : 0).ToString("F1"))% @_localizer["of total"]
                                     </span>
                                 </div>
                             </div>
                             <div class="col-md-4 text-center">
                                 <div class="p-3 bg-danger-50 rounded mb-3">
                                     <h4 class="text-muted mb-2">@_localizer["Unmatched Records"]</h4>
-                                    <h2 class="text-danger fw-700 mb-1">@Model.Run.UnmatchedRecords.ToString("N0")</h2>
+                                    <h2 class="text-danger fw-700 mb-1">@Model.Run.UnmatchedRecordsCount.ToString("N0")</h2>
                                     <span class="text-muted">
-                                        @((Model.Run.TotalRecords > 0 ? (Model.Run.UnmatchedRecords * 100.0 / Model.Run.TotalRecords) : 0).ToString("F1"))% @_localizer["of total"]
+                                        @((Model.Run.TotalRecordsCount > 0 ? (Model.Run.UnmatchedRecordsCount * 100.0 / Model.Run.TotalRecordsCount) : 0).ToString("F1"))% @_localizer["of total"]
                                     </span>
                                 </div>
                             </div>
                             <div class="col-md-4 text-center">
                                 <div class="p-3 bg-warning-50 rounded mb-3">
                                     <h4 class="text-muted mb-2">@_localizer["Partial Matches"]</h4>
-                                    <h2 class="text-warning fw-700 mb-1">@Model.Run.PartialMatchRecords.ToString("N0")</h2>
+                                    <h2 class="text-warning fw-700 mb-1">@Model.Run.PartialMatchRecordsCount.ToString("N0")</h2>
                                     <span class="text-muted">
-                                        @((Model.Run.TotalRecords > 0 ? (Model.Run.PartialMatchRecords * 100.0 / Model.Run.TotalRecords) : 0).ToString("F1"))% @_localizer["of total"]
+                                        @((Model.Run.TotalRecordsCount > 0 ? (Model.Run.PartialMatchRecordsCount * 100.0 / Model.Run.TotalRecordsCount) : 0).ToString("F1"))% @_localizer["of total"]
                                     </span>
                                 </div>
                             </div>

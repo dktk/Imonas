@@ -424,11 +424,11 @@
                 btn.prop('disabled', true).html('<i class="fal fa-spinner fa-spin mr-1"></i> @_localizer["Seeding..."]');
 
                 axios.get('@seedUrl').then(function (res) {
-                    if (res.data.success) {
+                    if (res.data.Success) {
                         toastr.success('@_localizer["PSPs seeded successfully."]');
                         location.reload();
                     } else {
-                        toastr.error(res.data.message || '@_localizer["Failed to seed PSPs."]');
+                        toastr.error(res.data.Message || '@_localizer["Failed to seed PSPs."]');
                         btn.prop('disabled', false).html(originalHtml);
                     }
                 }).catch(function (err) {
@@ -448,11 +448,11 @@
                 axios.post('@createUrl', formData, {
                     headers: { 'Content-Type': 'application/x-www-form-urlencoded' }
                 }).then(function (res) {
-                    if (res.data.succeeded) {
-                        toastr.success(res.data.message);
+                    if (res.data.Succeeded) {
+                        toastr.success(res.data.Message);
                         location.reload();
                     } else {
-                        toastr.error(res.data.message);
+                        toastr.error(res.data.Message);
                         $('#createSubmitBtn').prop('disabled', false).html('<i class="fal fa-save mr-1"></i> @_localizer["Create"]');
                     }
                 }).catch(function (err) {
@@ -491,11 +491,11 @@
                 axios.post('@updateUrl', formData, {
                     headers: { 'Content-Type': 'application/x-www-form-urlencoded' }
                 }).then(function (res) {
-                    if (res.data.succeeded) {
-                        toastr.success(res.data.message);
+                    if (res.data.Succeeded) {
+                        toastr.success(res.data.Message);
                         location.reload();
                     } else {
-                        toastr.error(res.data.message);
+                        toastr.error(res.data.Message);
                         $('#editSubmitBtn').prop('disabled', false).html('<i class="fal fa-save mr-1"></i> @_localizer["Save Changes"]');
                     }
                 }).catch(function (err) {
@@ -516,11 +516,11 @@
                 axios.post('@toggleActiveUrl', 'id=' + id + '&__RequestVerificationToken=' + $('input[name="__RequestVerificationToken"]').val(), {
                     headers: { 'Content-Type': 'application/x-www-form-urlencoded' }
                 }).then(function (res) {
-                    if (res.data.succeeded) {
-                        toastr.success(res.data.message);
+                    if (res.data.Succeeded) {
+                        toastr.success(res.data.Message);
                         location.reload();
                     } else {
-                        toastr.error(res.data.message);
+                        toastr.error(res.data.Message);
                         location.reload();
                     }
                 }).catch(function (err) {
@@ -561,11 +561,11 @@
                 axios.post('@deleteUrl', 'id=' + deletePspId + '&__RequestVerificationToken=' + $('input[name="__RequestVerificationToken"]').val(), {
                     headers: { 'Content-Type': 'application/x-www-form-urlencoded' }
                 }).then(function (res) {
-                    if (res.data.succeeded) {
-                        toastr.success(res.data.message);
+                    if (res.data.Succeeded) {
+                        toastr.success(res.data.Message);
                         location.reload();
                     } else {
-                        toastr.error(res.data.message);
+                        toastr.error(res.data.Message);
                         $('#confirmDeleteBtn').prop('disabled', false).html('<i class="fal fa-trash mr-1"></i> @_localizer["Delete"]');
                         $('#deleteModal').modal('hide');
                     }

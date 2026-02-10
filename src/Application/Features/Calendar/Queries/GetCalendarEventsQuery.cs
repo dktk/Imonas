@@ -46,11 +46,11 @@ namespace Application.Features.Calendar.Queries
                 // Filter by user if not admin
                 if (!isAdmin && !string.IsNullOrEmpty(currentUserId))
                 {
-                    casesQuery = casesQuery.Where(c => c.AssignedTo == currentUserId);
+                    casesQuery = casesQuery.Where(c => c.AssignedToId == currentUserId);
                 }
                 else if (!string.IsNullOrEmpty(request.AssignedTo))
                 {
-                    casesQuery = casesQuery.Where(c => c.AssignedTo == request.AssignedTo);
+                    casesQuery = casesQuery.Where(c => c.AssignedToId == request.AssignedTo);
                 }
 
                 var cases = await casesQuery.ToListAsync(cancellationToken);
@@ -76,7 +76,7 @@ namespace Application.Features.Calendar.Queries
                         Color = color,
                         Url = $"/Cases/Details/{caseItem.Id}",
                         AllDay = true,
-                        AssignedTo = caseItem.AssignedTo,
+                        AssignedTo = caseItem.AssignedToId,
                         CaseId = caseItem.Id,
                         CaseNumber = caseItem.CaseNumber,
                         CaseStatus = caseItem.Status,
@@ -161,7 +161,7 @@ namespace Application.Features.Calendar.Queries
                         Title = $"[Run] {run.RunName}",
                         Start = run.StartedAt,
                         End = run.CompletedAt,
-                        Description = $"Status: {run.Status}, Matched: {run.MatchedRecords}, Unmatched: {run.UnmatchedRecords}",
+                        Description = $"Status: {run.Status}, Matched: {run.ExternalMatchedRecordsCount}, Unmatched: {run.ExternalUnmatchedRecordsCount}",
                         EventType = CalendarEventType.ReconciliationRun,
                         Color = color,
                         Url = $"/Runs/Details/{run.Id}",

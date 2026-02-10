@@ -31,6 +31,10 @@ namespace PspConnectors.Methods.Rastpay
                 Currency = x.Currency,
                 TxId = x.ReferenceId,
                 TxStatus = x.State,
+                ClientId = GetClientId(),
+                Description = x.Description,
+                ReferenceCode = x.ReferenceId,
+
                 //switch
                 //{
                 //    "COMPLETED" => Status.Successful,
@@ -38,6 +42,11 @@ namespace PspConnectors.Methods.Rastpay
                 //    "DECLINED" => Status.Declined
                 //}
             }).ToArray();
+        }
+
+        private int GetClientId()
+        {
+            throw new NotImplementedException();
         }
     }
 }

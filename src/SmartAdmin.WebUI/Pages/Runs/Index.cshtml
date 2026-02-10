@@ -1,4 +1,4 @@
-@page
+﻿@page
 @using Microsoft.AspNetCore.Mvc.Localization
 @using Domain.Enums
 @model SmartAdmin.WebUI.Pages.Runs.IndexModel
@@ -7,6 +7,8 @@
 @{
     ViewData["Title"] = "Reconciliation Runs";
     ViewData["PageName"] = "runs_index";
+
+    var archiveUrl = Url.Page("/Runs/Index", "Archive");
 }
 
 @section HeadBlock {
@@ -116,21 +118,21 @@
                         <div class="col-md-3 text-center">
                             <div class="p-3">
                                 <h4 class="text-muted mb-2">@_localizer["Total Processed"]</h4>
-                                <h2 class="fw-700 text-primary mb-0">@Model.Stats.TotalRecordsProcessed.ToString("N0")</h2>
+                                <h2 class="fw-700 text-primary mb-0">@Model.Stats.TotalRecordsCount.ToString("N0")</h2>
                                 <small class="text-muted">@_localizer["records"]</small>
                             </div>
                         </div>
                         <div class="col-md-3 text-center">
                             <div class="p-3">
                                 <h4 class="text-muted mb-2">@_localizer["Total Matched"]</h4>
-                                <h2 class="fw-700 text-success mb-0">@Model.Stats.TotalMatched.ToString("N0")</h2>
+                                <h2 class="fw-700 text-success mb-0">@Model.Stats.TotalMatchedCount.ToString("N0")</h2>
                                 <small class="text-muted">@_localizer["records"]</small>
                             </div>
                         </div>
                         <div class="col-md-3 text-center">
                             <div class="p-3">
                                 <h4 class="text-muted mb-2">@_localizer["Total Unmatched"]</h4>
-                                <h2 class="fw-700 text-danger mb-0">@Model.Stats.TotalUnmatched.ToString("N0")</h2>
+                                <h2 class="fw-700 text-danger mb-0">@Model.Stats.TotalUnmatchedCount.ToString("N0")</h2>
                                 <small class="text-muted">@_localizer["records"]</small>
                             </div>
                         </div>
@@ -228,6 +230,12 @@
                                                 <i class="@(Settings.Theme.IconPrefix) fa-eye"></i>
                                                 @_localizer["View"]
                                             </a>
+                                            <button class="btn btn-sm btn-outline-danger waves-effect waves-themed archive-btn"
+                                                    data-id="@run.Id"
+                                                    data-name="@run.RunName"
+                                                    title="@_localizer["Archive"]">
+                                                <i class="@(Settings.Theme.IconPrefix) fa-archive"></i>
+                                            </button>
                                         </td>
                                     </tr>
                                 }
@@ -249,11 +257,117 @@
     </div>
 </div>
 
+<!-- Anti-forgery token for AJAX calls -->
+<form id="antiForgeryForm" style="display:none;">
+    @Html.AntiForgeryToken()
+</form>
+
+<!-- Archive Confirmation Modal -->
+<div class="modal fade" id="archiveModal" tabindex="-1" role="dialog" aria-labelledby="archiveModalLabel" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header bg-warning-600">
+                <h5 class="modal-title text-white" id="archiveModalLabel">
+                    <i class="@(Settings.Theme.IconPrefix) fa-archive mr-2"></i>
+                    @_localizer["Archive Reconciliation Run"]
+                </h5>
+                <button type="button" class="close text-white" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <p>@_localizer["Are you sure you want to archive the run"] <strong id="archiveRunName"></strong>?</p>
+                <p class="text-muted small mb-3">
+                    <i class="@(Settings.Theme.IconPrefix) fa-info-circle mr-1"></i>
+                    @_localizer["Archived runs will be removed from the active listing and excluded from statistics."]
+                </p>
+                <div class="form-group">
+                    <label class="form-label" for="archiveComment">
+                        @_localizer["Reason for archiving"] <span class="text-danger">*</span>
+                    </label>
+                    <textarea class="form-control" id="archiveComment" rows="3"
+                              placeholder="@_localizer["Please explain why this run is being archived..."]"
+                              required></textarea>
+                    <small class="text-danger d-none" id="archiveCommentError">
+                        @_localizer["A comment is required to archive a run."]
+                    </small>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">@_localizer["Cancel"]</button>
+                <button type="button" class="btn btn-warning" id="confirmArchiveBtn">
+                    <i class="@(Settings.Theme.IconPrefix) fa-archive mr-1"></i>
+                    @_localizer["Archive"]
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
 @section ScriptsBlock {
+    <script src="~/lib/axios/dist/axios.js"></script>
     <script>
         $(function () {
             'use strict';
-            // Any additional initialization can go here
+
+            var archiveRunId = null;
+
+            // Archive button click - populate modal and show it
+            $('.archive-btn').on('click', function () {
+                archiveRunId = $(this).data('id');
+                var name = $(this).data('name');
+                $('#archiveRunName').text(name);
+                $('#archiveComment').val('');
+                $('#archiveCommentError').addClass('d-none');
+                $('#archiveModal').modal('show');
+            });
+
+            // Confirm archive click
+            $('#confirmArchiveBtn').on('click', function () {
+                var comment = $('#archiveComment').val().trim();
+
+                if (!comment) {
+                    $('#archiveCommentError').removeClass('d-none');
+                    $('#archiveComment').focus();
+                    return;
+                }
+
+                if (!archiveRunId) return;
+
+                $(this).prop('disabled', true).html('<i class="fal fa-spinner fa-spin mr-1"></i> @_localizer["Archiving..."]');
+
+                var token = $('input[name="__RequestVerificationToken"]').val();
+
+                axios.post('@Html.Raw(archiveUrl)', 'id=' + archiveRunId + '&comment=' + encodeURIComponent(comment) + '&__RequestVerificationToken=' + token, {
+                    headers: { 'Content-Type': 'application/x-www-form-urlencoded' }
+                }).then(function (res) {
+                    if (res.data.succeeded) {
+                        toastr.success(res.data.message);
+                        location.reload();
+                    } else {
+                        toastr.error(res.data.message);
+                        $('#confirmArchiveBtn').prop('disabled', false).html('<i class="fal fa-archive mr-1"></i> @_localizer["Archive"]');
+                    }
+                }).catch(function (err) {
+                    toastr.error('@_localizer["An error occurred while archiving the run."]');
+                    $('#confirmArchiveBtn').prop('disabled', false).html('<i class="fal fa-archive mr-1"></i> @_localizer["Archive"]');
+                });
+            });
+
+            // Reset modal on close
+            $('#archiveModal').on('hidden.bs.modal', function () {
+                archiveRunId = null;
+                $('#archiveComment').val('');
+                $('#archiveCommentError').addClass('d-none');
+                $('#confirmArchiveBtn').prop('disabled', false).html('<i class="fal fa-archive mr-1"></i> @_localizer["Archive"]');
+            });
+
+            // Hide validation error when user starts typing
+            $('#archiveComment').on('input', function () {
+                if ($(this).val().trim()) {
+                    $('#archiveCommentError').addClass('d-none');
+                }
+            });
         });
     </script>
 }

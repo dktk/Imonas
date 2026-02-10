@@ -36,6 +36,9 @@ namespace Domain
         public required string TxStatus { get; set; }
         public required string Psp { get; set; }
         public required string Email { get; set; }
+        public required int ClientId { get; set; }
+        public required string Description { get; set; }
+        public required string ReferenceCode { get; set; }
 
         public PaymentAction Action { get; set; }
         public string PaymentMethod { get; set; }

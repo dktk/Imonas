@@ -1,4 +1,3 @@
-using Domain.Enums;
 using SG.Common;
 
 namespace Application.Features.Cases.Commands
@@ -22,7 +21,9 @@ namespace Application.Features.Cases.Commands
             if (caseEntity == null)
                 return Result<bool>.CreateFailure(new[] { "Case not found." });
 
-            caseEntity.AssignedTo = request.AssignedTo ?? currentUserService.UserId;
+            caseEntity.AssignedToId = !string.IsNullOrEmpty(request.AssignedTo)
+                ? request.AssignedTo
+                : currentUserService.DisplayName ?? currentUserService.UserId;
             caseEntity.Status = CaseStatus.InProgress;
             caseEntity.LastModified = dateTime.Now;
             caseEntity.LastModifiedBy = currentUserService.UserId;

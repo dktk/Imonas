@@ -97,10 +97,8 @@
                         <div class="form-row">
                             <div class="col-md-6 mb-3">
                                 <label class="form-label" asp-for="Input.AssignedTo">@_localizer["Assign To"]</label>
-                                <select asp-for="Input.AssignedTo" class="form-control select2">
+                                <select asp-for="Input.AssignedTo" class="form-control select2" id="assignToSelect">
                                     <option value="">-- @_localizer["Unassigned"] --</option>
-                                    <option value="admin">Admin</option>
-                                    <option value="analyst">Analyst</option>
                                 </select>
                             </div>
                             <div class="col-md-6 mb-3">
@@ -168,4 +166,20 @@
 
 @section ScriptsBlock {
     <partial name="_ValidationScriptsPartial" />
+    <script>
+        (function () {
+            var $select = $('#assignToSelect');
+            axios.get('/api/users').then(function (res) {
+                var users = (res.data.data || res.data || []).filter(function (u) { return u.isActive; });
+                users.forEach(function (u) {
+                    var name = u.displayName || u.userName || '';
+                    $select.append('<option value="' + name + '">' + name + ' (' + (u.email || '') + ')</option>');
+                });
+                // Re-init select2 if applicable
+                if ($select.hasClass('select2-hidden-accessible')) {
+                    $select.trigger('change.select2');
+                }
+            });
+        })();
+    </script>
 }

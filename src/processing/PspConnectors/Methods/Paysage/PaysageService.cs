@@ -92,6 +92,9 @@ namespace PspConnectors.Methods.Paysage
                             Email = x.Customer.Email,
                             TxId = x.Tracking_Id,
                             Currency = x.Currency,
+                            ClientId = GetClientId(),
+                            Description = x.Description,
+                            ReferenceCode = GetRefernceCode(),
 
                             TxStatus = x.Status,
                             //switch
@@ -108,6 +111,16 @@ namespace PspConnectors.Methods.Paysage
                         ?.ToArray();
 
             return data;
+        }
+
+        private string GetRefernceCode()
+        {
+            throw new NotImplementedException();
+        }
+
+        private int GetClientId()
+        {
+            throw new NotImplementedException();
         }
     }
 }

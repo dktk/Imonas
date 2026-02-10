@@ -1,3 +1,5 @@
+using Azure.Messaging.EventGrid.SystemEvents;
+
 using CsvHelper;
 
 using Domain;
@@ -29,6 +31,10 @@ namespace PspConnectors.Methods.Skrill
                 Psp = PspName,
                 Currency = record.Currency,
                 TxStatus = record.Status,
+                ClientId = record.AccountID,
+                Description = record.TransactionDetails,
+                ReferenceCode = record.Reference,
+
                 //switch
                 //{
                 //    "processed" => Status.Successful,

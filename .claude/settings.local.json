@@ -6,7 +6,12 @@
       "Bash(dir:*)",
       "Bash(dotnet test:*)",
       "Bash(find:*)",
-      "Bash(xargs:*)"
+      "Bash(xargs:*)",
+      "Bash(findstr:*)",
+      "Bash(powershell -File -:*)",
+      "Bash(powershell -Command:*)",
+      "Bash(Select-String \"error|Build succeeded|Build FAILED\")",
+      "Bash(dotnet ef migrations:*)"
     ]
   }
 }

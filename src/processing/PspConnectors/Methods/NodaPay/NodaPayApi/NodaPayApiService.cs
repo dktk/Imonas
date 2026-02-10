@@ -106,6 +106,10 @@ namespace PspConnectors.Methods.Noda.NodaPay
                 Currency = x.Currency,
                 TxId = x.MerchantPaymentId,
                 TxStatus = x.Status,
+                Description = x.Description,
+                ReferenceCode = x.Reference,
+                ClientId = GetClientId(),
+
                 //switch
                 //{
                 //    "Done" => Status.Successful,
@@ -114,6 +118,11 @@ namespace PspConnectors.Methods.Noda.NodaPay
                 //    "Processing" => Status.Pending
                 //}
             })?.ToArray() ?? Array.Empty<TargetData>();
+        }
+
+        private int GetClientId()
+        {
+            throw new NotImplementedException();
         }
 
         private static string GetSuccessfullTransactionsUrl(DateTime? from, DateTime to)

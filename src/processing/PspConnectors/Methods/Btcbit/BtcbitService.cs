@@ -27,6 +27,10 @@ namespace PspConnectors.Methods.Btcbit
                     Currency = record.Currency,
                     TxId = record.ExternalId,
                     TxStatus = record.Status,
+                    ClientId = record.ClientId,
+                    Description = record.AdvSystemMessage,
+                    ReferenceCode = record.OrderNr,
+
                     //switch
                     //{
                     //    "completed" => Status.Successful,

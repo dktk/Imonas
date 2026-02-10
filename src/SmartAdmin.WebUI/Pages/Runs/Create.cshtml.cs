@@ -1,4 +1,6 @@
 using Application.Features.ReconciliationRuns.Commands;
+using Application.Features.Rules.Queries;
+using Application.Features.Settlement.Commands;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using Microsoft.Extensions.Localization;
@@ -14,6 +16,8 @@ namespace SmartAdmin.WebUI.Pages.Runs
         public InputModel Input { get; set; } = new();
 
         public string? ErrorMessage { get; set; }
+
+        public IEnumerable<MatchingRuleDto> AllRules { get; set; } = new List<MatchingRuleDto>();
 
         public class InputModel
         {
@@ -38,11 +42,11 @@ namespace SmartAdmin.WebUI.Pages.Runs
             public bool CreateCasesForExceptions { get; set; } = true;
         }
 
-        public void OnGet()
+        public async Task OnGetAsync()
         {
-            // Set default date range to last 7 days
             Input.EndDate = DateTime.UtcNow.Date;
             Input.StartDate = DateTime.UtcNow.Date.AddDays(-7);
+            AllRules = await mediator.Send(new GetMatchingRulesQuery());
         }
 
         public async Task<IActionResult> OnPostAsync()
@@ -85,6 +89,69 @@ namespace SmartAdmin.WebUI.Pages.Runs
                 ErrorMessage = $"Failed to start reconciliation run: {ex.Message}";
                 return Page();
             }
+        }
+
+        public async Task<IActionResult> OnPostSimulateAsync([FromBody] SimulateRequest request)
+        {
+            try
+            {
+                if (request.CandidateRuleIds == null || !request.CandidateRuleIds.Any())
+                {
+                    return new JsonResult(new
+                    {
+                        succeeded = false,
+                        message = localizer["Please select at least one candidate rule."].Value
+                    });
+                }
+
+                var command = new RunSimulationCommand
+                {
+                    StartDate = request.StartDate,
+                    EndDate = request.EndDate,
+                    PspId = request.PspId,
+                    CurrencyCode = request.CurrencyCode,
+                    CandidateRuleIds = request.CandidateRuleIds,
+                    FalsePositiveThreshold = request.FalsePositiveThreshold ?? 0.7m,
+                    StopAtFirstMatch = request.StopAtFirstMatch
+                };
+
+                var result = await mediator.Send(command);
+
+                if (result.Success)
+                {
+                    return new JsonResult(new
+                    {
+                        succeeded = true,
+                        message = result.Message,
+                        data = result.Value
+                    });
+                }
+
+                return new JsonResult(new
+                {
+                    succeeded = false,
+                    message = result.Message
+                });
+            }
+            catch (Exception ex)
+            {
+                return new JsonResult(new
+                {
+                    succeeded = false,
+                    message = $"Simulation failed: {ex.Message}"
+                });
+            }
+        }
+
+        public class SimulateRequest
+        {
+            public DateTime? StartDate { get; set; }
+            public DateTime? EndDate { get; set; }
+            public int? PspId { get; set; }
+            public string? CurrencyCode { get; set; }
+            public List<int> CandidateRuleIds { get; set; } = new();
+            public decimal? FalsePositiveThreshold { get; set; }
+            public bool StopAtFirstMatch { get; set; }
         }
     }
 }

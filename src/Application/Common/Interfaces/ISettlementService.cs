@@ -15,7 +15,7 @@ namespace Application.Common.Interfaces
         /// <summary>
         /// Matches a single internal payment against all external payments using active rules.
         /// </summary>
-        Task<RuleMatchResult?> FindMatchForInternalPaymentAsync(InternalPayment internalPayment, IEnumerable<ExternalPayment> externalPayments, IEnumerable<MatchingRule> rules);
+        Task<(RuleMatchResult?, ExternalPayment)> FindMatchForInternalPaymentAsync(InternalPayment internalPayment, IEnumerable<ExternalPayment> externalPayments, IEnumerable<MatchingRule> rules);
 
         /// <summary>
         /// Evaluates if two transactions match based on a specific rule.
@@ -31,5 +31,11 @@ namespace Application.Common.Interfaces
         /// Creates a settlement record from a match result.
         /// </summary>
         Task<PspSettlement> CreateSettlementAsync(InternalPayment internalPayment, ExternalPayment externalPayment, RuleMatchResult matchResult, int runId, CancellationToken cancellationToken = default);
+
+        /// <summary>
+        /// Runs a read-only simulation comparing baseline (active) rules vs candidate rules
+        /// against ALL transactions in the date range. No records are persisted.
+        /// </summary>
+        Task<SimulationResultDto> SimulateAsync(SettlementRunOptionsDto options, List<int> candidateRuleIds, decimal falsePositiveThreshold = 0.7m, CancellationToken cancellationToken = default);
     }
 }

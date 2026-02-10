@@ -20,15 +20,20 @@ namespace Application.Features.Settlement.DTOs
         public string RunName { get; set; } = string.Empty;
         public int TotalInternalTransactions { get; set; }
         public int TotalExternalTransactions { get; set; }
-        public int MatchedCount { get; set; }
-        public int PartialMatchCount { get; set; }
-        public int UnmatchedInternalCount { get; set; }
-        public int UnmatchedExternalCount { get; set; }
+        public int MatchedCount => Matches.Count;
+        public int PartialMatchCount => PartialMatches.Count;
+        public int InternalUnmatchedCount => UnmatchedInternal.Count;
+        public int ExternalUnmatchedCount => UnmatchedExternal.Count;
         public decimal MatchPercentage { get; set; }
         public TimeSpan Duration { get; set; }
         public List<SettlementMatchDto> Matches { get; set; } = new();
         public List<UnmatchedTransactionDto> UnmatchedInternal { get; set; } = new();
         public List<UnmatchedTransactionDto> UnmatchedExternal { get; set; } = new();
+
+        /// <summary>
+        /// A list of Internal, External pairs, partially mapped
+        /// </summary>
+        public List<(UnmatchedTransactionDto, UnmatchedTransactionDto)> PartialMatches { get; set; } = new();
     }
 
     public class UnmatchedTransactionDto
@@ -42,14 +47,27 @@ namespace Application.Features.Settlement.DTOs
         public string Source { get; set; } = string.Empty; // "Internal" or "External"
     }
 
+    public enum RuleMatchResultType
+    {
+        NoMatch,
+        Match,
+        PartialMatch,
+    }
+
     public class RuleMatchResult
     {
-        public bool IsMatch { get; set; }
+        public RuleMatchResultType Value { get; set; }
+
+        public bool IsMatch => Value == RuleMatchResultType.Match;
+        public bool IsNotMatch => Value == RuleMatchResultType.NoMatch;
+        public bool IsPartialMatch => Value == RuleMatchResultType.PartialMatch;
+
         public decimal Score { get; set; }
         public string RuleName { get; set; } = string.Empty;
         public decimal? AmountVariance { get; set; }
         public int? DateVarianceDays { get; set; }
         public string? Notes { get; set; }
+        public List<(string, string, string)> UnmatchedFields { get; set; } = new List<(string, string, string)>();
     }
 
     public class SettlementRunOptionsDto

@@ -9,7 +9,7 @@ namespace Application.Features.Reports.Queries
         public string ExternalPaymentId { get; set; } = string.Empty;
         public string PspName { get; set; } = string.Empty;
         public int PspId { get; set; }
-        public string PlayerId { get; set; } = string.Empty;
+        public int ClientId { get; set; }
         public string BrandId { get; set; } = string.Empty;
         public decimal Amount { get; set; }
         public string CurrencyCode { get; set; } = string.Empty;
@@ -111,10 +111,10 @@ namespace Application.Features.Reports.Queries
 
             // Get cases linked to these payments
             var cases = await context.ExceptionCases
-                .Where(c => c.LinkedTransactionId.HasValue && externalPaymentIds.Contains(c.LinkedTransactionId.Value))
+                .Where(c => c.ExternalTransactionId.HasValue && externalPaymentIds.Contains(c.ExternalTransactionId.Value))
                 .Select(c => new
                 {
-                    TransactionId = c.LinkedTransactionId!.Value,
+                    TransactionId = c.ExternalTransactionId!.Value,
                     c.Id,
                     c.CaseNumber,
                     c.Title,
@@ -188,7 +188,7 @@ namespace Application.Features.Reports.Queries
                     ep.ExternalPaymentId,
                     PspName = ep.Psp.Name,
                     ep.PspId,
-                    ep.PlayerId,
+                    ep.ClientId,
                     ep.BrandId,
                     ep.Amount,
                     ep.CurrencyCode,
@@ -211,7 +211,7 @@ namespace Application.Features.Reports.Queries
                     ExternalPaymentId = ep.ExternalPaymentId,
                     PspName = ep.PspName,
                     PspId = ep.PspId,
-                    PlayerId = ep.PlayerId,
+                    ClientId = ep.ClientId,
                     BrandId = ep.BrandId,
                     Amount = ep.Amount,
                     CurrencyCode = ep.CurrencyCode,

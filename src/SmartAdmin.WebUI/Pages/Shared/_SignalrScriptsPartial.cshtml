@@ -1,10 +1,93 @@
-﻿@using Application.Hubs.Constants
+@using Application.Hubs.Constants
 <script src="~/lib/microsoft/signalr/dist/browser/signalr.min.js"></script>
 <script>
-	 Object.defineProperty(WebSocket, 'OPEN', { value: 1, });
-     var connection = new signalR.HubConnectionBuilder().withUrl("@SignalR.HubUrl").build();
-     connection.on("UpdateOnlineUsers", function (count) {
-            console.log(count);
-      });
-      connection.start();
+    Object.defineProperty(WebSocket, 'OPEN', { value: 1, });
+    var connection = new signalR.HubConnectionBuilder().withUrl("@SignalR.HubUrl").build();
+    connection.on("UpdateOnlineUsers", function (count) {
+        console.log(count);
+    });
+
+    function loadUnreadCount() {
+        axios.get('/api/notifications/unread-count').then(function (res) {
+            var count = res.data.count || 0;
+            var $badge = $('#notification-badge');
+            var $headerCount = $('#notification-header-count');
+            if (count > 0) {
+                $badge.text(count > 99 ? '99+' : count).show();
+                if ($headerCount.length) $headerCount.text(count);
+            } else {
+                $badge.hide();
+                if ($headerCount.length) $headerCount.text('0');
+            }
+        });
+    }
+
+    function loadNotifications() {
+        axios.get('/api/notifications').then(function (res) {
+            var list = $('#notification-list');
+            list.empty();
+            var items = res.data || [];
+            if (items.length === 0) {
+                list.append('<li class="text-center py-4 text-muted"><i class="fal fa-bell-slash fa-2x d-block mb-2 opacity-50"></i>No new notifications</li>');
+            } else {
+                items.forEach(function (n) {
+                    var readClass = n.isRead ? '' : 'unread';
+                    list.append(
+                        '<li class="' + readClass + '">' +
+                            '<a href="' + (n.linkUrl || '#') + '" class="d-flex align-items-center notification-item" data-id="' + n.id + '">' +
+                                '<span class="d-flex flex-column flex-1 ml-1">' +
+                                    '<span class="name fw-500">' + escapeNotifHtml(n.senderDisplayName) + '</span>' +
+                                    '<span class="msg-a fs-sm">' + escapeNotifHtml(n.message) + '</span>' +
+                                    '<span class="fs-nano text-muted mt-1">' + moment(n.created).fromNow() + '</span>' +
+                                '</span>' +
+                            '</a>' +
+                        '</li>'
+                    );
+                });
+            }
+        });
+    }
+
+    function escapeNotifHtml(str) {
+        if (!str) return '';
+        var div = document.createElement('div');
+        div.appendChild(document.createTextNode(str));
+        return div.innerHTML;
+    }
+
+    $(document).on('click', '.notification-item', function () {
+        var id = $(this).data('id');
+        if (id) {
+            axios.post('/api/notifications/' + id + '/mark-read');
+        }
+    });
+
+    $(document).on('click', '#mark-all-read', function (e) {
+        e.preventDefault();
+        axios.post('/api/notifications/mark-all-read').then(function () {
+            loadUnreadCount();
+            loadNotifications();
+        });
+    });
+
+    $(document).on('show.bs.dropdown', function (e) {
+        if ($(e.target).find('#notification-bell').length) {
+            loadNotifications();
+        }
+    });
+
+    connection.on("@SignalR.ReceiveMentionNotification", function (data) {
+        toastr.info(
+            '<a href="' + data.linkUrl + '" class="text-white">' +
+                '<strong>' + data.senderName + '</strong> ' + data.message +
+            '</a>',
+            'New Mention',
+            { timeOut: 8000, closeButton: true, escapeHtml: false }
+        );
+        loadUnreadCount();
+    });
+
+    connection.start().then(function () {
+        loadUnreadCount();
+    });
 </script>

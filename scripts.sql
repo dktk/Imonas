@@ -1,11 +1,16 @@
+/*
 
 -- clear user-data
 --
+
+delete from public.exception_cases;
+delete from public.run_metrics;
+delete from gold.reconciliation_comments;
+delete from public.reconciliation_runs;
+delete from gold.psp_settlements;
 delete from silver.external_payments;
 delete from silver.internal_payments;
 delete from bronze.raw_payments;
-delete from gold.psp_settlements;
-delete from public.reconciliation_runs;
 
 delete from public.Serilogs;
 
@@ -36,3 +41,5 @@ CALL gold.sp_settle_psp_transactions(
 
 FETCH ALL FROM unmatched;
 FETCH ALL FROM settled;
+
+*/

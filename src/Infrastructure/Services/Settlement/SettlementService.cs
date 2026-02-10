@@ -96,6 +96,7 @@ namespace Infrastructure.Services.Settlement
                     .ToListAsync(cancellationToken);
 
                 var externalPayments = await externalPaymentsQuery
+                    .Include(x => x.Psp)
                     .Where(p => !matchedExternalIds.Contains(p.Id))
                     .ToListAsync(cancellationToken);
 
@@ -116,18 +117,20 @@ namespace Infrastructure.Services.Settlement
                         .Where(e => !matchedExternals.Contains(e.Id))
                         .ToList();
 
-                    var matchResult = await FindMatchForInternalPaymentAsync(
+                    var (matchResult, externalTransaction) = await FindMatchForInternalPaymentAsync(
                         internalPayment,
                         availableExternals,
                         rulesList);
 
-                    if (matchResult != null && matchResult.IsMatch)
+                    // Completely Settled
+                    //
+                    if (matchResult != null && matchResult.Value == RuleMatchResultType.Match)
                     {
                         // Find the matched external payment
                         var matchedExternal = availableExternals
                             .FirstOrDefault(e => EvaluateRule(
                                 rulesList.First(r => r.RuleName == matchResult.RuleName),
-                                internalPayment, e).IsMatch);
+                                internalPayment, e).Value == RuleMatchResultType.Match);
 
                         if (matchedExternal != null)
                         {
@@ -156,48 +159,73 @@ namespace Infrastructure.Services.Settlement
                             };
 
                             result.Matches.Add(matchDto);
-
-                            if (matchResult.Score >= 1.0m)
-                                result.MatchedCount++;
-                            else
-                                result.PartialMatchCount++;
                         }
+
+                        continue;
                     }
-                    else
+
+                    var unmatchedInternal = new UnmatchedTransactionDto
                     {
-                        // Unmatched internal payment
-                        result.UnmatchedInternal.Add(new UnmatchedTransactionDto
+                        Id = internalPayment.Id,
+                        TransactionId = internalPayment.TxId,
+                        Amount = internalPayment.Amount,
+                        CurrencyCode = internalPayment.CurrencyCode,
+                        TransactionDate = internalPayment.TxDate.DateTime,
+                        Status = internalPayment.Status,
+                        Source = internalPayment.System
+                    };
+
+                    var unmatchedExternal = externalTransaction != null ?
+                        new UnmatchedTransactionDto
                         {
-                            Id = internalPayment.Id,
-                            TransactionId = internalPayment.TxId,
-                            Amount = internalPayment.Amount,
-                            CurrencyCode = internalPayment.CurrencyCode,
-                            TransactionDate = internalPayment.TxDate.DateTime,
-                            Status = internalPayment.Status,
-                            Source = "Internal"
-                        });
-                        result.UnmatchedInternalCount++;
+                            Amount = externalTransaction.Amount,
+                            CurrencyCode = externalTransaction.CurrencyCode,
+                            Id = externalTransaction.Id,
+                            Source = externalTransaction.Psp.Name,
+                            Status = externalTransaction.Status,
+                            TransactionDate = externalTransaction.TxDate,
+                            TransactionId = externalTransaction.TxId
+                        }
+                        : null;
+
+                    // Partially Settled
+                    //
+                    if (matchResult != null && matchResult.Value == RuleMatchResultType.PartialMatch)
+                    {
+                        result.PartialMatches.Add((unmatchedInternal, unmatchedExternal));
+
+                        continue;
+                    }
+
+
+                    // Unmatched internal payment
+                    //
+                    result.UnmatchedInternal.Add(unmatchedInternal);
+
+                    if (unmatchedExternal != null)
+                    {
+                        result.UnmatchedExternal.Add(unmatchedExternal);
                     }
                 }
 
                 // Add unmatched external payments
-                foreach (var externalPayment in externalPayments.Where(e => !matchedExternals.Contains(e.Id)))
-                {
-                    result.UnmatchedExternal.Add(new UnmatchedTransactionDto
-                    {
-                        Id = externalPayment.Id,
-                        TransactionId = externalPayment.ExternalPaymentId,
-                        Amount = externalPayment.Amount,
-                        CurrencyCode = externalPayment.CurrencyCode,
-                        TransactionDate = externalPayment.TxDate,
-                        Status = externalPayment.Status,
-                        Source = "External"
-                    });
-                    result.UnmatchedExternalCount++;
-                }
+                //foreach (var externalPayment in externalPayments.Where(e => !matchedExternals.Contains(e.Id)))
+                //{
+                //    result.UnmatchedExternal.Add(new UnmatchedTransactionDto
+                //    {
+                //        Id = externalPayment.Id,
+                //        TransactionId = externalPayment.ExternalPaymentId,
+                //        Amount = externalPayment.Amount,
+                //        CurrencyCode = externalPayment.CurrencyCode,
+                //        TransactionDate = externalPayment.TxDate,
+                //        Status = externalPayment.Status,
+                //        Source = externalPayment.Psp.Name
+                //    });
+                //    result.ExternalUnmatchedCount++;
+                //}
 
                 // Calculate match percentage
-                var totalTransactions = result.TotalInternalTransactions + result.TotalExternalTransactions;
+                var totalTransactions = result.TotalExternalTransactions + result.TotalInternalTransactions;
                 if (totalTransactions > 0)
                 {
                     result.MatchPercentage = (decimal)(result.MatchedCount * 2 + result.PartialMatchCount) / totalTransactions * 100;
@@ -206,10 +234,12 @@ namespace Infrastructure.Services.Settlement
                 // Update run with results
                 run.Status = RunStatus.Completed;
                 run.CompletedAt = DateTime.UtcNow;
-                run.TotalRecords = totalTransactions;
-                run.MatchedRecords = result.MatchedCount;
-                run.UnmatchedRecords = result.UnmatchedInternalCount + result.UnmatchedExternalCount;
-                run.PartialMatchRecords = result.PartialMatchCount;
+                run.InternalMatchedRecordsCount = result.TotalInternalTransactions;
+                run.ExternalMatchedRecordsCount = result.TotalExternalTransactions;
+                run.InternalUnmatchedRecordsCount = result.InternalUnmatchedCount;
+                run.ExternalUnmatchedRecordsCount = result.ExternalUnmatchedCount;
+
+                run.PartialMatchRecordsCount = result.PartialMatchCount;
                 run.MatchPercentage = result.MatchPercentage;
 
                 await dbContext.SaveChangesAsync(cancellationToken);
@@ -219,20 +249,25 @@ namespace Infrastructure.Services.Settlement
                 logger.LogInformation(
                     "Settlement completed for Run {RunId}. Matched: {Matched}, Partial: {Partial}, Unmatched: {Unmatched}",
                     runId, result.MatchedCount, result.PartialMatchCount,
-                    result.UnmatchedInternalCount + result.UnmatchedExternalCount);
+                    result.InternalUnmatchedCount + result.ExternalUnmatchedCount);
 
                 // Create cases for exceptions if enabled
-                if (options.CreateCasesForExceptions && result.UnmatchedInternalCount > 0)
+                if (options.CreateCasesForExceptions && result.InternalUnmatchedCount > 0)
                 {
                     await CreateExceptionCasesAsync(result.UnmatchedInternal, runId, options.CurrentUserId, cancellationToken);
                 }
 
                 // Create cases for exceptions if enabled
-                if (options.CreateCasesForExceptions && result.UnmatchedExternalCount > 0)
+                if (options.CreateCasesForExceptions && result.ExternalUnmatchedCount > 0)
                 {
                     await CreateExceptionCasesAsync(result.UnmatchedExternal, runId, options.CurrentUserId, cancellationToken);
                 }
 
+                if (options.CreateCasesForExceptions && result.PartialMatchCount > 0)
+                {
+                    await CreateExceptionCasesAsync(result.PartialMatches, runId, options.CurrentUserId, cancellationToken);
+                }
+                
                 return result;
             }
             catch (Exception ex)
@@ -248,22 +283,56 @@ namespace Infrastructure.Services.Settlement
             }
         }
 
-        public async Task<RuleMatchResult?> FindMatchForInternalPaymentAsync(
+        private async Task CreateExceptionCasesAsync(List<(UnmatchedTransactionDto, UnmatchedTransactionDto)> partialMatches, int runId, string currentUserId, CancellationToken cancellationToken)
+        {
+            // Determine who should be assigned the cases based on user role
+            var assigneeId = await userService.GetCaseAssigneeAsync(currentUserId);
+
+            foreach (var (internalTransaction, externalTransaction) in partialMatches.Take(100)) // todo: configure this limit 
+            {
+                var caseNumber = $"CASE-{DateTime.UtcNow:yyyyMMdd}-{Guid.NewGuid().ToString()[..8].ToUpper()}";
+
+                var amountDiff = Math.Abs(internalTransaction.Amount - externalTransaction?.Amount ?? 0);
+
+                var exceptionCase = new Domain.Entities.Cases.ExceptionCase
+                {
+                    CaseNumber = caseNumber,
+                    Title = $"Partial {externalTransaction?.Source} Transaction",
+                    Description = $"<strong>{internalTransaction.Source}</strong> {internalTransaction.TransactionId} partialy matches <strong>{externalTransaction.Source}</strong> {externalTransaction?.TransactionId}.",
+                    InternalTransactionId = internalTransaction.Id,
+                    ExternalTransactionId = externalTransaction?.Id,
+                    Status = CaseStatus.Open,
+                    // todo: configure the 100 value
+                    Severity = amountDiff > 100 ? CaseSeverity.High : CaseSeverity.Medium,
+                    ReconciliationRunId = runId,
+                    AssignedToId = assigneeId
+                };
+
+                dbContext.ExceptionCases.Add(exceptionCase);
+            }
+
+            await dbContext.SaveChangesAsync(cancellationToken);
+
+            logger.LogInformation("Created {Count} exception cases for partially matched transactions, assigned to user {AssigneeId}",
+                Math.Min(partialMatches.Count, 100), assigneeId ?? "unassigned");
+        }
+
+        public async Task<(RuleMatchResult?, ExternalPayment)> FindMatchForInternalPaymentAsync(
             InternalPayment internalPayment,
             IEnumerable<ExternalPayment> externalPayments,
             IEnumerable<MatchingRule> rules)
         {
             RuleMatchResult? bestMatch = null;
 
+            var matchedExternalPayments = externalPayments.Where(e => e.TxId == internalPayment.ProviderTxId);
+
             foreach (var rule in rules.OrderBy(r => r.Priority))
             {
-                var matchedExternalPayments = externalPayments.Where(e => e.ExternalPaymentId == internalPayment.ProviderTxId);
-
                 foreach (var externalPayment in matchedExternalPayments)
                 {
                     var result = EvaluateRule(rule, internalPayment, externalPayment);
 
-                    if (result.IsMatch)
+                    if (result.Value == RuleMatchResultType.Match || result.Value == RuleMatchResultType.PartialMatch)
                     {
                         if (bestMatch == null || result.Score > bestMatch.Score)
                         {
@@ -273,7 +342,7 @@ namespace Infrastructure.Services.Settlement
                         // Stop at first match if rule specifies
                         if (rule.StopAtFirstMatch && result.Score >= 1.0m)
                         {
-                            return bestMatch;
+                            return (bestMatch, externalPayment);
                         }
                     }
                 }
@@ -285,7 +354,7 @@ namespace Infrastructure.Services.Settlement
                 }
             }
 
-            return bestMatch;
+            return (bestMatch, matchedExternalPayments.LastOrDefault());
         }
 
         public RuleMatchResult EvaluateRule(
@@ -297,7 +366,7 @@ namespace Infrastructure.Services.Settlement
             {
                 RuleName = rule.RuleName,
                 Score = 0m,
-                IsMatch = false
+                Value = RuleMatchResultType.NoMatch
             };
 
             try
@@ -337,7 +406,7 @@ namespace Infrastructure.Services.Settlement
             {
                 RuleName = rule.RuleName,
                 Score = 0m,
-                IsMatch = false
+                Value = RuleMatchResultType.NoMatch
             };
 
             // Parse rule definition for field mappings
@@ -353,17 +422,18 @@ namespace Infrastructure.Services.Settlement
 
             if (amountMatch && currencyMatch && txIdMatch)
             {
-                result.IsMatch = true;
+                result.Value = RuleMatchResultType.Match;
                 result.Score = 1.0m;
                 result.Notes = "Exact match on Amount, Currency, and Transaction ID";
             }
-            else if (amountMatch && currencyMatch)
+            else if (txIdMatch && currencyMatch)
             {
                 // Partial match - amount and currency match but not tx id
                 var allowPartial = definition.TryGetValue("allowPartialMatch", out var val) && val is bool b && b;
-                result.IsMatch = allowPartial;
+                // todo:
+                result.Value = RuleMatchResultType.PartialMatch;
                 result.Score = 0.7m;
-                result.Notes = "Amount and Currency match, Transaction ID mismatch";
+                result.Notes = "Transaction ID and Currency match, Amount mismatch";
             }
 
             result.AmountVariance = externalPayment.Amount - internalPayment.Amount;
@@ -380,7 +450,7 @@ namespace Infrastructure.Services.Settlement
             {
                 RuleName = rule.RuleName,
                 Score = 0m,
-                IsMatch = false
+                Value = RuleMatchResultType.NoMatch
             };
 
             // Currency must always match
@@ -401,7 +471,7 @@ namespace Infrastructure.Services.Settlement
 
             if (amountWithinTolerance && dateWithinTolerance)
             {
-                result.IsMatch = true;
+                result.Value = RuleMatchResultType.Match;
 
                 // Calculate score based on how close the match is
                 var amountScore = toleranceAmount > 0
@@ -430,7 +500,7 @@ namespace Infrastructure.Services.Settlement
             {
                 RuleName = rule.RuleName,
                 Score = 0m,
-                IsMatch = false
+                Value = RuleMatchResultType.NoMatch
             };
 
             var definition = ParseRuleDefinition(rule.RuleDefinition);
@@ -443,7 +513,13 @@ namespace Infrastructure.Services.Settlement
                 {
                     var fieldName = field.GetString() ?? string.Empty;
                     var weight = 100m; // todo: field.TryGetProperty("weight", out var w) ? w.GetDecimal() : 1m;
-                    var matched = EvaluateFieldMatch(fieldName, internalPayment, externalPayment);
+                    var (matched, fieldInfo) = EvaluateFieldMatch(fieldName, internalPayment, externalPayment);
+
+                    if (!matched)
+                    {
+                        result.UnmatchedFields.Add(fieldInfo);
+                    }
+
                     conditions.Add((fieldName, matched, weight));
                 }
             }
@@ -460,7 +536,15 @@ namespace Infrastructure.Services.Settlement
             var matchedWeight = conditions.Where(c => c.matched).Sum(c => c.weight);
 
             result.Score = totalWeight > 0 ? matchedWeight / totalWeight : 0m;
-            result.IsMatch = result.Score * 100 >= (rule.MinimumScore ?? 70m);
+            result.Value = (result.Score * 100) switch
+            {
+                100 => RuleMatchResultType.Match,
+
+                (> 0) => RuleMatchResultType.PartialMatch,
+
+                _ => RuleMatchResultType.NoMatch
+            };
+
             result.AmountVariance = externalPayment.Amount - internalPayment.Amount;
             result.Notes = $"Composite match: {conditions.Count(c => c.matched)}/{conditions.Count} conditions met";
 
@@ -476,7 +560,7 @@ namespace Infrastructure.Services.Settlement
             {
                 RuleName = rule.RuleName,
                 Score = 0m,
-                IsMatch = false
+                Value = RuleMatchResultType.NoMatch
             };
 
             // Currency must always match
@@ -509,7 +593,18 @@ namespace Infrastructure.Services.Settlement
             }
 
             result.Score = scores.Any() ? scores.Average() : 0m;
-            result.IsMatch = result.Score >= (rule.MinimumScore ?? 0.8m);
+            if (result.Score == 100)
+            {
+                result.Value = RuleMatchResultType.Match;
+            }
+            else if (result.Score > rule.MinimumScore)
+            {
+                result.Value = RuleMatchResultType.PartialMatch;
+            } else
+            {
+                result.Value = RuleMatchResultType.NoMatch;
+            }
+
             result.AmountVariance = externalPayment.Amount - internalPayment.Amount;
             result.DateVarianceDays = daysDiff;
             result.Notes = $"Fuzzy match score: {result.Score:P2}";
@@ -517,16 +612,41 @@ namespace Infrastructure.Services.Settlement
             return result;
         }
 
-        private bool EvaluateFieldMatch(string fieldName, InternalPayment internal_, ExternalPayment external)
+        private static readonly (bool, (string, string, string)) MatchedResult = (true, (String.Empty, String.Empty, String.Empty));
+        private const string AMOUNT_PROP_NAME = "amount";
+        private const string CURRENCY_PROP_NAME = "currency";
+        private const string CURRENCY_CODE_PROP_NAME = "currencycode";
+        private const string DATE_PROP_NAME = "date";
+        private const string TXDATE_PROP_NAME = "txdate";
+        private const string TXID_PROP_NAME = "txid";
+        private const string STATUS_PROP_NAME = "status";
+        private const string TRANSACTIONID_PROP_NAME = "transactionid";
+        private const string EXTERNAL_PAYMENTID_PROPNAME = "externalpaymentid";
+        private const string USER_EMAIL_PROP_NAME = "useremail";
+        private const string USER_ID_PROP_NAME = "userid";
+        private const string DESCRIPTION_PROP_NAME = "descrition";
+        private const string REFERENCE_CODE_PROP_NAME = "referencenumber";
+
+        private (bool, (string, string, string)) EvaluateFieldMatch(string fieldName, InternalPayment @internal, ExternalPayment external)
         {
-            return fieldName.ToLower() switch
+            var field = fieldName.ToLower();
+
+            // todo: unit test this
+            return field switch
             {
-                "amount" => internal_.Amount == external.Amount,
-                "currency" or "currencycode" => internal_.CurrencyCode == external.CurrencyCode,
-                "date" or "txdate" => Math.Abs((internal_.TxDate.DateTime - external.TxDate).Days) <= 1,
-                "txid" or "transactionid" => internal_.ProviderTxId == external.ExternalPaymentId,
-                "status" => internal_.Status == external.Status,
-                _ => false
+                AMOUNT_PROP_NAME => @internal.Amount == external.Amount ? MatchedResult : (false, (field, @internal.Amount.ToString(), external.Amount.ToString())),
+
+                CURRENCY_PROP_NAME or CURRENCY_CODE_PROP_NAME => @internal.CurrencyCode == external.CurrencyCode ? MatchedResult : (false, (field, @internal.CurrencyCode, external.CurrencyCode)),
+                DATE_PROP_NAME or TXDATE_PROP_NAME => Math.Abs((@internal.TxDate.DateTime - external.TxDate).Days) <= 1 ? MatchedResult : (false, (field, @internal.TxDate.DateTime.ToString(), external.TxDate.ToString())),
+                TXID_PROP_NAME or TRANSACTIONID_PROP_NAME => @internal.ProviderTxId == external.TxId ? MatchedResult : (false, (field, @internal.ProviderTxId, external.TxId.ToString())),
+                STATUS_PROP_NAME => @internal.Status == external.Status ? MatchedResult : (false, (field, @internal.Status, external.Status)),
+                EXTERNAL_PAYMENTID_PROPNAME => @internal.ReferenceCode == external.ExternalPaymentId ? MatchedResult : (false, (field, @internal.ReferenceCode, external.ExternalPaymentId)),
+                USER_EMAIL_PROP_NAME => @internal.UserEmail == external.Email ? MatchedResult : (false, (field, @internal.UserEmail, external.Email)),
+                USER_ID_PROP_NAME => @internal.ClientId == external.ClientId ? MatchedResult : (false, (field, @internal.ClientId.ToString(), external.ClientId.ToString())),
+                DESCRIPTION_PROP_NAME => @internal.Description == external.Description ? MatchedResult : (false, (field, @internal.Description, external.Description)),
+                REFERENCE_CODE_PROP_NAME => @internal.ReferenceCode == external.ReferenceCode ? MatchedResult : (false, (field, @internal.ReferenceCode, external.ReferenceCode)),
+
+                _ => (false, (field, string.Empty, string.Empty))
             };
         }
 
@@ -646,6 +766,230 @@ namespace Infrastructure.Services.Settlement
             return settlement;
         }
 
+        public async Task<SimulationResultDto> SimulateAsync(
+            SettlementRunOptionsDto options,
+            List<int> candidateRuleIds,
+            decimal falsePositiveThreshold = 0.7m,
+            CancellationToken cancellationToken = default)
+        {
+            var startTime = DateTime.UtcNow;
+            logger.LogInformation("Starting simulation with {CandidateCount} candidate rules", candidateRuleIds.Count);
+
+            // Load ALL internal payments (no unmatched filter)
+            var internalPaymentsQuery = dbContext.InternalPayments.AsQueryable();
+            if (options.StartDate.HasValue)
+                internalPaymentsQuery = internalPaymentsQuery.Where(p => p.TxDate >= options.StartDate.Value);
+            if (options.EndDate.HasValue)
+                internalPaymentsQuery = internalPaymentsQuery.Where(p => p.TxDate <= options.EndDate.Value);
+            if (!string.IsNullOrEmpty(options.CurrencyCode))
+                internalPaymentsQuery = internalPaymentsQuery.Where(p => p.CurrencyCode == options.CurrencyCode);
+            var internalPayments = await internalPaymentsQuery.ToListAsync(cancellationToken);
+
+            // Load ALL external payments (no unmatched filter)
+            var externalPaymentsQuery = dbContext.ExternalPayments.AsQueryable();
+            if (options.PspId.HasValue)
+                externalPaymentsQuery = externalPaymentsQuery.Where(p => p.PspId == options.PspId.Value);
+            if (options.StartDate.HasValue)
+                externalPaymentsQuery = externalPaymentsQuery.Where(p => p.TxDate >= options.StartDate.Value);
+            if (options.EndDate.HasValue)
+                externalPaymentsQuery = externalPaymentsQuery.Where(p => p.TxDate <= options.EndDate.Value);
+            if (!string.IsNullOrEmpty(options.CurrencyCode))
+                externalPaymentsQuery = externalPaymentsQuery.Where(p => p.CurrencyCode == options.CurrencyCode);
+            var externalPayments = await externalPaymentsQuery.ToListAsync(cancellationToken);
+
+            // Load baseline (active) rules
+            var baselineRules = await GetActiveRulesAsync(cancellationToken);
+
+            // Load candidate rules by ID (regardless of IsActive)
+            var candidateRules = await dbContext.MatchingRules
+                .Where(r => candidateRuleIds.Contains(r.Id))
+                .OrderBy(r => r.Priority)
+                .ToListAsync(cancellationToken);
+
+            // Load existing verified settlements for false-positive comparison
+            var verifiedPairs = await dbContext.PspSettlements
+                .Where(s => s.ReconciliationStatus == ReconciliationStatus.Successful)
+                .Select(s => new { s.InternalPaymentId, s.ExternalPaymentId })
+                .ToListAsync(cancellationToken);
+            var verifiedSet = new HashSet<(int, int)>(
+                verifiedPairs.Select(p => (p.InternalPaymentId, p.ExternalPaymentId)));
+
+            // Run matching for both rule sets
+            var baselineResult = RunMatchingInMemory(internalPayments, externalPayments, baselineRules);
+            var candidateResult = RunMatchingInMemory(internalPayments, externalPayments, candidateRules);
+
+            // Compute lift and false positives
+            var lift = ComputeLift(baselineResult, candidateResult);
+            var falsePositives = ComputeFalsePositives(candidateResult, verifiedSet, falsePositiveThreshold);
+
+            logger.LogInformation(
+                "Simulation completed. Baseline: {BaselineMatched} matched, Candidate: {CandidateMatched} matched, Lift: {Lift}",
+                baselineResult.MatchedCount, candidateResult.MatchedCount, lift.MatchedDelta);
+
+            return new SimulationResultDto
+            {
+                Duration = DateTime.UtcNow - startTime,
+                SimulatedAt = DateTime.UtcNow,
+                TotalInternalTransactions = internalPayments.Count,
+                TotalExternalTransactions = externalPayments.Count,
+                Baseline = baselineResult,
+                Candidate = candidateResult,
+                Lift = lift,
+                FalsePositives = falsePositives,
+                BaselineRuleIds = baselineRules.Select(r => r.Id).ToList(),
+                CandidateRuleIds = candidateRuleIds
+            };
+        }
+
+        private SimulationRuleSetResultDto RunMatchingInMemory(
+            List<InternalPayment> internalPayments,
+            List<ExternalPayment> externalPayments,
+            List<MatchingRule> rules)
+        {
+            var result = new SimulationRuleSetResultDto();
+            var matchedExternals = new HashSet<int>();
+
+            if (!rules.Any())
+                return result;
+
+            foreach (var internalPayment in internalPayments)
+            {
+                var availableExternals = externalPayments
+                    .Where(e => !matchedExternals.Contains(e.Id))
+                    .ToList();
+
+                var (matchResult, externalPayment) = FindMatchForInternalPaymentAsync(
+                    internalPayment, availableExternals, rules).GetAwaiter().GetResult();
+
+                if (matchResult != null && matchResult.Value == RuleMatchResultType.Match)
+                {
+                    var matchedExternal = availableExternals
+                        .FirstOrDefault(e => EvaluateRule(
+                            rules.First(r => r.RuleName == matchResult.RuleName),
+                            internalPayment, e).Value == RuleMatchResultType.Match);
+
+                    if (matchedExternal != null)
+                    {
+                        matchedExternals.Add(matchedExternal.Id);
+
+                        if (result.Matches.Count < 500)
+                        {
+                            result.Matches.Add(new SimulationMatchDto
+                            {
+                                InternalPaymentId = internalPayment.Id,
+                                ExternalPaymentId = matchedExternal.Id,
+                                InternalTxId = internalPayment.TxId,
+                                ExternalTxId = matchedExternal.TxId,
+                                Amount = internalPayment.Amount,
+                                CurrencyCode = internalPayment.CurrencyCode,
+                                RuleApplied = matchResult.RuleName,
+                                MatchScore = matchResult.Score,
+                                AmountVariance = matchResult.AmountVariance,
+                                DateVarianceDays = matchResult.DateVarianceDays,
+                                Notes = matchResult.Notes
+                            });
+                        }
+
+                        if (matchResult.Score >= 1.0m)
+                            result.MatchedCount++;
+                        else
+                            result.PartialMatchCount++;
+                    }
+                }
+                else
+                {
+                    result.InternalUnmatchedCount++;
+                }
+            }
+
+            result.ExternalUnmatchedCount = externalPayments.Count(e => !matchedExternals.Contains(e.Id));
+
+            var totalTransactions = internalPayments.Count + externalPayments.Count;
+            if (totalTransactions > 0)
+            {
+                result.MatchPercentage = (decimal)(result.MatchedCount * 2 + result.PartialMatchCount)
+                                          / totalTransactions * 100;
+            }
+
+            return result;
+        }
+
+        private static SimulationLiftDto ComputeLift(
+            SimulationRuleSetResultDto baseline,
+            SimulationRuleSetResultDto candidate)
+        {
+            var baselinePairs = baseline.Matches
+                .ToDictionary(m => (m.InternalPaymentId, m.ExternalPaymentId));
+            var candidatePairs = candidate.Matches
+                .ToDictionary(m => (m.InternalPaymentId, m.ExternalPaymentId));
+
+            var newMatches = candidate.Matches
+                .Where(m => !baselinePairs.ContainsKey((m.InternalPaymentId, m.ExternalPaymentId)))
+                .ToList();
+
+            var lostMatches = baseline.Matches
+                .Where(m => !candidatePairs.ContainsKey((m.InternalPaymentId, m.ExternalPaymentId)))
+                .ToList();
+
+            var changedMatches = candidate.Matches
+                .Where(m => baselinePairs.ContainsKey((m.InternalPaymentId, m.ExternalPaymentId)))
+                .Where(m =>
+                {
+                    var bp = baselinePairs[(m.InternalPaymentId, m.ExternalPaymentId)];
+                    return bp.RuleApplied != m.RuleApplied || bp.MatchScore != m.MatchScore;
+                })
+                .Select(m =>
+                {
+                    var bp = baselinePairs[(m.InternalPaymentId, m.ExternalPaymentId)];
+                    return new SimulationMatchDiffDto
+                    {
+                        InternalPaymentId = m.InternalPaymentId,
+                        ExternalPaymentId = m.ExternalPaymentId,
+                        BaselineRule = bp.RuleApplied,
+                        BaselineScore = bp.MatchScore,
+                        CandidateRule = m.RuleApplied,
+                        CandidateScore = m.MatchScore,
+                        ScoreDelta = m.MatchScore - bp.MatchScore
+                    };
+                })
+                .ToList();
+
+            return new SimulationLiftDto
+            {
+                MatchedDelta = candidate.MatchedCount - baseline.MatchedCount,
+                PartialMatchDelta = candidate.PartialMatchCount - baseline.PartialMatchCount,
+                UnmatchedDelta = (candidate.InternalUnmatchedCount + candidate.ExternalUnmatchedCount)
+                               - (baseline.InternalUnmatchedCount + baseline.ExternalUnmatchedCount),
+                MatchPercentageDelta = candidate.MatchPercentage - baseline.MatchPercentage,
+                NewMatches = newMatches,
+                LostMatches = lostMatches,
+                ChangedMatches = changedMatches
+            };
+        }
+
+        private static FalsePositiveAnalysisDto ComputeFalsePositives(
+            SimulationRuleSetResultDto candidateResult,
+            HashSet<(int, int)> verifiedSet,
+            decimal threshold)
+        {
+            var unverified = candidateResult.Matches
+                .Where(m => !verifiedSet.Contains((m.InternalPaymentId, m.ExternalPaymentId)))
+                .ToList();
+
+            var lowConfidence = candidateResult.Matches
+                .Where(m => m.MatchScore < threshold)
+                .ToList();
+
+            return new FalsePositiveAnalysisDto
+            {
+                UnverifiedMatches = unverified.Take(200).ToList(),
+                LowConfidenceMatches = lowConfidence.Take(200).ToList(),
+                UnverifiedCount = unverified.Count,
+                LowConfidenceCount = lowConfidence.Count,
+                FalsePositiveThreshold = threshold
+            };
+        }
+
         private async Task CreateExceptionCasesAsync(
             List<UnmatchedTransactionDto> unmatchedTransactions,
             int runId,
@@ -665,12 +1009,14 @@ namespace Infrastructure.Services.Settlement
                     Title = $"Unmatched {transaction.Source} Transaction",
                     Description = $"Transaction {transaction.TransactionId} with amount {transaction.Amount} {transaction.CurrencyCode} dated {transaction.TransactionDate:d} could not be matched during reconciliation run.",
                     Status = CaseStatus.Open,
-                    Severity = transaction.Amount > 10000 ? CaseSeverity.High :
-                              transaction.Amount > 1000 ? CaseSeverity.Medium : CaseSeverity.Low,
+                    Severity = transaction.Amount > 100 ? CaseSeverity.High : CaseSeverity.Medium,
+                    InternalTransactionId = transaction.Id,
+
+                    // todo:
                     VarianceType = VarianceType.Amount,
                     VarianceAmount = transaction.Amount,
                     ReconciliationRunId = runId,
-                    AssignedTo = assigneeId
+                    AssignedToId = assigneeId
                 };
 
                 dbContext.ExceptionCases.Add(exceptionCase);

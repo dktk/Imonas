@@ -7,6 +7,8 @@
 @{
     ViewData["Title"] = "Exception Cases";
     ViewData["PageName"] = "cases_index";
+
+    var assignUrl = Url.Page("/Cases/Index", "Assign");
 }
 
 @section HeadBlock {
@@ -225,6 +227,7 @@
             <div class="panel-container show">
                 <div class="panel-content">
                     <div class="table-responsive">
+                        @Html.AntiForgeryToken()
                         <table class="table table-bordered table-hover table-striped w-100">
                             <thead class="bg-primary-600">
                                 <tr>
@@ -319,9 +322,9 @@
                                             }
                                         </td>
                                         <td>
-                                            @if (!string.IsNullOrEmpty(caseItem.AssignedTo))
+                                            @if (!string.IsNullOrEmpty(caseItem.AssignedToDisplayName))
                                             {
-                                                <span class="badge badge-light">@caseItem.AssignedTo</span>
+                                                <span class="badge badge-light">@caseItem.AssignedToDisplayName</span>
                                             }
                                             else
                                             {
@@ -342,9 +345,20 @@
                                         </td>
                                         <td>@caseItem.Created.ToString("yyyy-MM-dd")</td>
                                         <td class="text-center">
-                                            <a asp-page="Details" asp-route-id="@caseItem.Id" class="btn btn-sm btn-outline-primary waves-effect waves-themed">
-                                                <i class="@(Settings.Theme.IconPrefix) fa-eye"></i>
-                                            </a>
+                                            <div class="btn-group" role="group">
+                                                <a asp-page="Details" asp-route-id="@caseItem.Id" class="btn btn-sm btn-outline-primary waves-effect waves-themed" title="@_localizer["View"]">
+                                                    <i class="@(Settings.Theme.IconPrefix) fa-eye"></i>
+                                                </a>
+                                                @if (caseItem.Status != CaseStatus.Closed)
+                                                {
+                                                    <button type="button" class="btn btn-sm btn-outline-info waves-effect waves-themed assign-btn"
+                                                            data-id="@caseItem.Id"
+                                                            data-case="@caseItem.CaseNumber"
+                                                            title="@_localizer["Assign"]">
+                                                        <i class="@(Settings.Theme.IconPrefix) fa-user-check"></i>
+                                                    </button>
+                                                }
+                                            </div>
                                         </td>
                                     </tr>
                                 }
@@ -384,3 +398,102 @@
         </div>
     </div>
 </div>
+
+<!-- Assign Case Modal -->
+<div class="modal fade" id="assignCaseModal" tabindex="-1" role="dialog" aria-labelledby="assignCaseModalLabel" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header bg-primary-600">
+                <h5 class="modal-title text-white" id="assignCaseModalLabel">
+                    <i class="@(Settings.Theme.IconPrefix) fa-user-check mr-2"></i>
+                    @_localizer["Assign Case"]
+                </h5>
+                <button type="button" class="close text-white" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <p>@_localizer["Assign"] <strong id="assignCaseNumber"></strong> @_localizer["to"]:</p>
+                <div class="form-group">
+                    <label class="form-label">@_localizer["Select User"]</label>
+                    <select id="assignCaseUserSelect" class="form-control">
+                        <option value="">-- @_localizer["Loading users..."] --</option>
+                    </select>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">@_localizer["Cancel"]</button>
+                <button type="button" class="btn btn-primary" id="confirmAssignCaseBtn">
+                    <i class="@(Settings.Theme.IconPrefix) fa-check mr-1"></i>
+                    @_localizer["Assign"]
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section ScriptsBlock {
+    <script>
+        $(function () {
+            'use strict';
+
+            var assignCaseId = null;
+            var usersLoaded = false;
+
+            function loadUsers() {
+                if (usersLoaded) return;
+                axios.get('/api/users').then(function (res) {
+                    var users = (res.data.data || res.data || []).filter(function (u) { return u.isActive; });
+                    var $select = $('#assignCaseUserSelect');
+                    $select.empty();
+                    $select.append('<option value="">-- Select a user --</option>');
+                    users.forEach(function (u) {
+                        var name = u.displayName || u.userName || '';
+                        $select.append('<option value="' + name + '">' + name + ' (' + (u.email || '') + ')</option>');
+                    });
+                    usersLoaded = true;
+                });
+            }
+
+            $('.assign-btn').on('click', function () {
+                assignCaseId = $(this).data('id');
+                var caseNumber = $(this).data('case');
+                $('#assignCaseNumber').text(caseNumber);
+                loadUsers();
+                $('#assignCaseModal').modal('show');
+            });
+
+            $('#confirmAssignCaseBtn').on('click', function () {
+                if (!assignCaseId) return;
+                var assignedTo = $('#assignCaseUserSelect').val();
+                if (!assignedTo) {
+                    toastr.warning('@_localizer["Please select a user."]');
+                    return;
+                }
+
+                $(this).prop('disabled', true).html('<i class="fal fa-spinner fa-spin mr-1"></i> @_localizer["Assigning..."]');
+
+                axios.post('@assignUrl', 'id=' + assignCaseId + '&assignedTo=' + encodeURIComponent(assignedTo) + '&__RequestVerificationToken=' + $('input[name="__RequestVerificationToken"]').val(), {
+                    headers: { 'Content-Type': 'application/x-www-form-urlencoded' }
+                }).then(function (res) {
+                    if (res.data.succeeded) {
+                        toastr.success(res.data.message);
+                        $('#assignCaseModal').modal('hide');
+                        location.reload();
+                    } else {
+                        toastr.error(res.data.message);
+                        $('#confirmAssignCaseBtn').prop('disabled', false).html('<i class="fal fa-check mr-1"></i> @_localizer["Assign"]');
+                    }
+                }).catch(function () {
+                    toastr.error('@_localizer["An error occurred while assigning the case."]');
+                    $('#confirmAssignCaseBtn').prop('disabled', false).html('<i class="fal fa-check mr-1"></i> @_localizer["Assign"]');
+                });
+            });
+
+            $('#assignCaseModal').on('hidden.bs.modal', function () {
+                assignCaseId = null;
+                $('#confirmAssignCaseBtn').prop('disabled', false).html('<i class="fal fa-check mr-1"></i> @_localizer["Assign"]');
+            });
+        });
+    </script>
+}

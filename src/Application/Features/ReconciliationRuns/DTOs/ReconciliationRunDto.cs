@@ -41,10 +41,19 @@ namespace Application.Features.ReconciliationRuns.DTOs
         public DateTime StartedAt { get; set; }
         public DateTime? CompletedAt { get; set; }
         public string RulePackVersion { get; set; } = string.Empty;
-        public int TotalRecords { get; set; }
-        public int MatchedRecords { get; set; }
-        public int UnmatchedRecords { get; set; }
-        public int PartialMatchRecords { get; set; }
+        public int InternalMatchedRecordsCount { get; set; }
+        public int ExternalMatchedRecordsCount { get; set; }
+        public int InternalUnmatchedRecordsCount { get; set; }
+        public int ExternalUnmatchedRecordsCount { get; set; }
+
+        public int TotalRecordsCount => MatchedRecordsCount + UnmatchedRecordsCount;
+        public int MatchedRecordsCount => InternalMatchedRecordsCount + ExternalMatchedRecordsCount;
+        public int UnmatchedRecordsCount => InternalUnmatchedRecordsCount + ExternalUnmatchedRecordsCount;
+        public int PartialMatchRecordsCount { get; set; }
+
+        public int InternalRecordsCount => InternalMatchedRecordsCount + InternalUnmatchedRecordsCount;
+        public int ExternalRecordsCount => ExternalMatchedRecordsCount + ExternalUnmatchedRecordsCount;
+
         public decimal MatchPercentage { get; set; }
         public string? ErrorMessage { get; set; }
         public string? EvidencePackPath { get; set; }

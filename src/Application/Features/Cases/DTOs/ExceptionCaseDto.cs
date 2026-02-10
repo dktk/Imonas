@@ -1,6 +1,6 @@
-using Application.Common.Mappings;
+using Application.Features.Rules.Queries;
+
 using Domain.Entities.Cases;
-using Domain.Enums;
 
 namespace Application.Features.Cases.DTOs
 {
@@ -13,7 +13,7 @@ namespace Application.Features.Cases.DTOs
         public CaseStatus Status { get; set; }
         public CaseSeverity Severity { get; set; }
         public VarianceType VarianceType { get; set; }
-        public string? AssignedTo { get; set; }
+        public string? AssignedToDisplayName { get; set; }
         public DateTime? DueDate { get; set; }
         public DateTime? ResolvedAt { get; set; }
         public string? ResolvedBy { get; set; }
@@ -39,7 +39,6 @@ namespace Application.Features.Cases.DTOs
         public int Id { get; set; }
         public int CaseId { get; set; }
         public string FileName { get; set; } = string.Empty;
-        public string FilePath { get; set; } = string.Empty;
         public long FileSizeBytes { get; set; }
         public string ContentType { get; set; } = string.Empty;
         public string UploadedBy { get; set; } = string.Empty;
@@ -53,9 +52,19 @@ namespace Application.Features.Cases.DTOs
         public string LabelName { get; set; } = string.Empty;
         public string? LabelColor { get; set; }
     }
-
     public class ExceptionCaseDetailsDto : IMapFrom<ExceptionCase>
     {
+        public class TransactionDto
+        {
+            public int? Id { get; set; }
+            public decimal Amount { get; set; }
+            public string CurrencyCode { get; set; }
+            public string Status { get; set; }
+            public DateTime TransactionDate { get; set; }
+            public string Source { get; set; }
+            public string ExternalPaymentId { get; set; }
+        }
+
         public int Id { get; set; }
         public string CaseNumber { get; set; } = string.Empty;
         public string Title { get; set; } = string.Empty;
@@ -63,12 +72,17 @@ namespace Application.Features.Cases.DTOs
         public CaseStatus Status { get; set; }
         public CaseSeverity Severity { get; set; }
         public VarianceType VarianceType { get; set; }
-        public string? AssignedTo { get; set; }
+        public string? AssignedToDisplayName { get; set; }
         public DateTime? DueDate { get; set; }
         public DateTime? ResolvedAt { get; set; }
         public string? ResolvedBy { get; set; }
         public string? ResolutionNotes { get; set; }
-        public int? LinkedTransactionId { get; set; }
+        public int? ExternalTransactionId { get; set; }
+        public int InternalTransactionId { get; set; }
+        public TransactionDto InternalTransaction { get; set; }
+        public TransactionDto ExternalTransaction { get; set; }
+        public MatchingRuleDto MatchingRule { get; set; }
+
         public decimal? VarianceAmount { get; set; }
         public string? RootCauseCode { get; set; }
         public DateTime Created { get; set; }

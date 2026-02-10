@@ -85,7 +85,7 @@ namespace Application.UnitTests.Services.Settlement
             var result = _sut.EvaluateRule(rule, internalPayment, externalPayment);
 
             // Assert
-            result.IsMatch.Should().BeFalse();
+            result.IsNotMatch.Should().BeFalse();
             result.Score.Should().Be(0.7m);
         }
 
@@ -914,8 +914,9 @@ namespace Application.UnitTests.Services.Settlement
                 TxId = "INT001",
                 TxDate = txDate.HasValue ? new DateTimeOffset(txDate.Value) : DateTimeOffset.UtcNow,
                 Status = status,
-                RefNumber = "REF001",
+                ReferenceCode = "REF001",
                 UserEmail = "test@example.com",
+                ClientId = 1,
                 System = "TestSystem",
                 Hash = 12345
             };
@@ -939,7 +940,10 @@ namespace Application.UnitTests.Services.Settlement
                 Status = status,
                 Action = PaymentAction.Buy,
                 ExternalSystem = "TestPSP",
-                PlayerId = "Player001",
+                ClientId = 1,
+                Description = "description",
+                Email = "user1@email.com",
+                ReferenceCode = "RefCODE",
                 BrandId = "Brand001",
                 PspId = 1,
                 RawPaymentId = 1,

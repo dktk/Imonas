@@ -25,6 +25,10 @@ namespace PspConnectors.Methods.Noda.NodaCsv
                 Psp = PspName,
                 Currency = record.Currency,
                 TxStatus = record.Status,
+                ClientId = record.CustomerId,
+                ReferenceCode = record.ReferenceId,
+                Description = GetDescription(),
+
                 //switch
                 //{
                 //    "Done" => Status.Successful,
@@ -34,6 +38,11 @@ namespace PspConnectors.Methods.Noda.NodaCsv
                 //},
                 TxId = record.OrderId
             };
+
+        private static string GetDescription()
+        {
+            throw new NotImplementedException();
+        }
 
         public async override Task<TargetData[]> GetTransactionsAsync(DateTime from, DateTime to)
         {

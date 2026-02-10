@@ -91,13 +91,13 @@ namespace Infrastructure.Migrations
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("created");
 
+                    b.Property<byte[]>("FileContent")
+                        .HasColumnType("bytea")
+                        .HasColumnName("file_content");
+
                     b.Property<string>("FileName")
                         .HasColumnType("text")
                         .HasColumnName("file_name");
-
-                    b.Property<string>("FilePath")
-                        .HasColumnType("text")
-                        .HasColumnName("file_path");
 
                     b.Property<long>("FileSizeBytes")
                         .HasColumnType("bigint")
@@ -238,9 +238,9 @@ namespace Infrastructure.Migrations
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
-                    b.Property<string>("AssignedTo")
+                    b.Property<string>("AssignedToId")
                         .HasColumnType("text")
-                        .HasColumnName("assigned_to");
+                        .HasColumnName("assigned_to_id");
 
                     b.Property<string>("CaseNumber")
                         .HasColumnType("text")
@@ -258,6 +258,14 @@ namespace Infrastructure.Migrations
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("due_date");
 
+                    b.Property<int?>("ExternalTransactionId")
+                        .HasColumnType("integer")
+                        .HasColumnName("external_transaction_id");
+
+                    b.Property<int?>("InternalTransactionId")
+                        .HasColumnType("integer")
+                        .HasColumnName("internal_transaction_id");
+
                     b.Property<DateTime?>("LastModified")
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("last_modified");
@@ -265,10 +273,6 @@ namespace Infrastructure.Migrations
                     b.Property<string>("LastModifiedBy")
                         .HasColumnType("text")
                         .HasColumnName("last_modified_by");
-
-                    b.Property<int?>("LinkedTransactionId")
-                        .HasColumnType("integer")
-                        .HasColumnName("linked_transaction_id");
 
                     b.Property<int?>("ReconciliationRunId")
                         .HasColumnType("integer")
@@ -316,6 +320,12 @@ namespace Infrastructure.Migrations
 
                     b.HasKey("Id")
                         .HasName("pk_exception_cases");
+
+                    b.HasIndex("AssignedToId")
+                        .HasDatabaseName("ix_exception_cases_assigned_to_id");
+
+                    b.HasIndex("ReconciliationRunId")
+                        .HasDatabaseName("ix_exception_cases_reconciliation_run_id");
 
                     b.HasIndex("UserId")
                         .HasDatabaseName("ix_exception_cases_user_id");
@@ -1420,6 +1430,10 @@ namespace Infrastructure.Migrations
                         .HasColumnType("text")
                         .HasColumnName("brand_id");
 
+                    b.Property<int>("ClientId")
+                        .HasColumnType("integer")
+                        .HasColumnName("player_id");
+
                     b.Property<DateTime>("Created")
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("created");
@@ -1429,6 +1443,14 @@ namespace Infrastructure.Migrations
                         .HasMaxLength(3)
                         .HasColumnType("character varying(3)")
                         .HasColumnName("currency_code");
+
+                    b.Property<string>("Description")
+                        .HasColumnType("text")
+                        .HasColumnName("description");
+
+                    b.Property<string>("Email")
+                        .HasColumnType("text")
+                        .HasColumnName("email");
 
                     b.Property<string>("ExternalPaymentId")
                         .IsRequired()
@@ -1452,11 +1474,6 @@ namespace Infrastructure.Migrations
                         .HasColumnType("text")
                         .HasColumnName("last_modified_by");
 
-                    b.Property<string>("PlayerId")
-                        .IsRequired()
-                        .HasColumnType("text")
-                        .HasColumnName("player_id");
-
                     b.Property<int>("PspId")
                         .HasColumnType("integer")
                         .HasColumnName("psp_id");
@@ -1464,6 +1481,10 @@ namespace Infrastructure.Migrations
                     b.Property<int>("RawPaymentId")
                         .HasColumnType("integer")
                         .HasColumnName("raw_payment_id");
+
+                    b.Property<string>("ReferenceCode")
+                        .HasColumnType("text")
+                        .HasColumnName("reference_code");
 
                     b.Property<string>("Status")
                         .IsRequired()
@@ -1489,7 +1510,7 @@ namespace Infrastructure.Migrations
                     b.HasIndex("BrandId")
                         .HasDatabaseName("idx_external_payments_brand");
 
-                    b.HasIndex("PlayerId")
+                    b.HasIndex("ClientId")
                         .HasDatabaseName("idx_external_payments_player");
 
                     b.HasIndex("RawPaymentId")
@@ -1516,6 +1537,10 @@ namespace Infrastructure.Migrations
                     b.Property<decimal>("Amount")
                         .HasColumnType("numeric")
                         .HasColumnName("amount");
+
+                    b.Property<int>("ClientId")
+                        .HasColumnType("integer")
+                        .HasColumnName("client_id");
 
                     b.Property<DateTime>("Created")
                         .HasColumnType("timestamp with time zone")
@@ -1547,9 +1572,9 @@ namespace Infrastructure.Migrations
                         .HasColumnType("text")
                         .HasColumnName("provider_tx_id");
 
-                    b.Property<string>("RefNumber")
+                    b.Property<string>("ReferenceCode")
                         .HasColumnType("text")
-                        .HasColumnName("ref_number");
+                        .HasColumnName("reference_code");
 
                     b.Property<string>("Status")
                         .IsRequired()
@@ -1795,6 +1820,18 @@ namespace Infrastructure.Migrations
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
+                    b.Property<string>("ArchiveComment")
+                        .HasColumnType("text")
+                        .HasColumnName("archive_comment");
+
+                    b.Property<DateTime?>("ArchivedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("archived_at");
+
+                    b.Property<string>("ArchivedBy")
+                        .HasColumnType("text")
+                        .HasColumnName("archived_by");
+
                     b.Property<DateTime?>("CompletedAt")
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("completed_at");
@@ -1815,6 +1852,26 @@ namespace Infrastructure.Migrations
                         .HasColumnType("text")
                         .HasColumnName("evidence_pack_path");
 
+                    b.Property<int>("ExternalMatchedRecordsCount")
+                        .HasColumnType("integer")
+                        .HasColumnName("external_matched_records_count");
+
+                    b.Property<int>("ExternalUnmatchedRecordsCount")
+                        .HasColumnType("integer")
+                        .HasColumnName("external_unmatched_records_count");
+
+                    b.Property<int>("InternalMatchedRecordsCount")
+                        .HasColumnType("integer")
+                        .HasColumnName("internal_matched_records_count");
+
+                    b.Property<int>("InternalUnmatchedRecordsCount")
+                        .HasColumnType("integer")
+                        .HasColumnName("internal_unmatched_records_count");
+
+                    b.Property<bool>("IsArchived")
+                        .HasColumnType("boolean")
+                        .HasColumnName("is_archived");
+
                     b.Property<bool>("IsReplayable")
                         .HasColumnType("boolean")
                         .HasColumnName("is_replayable");
@@ -1831,13 +1888,9 @@ namespace Infrastructure.Migrations
                         .HasColumnType("numeric")
                         .HasColumnName("match_percentage");
 
-                    b.Property<int>("MatchedRecords")
+                    b.Property<int>("PartialMatchRecordsCount")
                         .HasColumnType("integer")
-                        .HasColumnName("matched_records");
-
-                    b.Property<int>("PartialMatchRecords")
-                        .HasColumnType("integer")
-                        .HasColumnName("partial_match_records");
+                        .HasColumnName("partial_match_records_count");
 
                     b.Property<string>("RulePackVersion")
                         .HasColumnType("text")
@@ -1854,14 +1907,6 @@ namespace Infrastructure.Migrations
                     b.Property<int>("Status")
                         .HasColumnType("integer")
                         .HasColumnName("status");
-
-                    b.Property<int>("TotalRecords")
-                        .HasColumnType("integer")
-                        .HasColumnName("total_records");
-
-                    b.Property<int>("UnmatchedRecords")
-                        .HasColumnType("integer")
-                        .HasColumnName("unmatched_records");
 
                     b.Property<string>("UserId")
                         .HasColumnType("text")
@@ -2013,6 +2058,68 @@ namespace Infrastructure.Migrations
                         .HasDatabaseName("ix_run_metrics_user_id");
 
                     b.ToTable("run_metrics", (string)null);
+                });
+
+            modelBuilder.Entity("Domain.Entities.UserNotification", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer")
+                        .HasColumnName("id");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<DateTime>("Created")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created");
+
+                    b.Property<bool>("IsRead")
+                        .HasColumnType("boolean")
+                        .HasColumnName("is_read");
+
+                    b.Property<DateTime?>("LastModified")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("last_modified");
+
+                    b.Property<string>("LastModifiedBy")
+                        .HasColumnType("text")
+                        .HasColumnName("last_modified_by");
+
+                    b.Property<string>("LinkUrl")
+                        .HasColumnType("text")
+                        .HasColumnName("link_url");
+
+                    b.Property<string>("Message")
+                        .HasColumnType("text")
+                        .HasColumnName("message");
+
+                    b.Property<DateTime?>("ReadAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("read_at");
+
+                    b.Property<string>("RecipientUserId")
+                        .HasColumnType("text")
+                        .HasColumnName("recipient_user_id");
+
+                    b.Property<string>("SenderDisplayName")
+                        .HasColumnType("text")
+                        .HasColumnName("sender_display_name");
+
+                    b.Property<string>("SenderUserId")
+                        .HasColumnType("text")
+                        .HasColumnName("sender_user_id");
+
+                    b.Property<string>("UserId")
+                        .HasColumnType("text")
+                        .HasColumnName("user_id");
+
+                    b.HasKey("Id")
+                        .HasName("pk_user_notifications");
+
+                    b.HasIndex("UserId")
+                        .HasDatabaseName("ix_user_notifications_user_id");
+
+                    b.ToTable("user_notifications", (string)null);
                 });
 
             modelBuilder.Entity("Domain.Entities.Worflow.ApprovalData", b =>
@@ -2445,10 +2552,24 @@ namespace Infrastructure.Migrations
 
             modelBuilder.Entity("Domain.Entities.Cases.ExceptionCase", b =>
                 {
+                    b.HasOne("Domain.Entities.Identity.User", "AssignedTo")
+                        .WithMany()
+                        .HasForeignKey("AssignedToId")
+                        .HasConstraintName("fk_exception_cases_asp_net_users_assigned_to_id");
+
+                    b.HasOne("Domain.Entities.ReconciliationRun", "ReconciliationRun")
+                        .WithMany()
+                        .HasForeignKey("ReconciliationRunId")
+                        .HasConstraintName("fk_exception_cases_reconciliation_runs_reconciliation_run_id");
+
                     b.HasOne("Domain.Entities.Identity.User", "User")
                         .WithMany()
                         .HasForeignKey("UserId")
                         .HasConstraintName("fk_exception_cases_asp_net_users_user_id");
+
+                    b.Navigation("AssignedTo");
+
+                    b.Navigation("ReconciliationRun");
 
                     b.Navigation("User");
                 });
@@ -2811,6 +2932,16 @@ namespace Infrastructure.Migrations
                         .HasConstraintName("fk_run_metrics_asp_net_users_user_id");
 
                     b.Navigation("Run");
+
+                    b.Navigation("User");
+                });
+
+            modelBuilder.Entity("Domain.Entities.UserNotification", b =>
+                {
+                    b.HasOne("Domain.Entities.Identity.User", "User")
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .HasConstraintName("fk_user_notifications_asp_net_users_user_id");
 
                     b.Navigation("User");
                 });

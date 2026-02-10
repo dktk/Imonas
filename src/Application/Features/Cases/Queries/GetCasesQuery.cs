@@ -15,6 +15,7 @@ namespace Application.Features.Cases.Queries
         public async Task<IEnumerable<ExceptionCaseDto>> Handle(GetCasesQuery request, CancellationToken cancellationToken)
         {
             return await context.ExceptionCases
+                .Include(c => c.User)
                 .OrderByDescending(c => c.Created)
                 .Take(request.PageSize)
                 .ProjectTo<ExceptionCaseDto>(mapper.ConfigurationProvider)

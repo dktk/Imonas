@@ -26,6 +26,10 @@ namespace PspConnectors.Methods.GumBallPay
                 Currency = record.Currency,
                 Psp = PspName,
                 TxStatus = record.TxStatus,
+                ClientId = GetClientId(),
+                Description = record.Description,
+                ReferenceCode = GetReference(),
+
                 //switch
                 //{
                 //    "approved" => Status.Successful,
@@ -33,5 +37,15 @@ namespace PspConnectors.Methods.GumBallPay
                 //    "declined" => Status.Declined,
                 //}
             };
+
+        private static int GetClientId()
+        {
+            throw new NotImplementedException();
+        }
+
+        private static string GetReference()
+        {
+            throw new NotImplementedException();
+        }
     }
 }

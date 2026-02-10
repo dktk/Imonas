@@ -1,3 +1,5 @@
+using Azure.Messaging.EventGrid.SystemEvents;
+
 using CsvHelper;
 
 using Domain;
@@ -31,6 +33,10 @@ namespace PspConnectors.Methods.Dns
                 Psp = PspName,
                 Currency = record.Currency,
                 TxStatus = record.Status,
+                ClientId = GetClientId(),
+                Description = record.OrderDescription,
+                ReferenceCode = GetReferenceCode(),
+
                 //switch
                 //{
                 //    "approved" => Status.Successful,
@@ -38,5 +44,15 @@ namespace PspConnectors.Methods.Dns
                 //    "filtered" => Status.Filtered
                 //}
             };
+
+        private static string GetReferenceCode()
+        {
+            throw new NotImplementedException();
+        }
+
+        private static int GetClientId()
+        {
+            throw new NotImplementedException();
+        }
     }
 }

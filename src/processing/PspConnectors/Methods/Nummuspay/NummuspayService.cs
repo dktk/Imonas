@@ -1,6 +1,8 @@
 using System.Net.Http.Headers;
 using System.Net.Http.Json;
 
+using ClosedXML;
+
 using Domain;
 
 using Microsoft.Extensions.Logging;
@@ -49,6 +51,10 @@ namespace PspConnectors.Methods.Nummuspay
                                 Currency = GetCurrency(x.CurrencyOriginal, x.CurrencyPaid, x.CurrencyCustomer),
                                 TxId = x.ID.ToString(),
                                 TxStatus = x.TransactionStatus,
+                                ClientId = x.Customer.ID,
+                                Description = x.Metadata,
+                                ReferenceCode = x.TransactionCode,
+
                                 //switch
                                 //{
                                 //    "Successful" => Status.Successful

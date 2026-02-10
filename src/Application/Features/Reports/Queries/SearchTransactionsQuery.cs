@@ -1,4 +1,3 @@
-using Application.Common.Interfaces;
 using Domain.Entities.MedalionData.Gold;
 
 namespace Application.Features.Reports.Queries
@@ -10,7 +9,7 @@ namespace Application.Features.Reports.Queries
         public string ExternalPaymentId { get; set; } = string.Empty;
         public string PspName { get; set; } = string.Empty;
         public int PspId { get; set; }
-        public string PlayerId { get; set; } = string.Empty;
+        public int ClientId { get; set; }
         public string BrandId { get; set; } = string.Empty;
         public decimal Amount { get; set; }
         public string CurrencyCode { get; set; } = string.Empty;
@@ -79,8 +78,8 @@ namespace Application.Features.Reports.Queries
 
             if (!string.IsNullOrWhiteSpace(request.PlayerId))
             {
-                var playerId = request.PlayerId.Trim();
-                query = query.Where(ep => ep.PlayerId.Contains(playerId));
+                var playerId = int.Parse(request.PlayerId.Trim());
+                query = query.Where(ep => ep.ClientId == playerId);
             }
 
             if (request.PspId.HasValue && request.PspId.Value > 0)
@@ -142,10 +141,10 @@ namespace Application.Features.Reports.Queries
 
             // Get cases
             var cases = await context.ExceptionCases
-                .Where(c => c.LinkedTransactionId.HasValue && matchingIds.Contains(c.LinkedTransactionId.Value))
+                .Where(c => c.ExternalTransactionId.HasValue && matchingIds.Contains(c.ExternalTransactionId.Value))
                 .Select(c => new
                 {
-                    TransactionId = c.LinkedTransactionId!.Value,
+                    TransactionId = c.ExternalTransactionId!.Value,
                     c.Id,
                     c.CaseNumber,
                     c.Title,
@@ -176,7 +175,7 @@ namespace Application.Features.Reports.Queries
                     ep.ExternalPaymentId,
                     PspName = ep.Psp.Name,
                     ep.PspId,
-                    ep.PlayerId,
+                    ep.ClientId,
                     ep.BrandId,
                     ep.Amount,
                     ep.CurrencyCode,
@@ -200,7 +199,7 @@ namespace Application.Features.Reports.Queries
                     ExternalPaymentId = ep.ExternalPaymentId,
                     PspName = ep.PspName,
                     PspId = ep.PspId,
-                    PlayerId = ep.PlayerId,
+                    ClientId = ep.ClientId,
                     BrandId = ep.BrandId,
                     Amount = ep.Amount,
                     CurrencyCode = ep.CurrencyCode,

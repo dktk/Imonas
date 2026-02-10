@@ -16,7 +16,8 @@ namespace Application.Features.ReconciliationRuns.Commands
         public async Task<Result<bool>> Handle(CancelRunCommand request, CancellationToken cancellationToken)
         {
             var run = await context.ReconciliationRuns
-                .FindAsync(new object[] { request.Id }, cancellationToken);
+                .Include(x => x.User)
+                .FirstOrDefaultAsync(x => x.Id == request.Id, cancellationToken);
 
             if (run == null)
             {
@@ -30,7 +31,7 @@ namespace Application.Features.ReconciliationRuns.Commands
 
             run.Status = RunStatus.Cancelled;
             run.CompletedAt = dateTime.Now;
-            run.ErrorMessage = $"Cancelled by user {currentUserService.UserId ?? "Unknown"} at {dateTime.Now:yyyy-MM-dd HH:mm:ss} UTC";
+            run.ErrorMessage = $"Cancelled by user {run.User.DisplayName ?? "Unknown"} at {dateTime.Now:yyyy-MM-dd HH:mm:ss} UTC";
 
             await context.SaveChangesAsync(cancellationToken);
 

@@ -1,4 +1,4 @@
-@page
+﻿@page
 @using Microsoft.AspNetCore.Mvc.Localization
 @model SmartAdmin.WebUI.Pages.Reports.SearchModel
 @inject IStringLocalizer<SearchModel> _localizer
@@ -118,10 +118,10 @@
                             <div class="form-group mb-2">
                                 <label class="form-label">
                                     <i class="@(Settings.Theme.IconPrefix) fa-user mr-1"></i>
-                                    @_localizer["Player ID"]
+                                    @_localizer["User ID"]
                                 </label>
                                 <input type="text" asp-for="PlayerId" class="form-control" id="playerId"
-                                       placeholder="@_localizer["Enter player ID..."]" autocomplete="off" />
+                                       placeholder="@_localizer["Enter user ID..."]" autocomplete="off" />
                                 <small class="search-hint">@_localizer["Partial match supported"]</small>
                             </div>
                         </div>
@@ -358,7 +358,7 @@
                     },
                     {
                         field: 'PlayerId',
-                        title: '@_localizer["Player ID"]',
+                        title: '@_localizer["User ID"]',
                         sortable: true,
                         width: 150
                     },
@@ -511,7 +511,7 @@
                 html += '<div class="col-md-6">';
                 html += '<h6 class="mb-3"><i class="fal fa-user mr-2"></i>@_localizer["Player & PSP Information"]</h6>';
                 html += '<table class="table table-sm table-borderless">';
-                html += '<tr><td class="detail-modal-label">@_localizer["Player ID"]:</td><td class="detail-modal-value">' + (transaction.PlayerId || '-') + '</td></tr>';
+                html += '<tr><td class="detail-modal-label">@_localizer["User ID"]:</td><td class="detail-modal-value">' + (transaction.PlayerId || '-') + '</td></tr>';
                 html += '<tr><td class="detail-modal-label">@_localizer["Brand"]:</td><td class="detail-modal-value">' + (transaction.BrandId || '-') + '</td></tr>';
                 html += '<tr><td class="detail-modal-label">@_localizer["PSP"]:</td><td class="detail-modal-value">' + (transaction.PspName || '-') + '</td></tr>';
                 html += '<tr><td class="detail-modal-label">@_localizer["External System"]:</td><td class="detail-modal-value">' + (transaction.ExternalSystem || '-') + '</td></tr>';

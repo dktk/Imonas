@@ -1,3 +1,5 @@
+using Azure.Messaging.EventGrid.SystemEvents;
+
 using CsvHelper;
 
 using Domain;
@@ -24,6 +26,10 @@ namespace PspConnectors.Methods.CubixPay
                 Currency = record.Currency,
                 TxId = record.ReferenceNo,
                 TxStatus = record.Status,
+                ClientId = GetClientId(),
+                Description = record.Descriptor,
+                ReferenceCode = record.ReferenceNo,
+
                 //switch
                 //{
                 //    "ERROR" => Status.Error,
@@ -31,6 +37,11 @@ namespace PspConnectors.Methods.CubixPay
                 //    "DECLINED" => Status.Declined
                 //}
             };
+
+        private static int GetClientId()
+        {
+            throw new NotImplementedException();
+        }
 
         public CubixPayService(IConfiguration configuration, ILogger<CubixPayService> logger)
             : base(configuration, logger, PspName) { }

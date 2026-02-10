@@ -46,7 +46,7 @@ namespace SmartAdmin.WebUI.Pages.Reports
         public SelectList Psps { get; set; } = default!;
         public string? RunName { get; set; }
 
-        public async Task OnGetAsync()
+        public async Task OnGetAsync([FromQuery]int runId = 0, [FromQuery]string matchedStatus = null)
         {
             if (StartDate == default)
                 StartDate = dateTime.TwoDaysBack;
@@ -129,7 +129,7 @@ namespace SmartAdmin.WebUI.Pages.Reports
             var csv = new System.Text.StringBuilder();
 
             // Header row
-            csv.AppendLine("Transaction ID,External Payment ID,PSP,Player ID,Brand,Amount,Currency,Date,Status,Action,Settlement Status,Fees,Net Settlement,Case Number,Case Status");
+            csv.AppendLine("Transaction ID,External Payment ID,PSP,User ID,Brand,Amount,Currency,Date,Status,Action,Settlement Status,Fees,Net Settlement,Case Number,Case Status");
 
             foreach (var item in result.rows)
             {
@@ -137,7 +137,7 @@ namespace SmartAdmin.WebUI.Pages.Reports
                     EscapeCsvField(item.TxId),
                     EscapeCsvField(item.ExternalPaymentId),
                     EscapeCsvField(item.PspName),
-                    EscapeCsvField(item.PlayerId),
+                    EscapeCsvField(item.ClientId.ToString()),
                     EscapeCsvField(item.BrandId),
                     item.Amount.ToString("F2"),
                     EscapeCsvField(item.CurrencyCode),

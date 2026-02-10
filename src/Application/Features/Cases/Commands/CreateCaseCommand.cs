@@ -30,6 +30,13 @@ namespace Application.Features.Cases.Commands
         {
             var caseNumber = $"CASE-{dateTime.Now:yyyy}-{Guid.NewGuid().ToString().Substring(0, 8).ToUpper()}";
 
+            var transaction = await context.InternalPayments.FirstOrDefaultAsync(x => x.TxId == request.LinkedTransactionId || x.ProviderTxId == request.LinkedTransactionId);
+
+            if (transaction == null)
+            {
+                return Result<ExceptionCaseDto>.CreateFailure("There is no transaction with Id: " + request.LinkedTransactionId);
+            }
+
             var caseEntity = new ExceptionCase
             {
                 CaseNumber = caseNumber,
@@ -38,9 +45,10 @@ namespace Application.Features.Cases.Commands
                 Severity = request.Severity,
                 VarianceType = request.VarianceType,
                 VarianceAmount = request.VarianceAmount,
-                AssignedTo = request.AssignedTo,
+                AssignedToId = request.AssignedTo,
+                InternalTransactionId = transaction.Id,
                 DueDate = request.DueDate,
-                LinkedTransactionId = string.IsNullOrWhiteSpace(request.LinkedTransactionId) ? null : int.Parse(request.LinkedTransactionId),
+                ExternalTransactionId = string.IsNullOrWhiteSpace(request.LinkedTransactionId) ? null : int.Parse(request.LinkedTransactionId),
                 RootCauseCode = request.RootCauseCode,
                 Status = CaseStatus.Open,
                 Created = dateTime.Now,

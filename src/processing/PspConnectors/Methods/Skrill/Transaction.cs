@@ -19,7 +19,7 @@ namespace PspConnectors.Methods.Skrill
         public string Country { get; set; }
         public string IpCountry { get; set; }
         public string InstrumentCountry { get; set; }
-        public long AccountID { get; set; }
+        public int AccountID { get; set; }
         public string Currency { get; set; }
         public string Region { get; set; }
     }

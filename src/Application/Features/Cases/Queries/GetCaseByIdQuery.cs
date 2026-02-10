@@ -15,6 +15,8 @@ namespace Application.Features.Cases.Queries
         public async Task<ExceptionCaseDetailsDto?> Handle(GetCaseByIdQuery request, CancellationToken cancellationToken)
         {
             var caseEntity = await context.ExceptionCases
+                .Include(c => c.ReconciliationRun)
+                .Include(c => c.AssignedTo)
                 .Include(c => c.Comments)
                 .Include(c => c.Attachments)
                 .Include(c => c.Labels)
@@ -23,7 +25,33 @@ namespace Application.Features.Cases.Queries
             if (caseEntity == null)
                 return null;
 
-            return mapper.Map<ExceptionCaseDetailsDto>(caseEntity);
+            var result = mapper.Map<ExceptionCaseDetailsDto>(caseEntity);
+            var internalPayment = await context.InternalPayments.FirstOrDefaultAsync(x => x.Id == result.InternalTransactionId);
+            var externalPayment = await context.ExternalPayments.Include(x => x.Psp).FirstOrDefaultAsync(x => x.Id == result.ExternalTransactionId);
+            
+            result.ExternalTransaction = new ExceptionCaseDetailsDto.TransactionDto
+            {
+                Amount = externalPayment.Amount,
+                CurrencyCode = externalPayment.CurrencyCode,
+                ExternalPaymentId = externalPayment.ExternalPaymentId,
+                Id = result.ExternalTransactionId,
+                Source = externalPayment.Psp.Name,
+                Status = externalPayment.Status,
+                TransactionDate = externalPayment.TxDate
+            };
+
+            result.InternalTransaction = new ExceptionCaseDetailsDto.TransactionDto
+            {
+                Amount = internalPayment.Amount,
+                CurrencyCode = internalPayment.CurrencyCode,
+                Id = result.InternalTransactionId,
+                Source = internalPayment.System,
+                Status = internalPayment.Status,
+                TransactionDate = internalPayment.TxDate.Date,
+                ExternalPaymentId = internalPayment.ProviderTxId
+            };
+
+            return result;
         }
     }
 }

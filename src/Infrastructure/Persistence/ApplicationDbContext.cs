@@ -88,6 +88,9 @@ namespace Infrastructure.Persistence
         // Notifications
         public DbSet<Notification> Notifications { get; set; }
 
+        // User Notifications (in-app)
+        public DbSet<UserNotification> UserNotifications { get; set; }
+
         public DbSet<Currency> Currencies { get; set; }
 
         // Identity Users (Domain entity mapped to AspNetUsers table)
@@ -255,6 +258,11 @@ namespace Infrastructure.Persistence
                     .HasColumnName("user_email");
 
                 entity
+                    .Property(e => e.ClientId)
+                    .IsRequired()
+                    .HasColumnName("client_id");
+
+                entity
                     .Property(e => e.Description)
                     .HasColumnName("description");
 
@@ -298,7 +306,7 @@ namespace Infrastructure.Persistence
                     .IsRequired()
                     .HasColumnName("external_payment_id");
 
-                entity.Property(e => e.PlayerId)
+                entity.Property(e => e.ClientId)
                     .IsRequired()
                     .HasColumnName("player_id");
 
@@ -349,7 +357,7 @@ namespace Infrastructure.Persistence
                     .IsRequired()
                     .HasColumnName("action");
 
-                entity.HasIndex(e => e.PlayerId)
+                entity.HasIndex(e => e.ClientId)
                     .HasDatabaseName("idx_external_payments_player");
 
                 entity.HasIndex(e => e.BrandId)

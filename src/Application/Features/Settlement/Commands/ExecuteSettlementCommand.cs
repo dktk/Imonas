@@ -67,7 +67,7 @@ namespace Application.Features.Settlement.Commands
 
                 return Result<SettlementResultDto>.BuildSuccess(
                     result,
-                    $"Settlement completed. Matched: {result.MatchedCount}, Partial: {result.PartialMatchCount}, Unmatched: {result.UnmatchedInternalCount + result.UnmatchedExternalCount}");
+                    $"Settlement completed. Matched: {result.MatchedCount}, Partial: {result.PartialMatchCount}, Unmatched: {result.InternalUnmatchedCount + result.ExternalUnmatchedCount}");
             }
             catch (Exception ex)
             {

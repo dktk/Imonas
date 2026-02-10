@@ -21,7 +21,9 @@ namespace Application.Features.ReconciliationRuns.Queries
             if (run == null)
                 return null;
 
-            return mapper.Map<ReconciliationRunDetailsDto>(run);
+            var dto = mapper.Map<ReconciliationRunDetailsDto>(run);
+
+            return dto;
         }
     }
 }

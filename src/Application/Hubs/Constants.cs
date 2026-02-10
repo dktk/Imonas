@@ -24,6 +24,8 @@ namespace Application.Hubs.Constants
 
         public const string OCRTaskCompleted = "OCRTaskCompleted";
 
+        public const string ReceiveMentionNotification = "ReceiveMentionNotification";
+
     }
 
 }

@@ -42,6 +42,9 @@ namespace Application.Common.Interfaces
         DbSet<CaseAttachment> CaseAttachments { get; set; }
         DbSet<CaseLabel> CaseLabels { get; set; }
 
+        // User Notifications
+        DbSet<UserNotification> UserNotifications { get; set; }
+
         // Configuration
         DbSet<StatusMapping> StatusMappings { get; set; }
         DbSet<FieldMapping> FieldMappings { get; set; }

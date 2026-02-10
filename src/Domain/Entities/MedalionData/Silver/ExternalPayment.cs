@@ -12,12 +12,14 @@ public class ExternalPayment : AuditableEntity
 
     public required PaymentAction Action { get; set; }
 
-    public required string ExternalSystem { get; set; } = default!;
+    public required string ExternalSystem { get; set; }
 
     public required string ExternalPaymentId { get; set; } = default!;
 
-    public required string PlayerId { get; set; } = default!;
-
+    public required int ClientId { get; set; }
+    public required string Email { get; set; }
+    public required string ReferenceCode { get; set; } = default!;
+    public required string Description { get; set; } = default!;
     public string BrandId { get; set; } = default!;
 
     public required int PspId { get; set; } = default!;
@@ -55,7 +57,7 @@ public class InternalPayment : AuditableEntity
     public string ProviderTxId { get; set; }
 
     // todo: should we remove
-    public required string RefNumber { get; set; }
+    public required string ReferenceCode { get; set; }
     public required DateTimeOffset TxDate { get; set; }
 
     public required string Status
@@ -66,6 +68,8 @@ public class InternalPayment : AuditableEntity
     public required decimal Amount { get; set; }
     public required string CurrencyCode { get => currencyCode; set => currencyCode = value.ToUpper(); }
     public required string UserEmail { get; set; }
+    public required int ClientId { get; set; }
+
     public string? Description { get; set; }
     public required string System { get; set; }
     public required int Hash { get; set; }

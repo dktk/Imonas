@@ -10,13 +10,11 @@
 
     var matchableFields = new[] {
         new { Value = "TxId", Text = "Transaction ID", Group = "Common" },
-        new { Value = "ExternalPaymentId", Text = "External Payment ID", Group = "External" },
-        new { Value = "PlayerId", Text = "Player ID", Group = "Common" },
+        new { Value = "PlayerId", Text = "User ID", Group = "Common" },
         new { Value = "Amount", Text = "Amount", Group = "Common" },
         new { Value = "CurrencyCode", Text = "Currency Code", Group = "Common" },
         new { Value = "TxDate", Text = "Transaction Date", Group = "Common" },
         new { Value = "Status", Text = "Status", Group = "Common" },
-        new { Value = "BrandId", Text = "Brand ID", Group = "External" },
         new { Value = "ProviderTxId", Text = "Provider Transaction ID", Group = "Internal" },
         new { Value = "RefNumber", Text = "Reference Number", Group = "Internal" },
         new { Value = "UserEmail", Text = "User Email", Group = "Internal" },
@@ -62,7 +60,6 @@
             color: #007bff;
         }
         .field-checkbox-group {
-            max-height: 200px;
             overflow-y: auto;
             border: 1px solid #dee2e6;
             border-radius: 4px;
@@ -75,7 +72,7 @@
             color: #d4d4d4;
             border-radius: 4px;
             padding: 10px;
-            max-height: 150px;
+            max-height: 250px;
             overflow-y: auto;
         }
         .json-preview .json-key { color: #9cdcfe; }
@@ -490,8 +487,7 @@
             // Field labels map
             const fieldLabels = {
                 'TxId': 'Transaction ID',
-                'ExternalPaymentId': 'External Payment ID',
-                'PlayerId': 'Player ID',
+                'ExternalPaymentId': 'External Payment ID',                
                 'Amount': 'Amount',
                 'CurrencyCode': 'Currency Code',
                 'TxDate': 'Transaction Date',

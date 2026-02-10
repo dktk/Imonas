@@ -15,6 +15,7 @@ namespace Application.Features.ReconciliationRuns.Queries
         public async Task<IEnumerable<ReconciliationRunDto>> Handle(GetRecentRunsQuery request, CancellationToken cancellationToken)
         {
             return await context.ReconciliationRuns
+                .Where(r => !r.IsArchived)
                 .OrderByDescending(r => r.StartedAt)
                 .Take(request.Count)
                 .ProjectTo<ReconciliationRunDto>(mapper.ConfigurationProvider)
