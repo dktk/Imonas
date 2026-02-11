@@ -6,6 +6,7 @@ using Application.Features.Psps.Queries;
 
 namespace SmartAdmin.WebUI.Pages.Config.StatusMappings
 {
+    [Authorize]
     public class CreateModel(
         IStringLocalizer<CreateModel> localizer,
         ISender mediator) : PageModel

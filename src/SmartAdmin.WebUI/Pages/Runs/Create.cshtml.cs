@@ -1,13 +1,12 @@
+using System.ComponentModel.DataAnnotations;
+
 using Application.Features.ReconciliationRuns.Commands;
 using Application.Features.Rules.Queries;
 using Application.Features.Settlement.Commands;
-using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Mvc.RazorPages;
-using Microsoft.Extensions.Localization;
-using System.ComponentModel.DataAnnotations;
 
 namespace SmartAdmin.WebUI.Pages.Runs
 {
+    [Authorize]
     public class CreateModel(
         IStringLocalizer<CreateModel> localizer,
         ISender mediator) : PageModel

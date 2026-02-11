@@ -1,13 +1,10 @@
 using Application.Features.Cases.Commands;
 using Application.Features.Cases.DTOs;
 using Application.Features.Cases.Queries;
-using Domain.Enums;
-using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Mvc.RazorPages;
-using Microsoft.Extensions.Localization;
 
 namespace SmartAdmin.WebUI.Pages.Cases
 {
+    [Authorize]
     public class IndexModel(
         IStringLocalizer<IndexModel> localizer,
         ISender mediator) : PageModel

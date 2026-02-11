@@ -4,6 +4,7 @@ using Application.Features.Psps.Queries;
 
 namespace SmartAdmin.WebUI.Pages.Config
 {
+    [Authorize]
     public class FieldMappingsModel(
         IStringLocalizer<FieldMappingsModel> localizer,
         ISender mediator) : PageModel

@@ -1,14 +1,13 @@
+using System.ComponentModel.DataAnnotations;
+
 using Application.Features.Schedules.Commands;
 using Application.Features.Schedules.Queries;
-using Domain.Enums;
-using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Mvc.RazorPages;
+
 using Microsoft.AspNetCore.Mvc.Rendering;
-using Microsoft.Extensions.Localization;
-using System.ComponentModel.DataAnnotations;
 
 namespace SmartAdmin.WebUI.Pages.Schedules
 {
+    [Authorize]
     public class EditModel(
         IStringLocalizer<EditModel> localizer,
         ISender mediator) : PageModel

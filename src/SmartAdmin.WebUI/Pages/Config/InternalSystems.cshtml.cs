@@ -3,6 +3,7 @@ using Application.Features.Psps.Queries;
 
 namespace SmartAdmin.WebUI.Pages.Config
 {
+    [Authorize]
     public class InternalSystemsModel(
         IStringLocalizer<InternalSystemsModel> localizer,
         IMediator mediator) : PageModel

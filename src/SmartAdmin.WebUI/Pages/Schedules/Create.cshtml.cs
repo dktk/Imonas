@@ -8,6 +8,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace SmartAdmin.WebUI.Pages.Schedules
 {
+    [Authorize]
     public class CreateModel(
         IStringLocalizer<CreateModel> localizer,
         ISender mediator,

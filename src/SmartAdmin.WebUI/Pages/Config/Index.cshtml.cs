@@ -3,6 +3,7 @@ using Application.Common.Interfaces;
 
 namespace SmartAdmin.WebUI.Pages.Config
 {
+    [Authorize]
     public class IndexModel(IStringLocalizer<IndexModel> localizer,
         IDateTime dateTime,
         IUptimeService uptimeService) : PageModel

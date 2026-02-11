@@ -1,12 +1,10 @@
-using Application.Features.Rules.Commands;
-using Domain.Enums;
-using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Mvc.RazorPages;
-using Microsoft.Extensions.Localization;
 using System.ComponentModel.DataAnnotations;
+
+using Application.Features.Rules.Commands;
 
 namespace SmartAdmin.WebUI.Pages.Rules
 {
+    [Authorize]
     public class CreateModel(
         IStringLocalizer<CreateModel> localizer,
         ISender mediator) : PageModel

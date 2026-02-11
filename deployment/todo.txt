@@ -1,0 +1,173 @@
+0.1 Install Docker
+chmod +x install-docker-ubuntu.sh
+./install-docker-ubuntu.sh
+
+0.2 Install Unzip
+sudo apt-get update
+sudo apt-get install -y unzip
+
+0.3 mkdir /home/imonas
+
+0.4 copy and run on the server install_postgres.sh from the Imonas solution
+        chmod +x install_postgres.sh
+        ./install_postgres.sh imonasdb -- to install the sql server and create the imonasdb
+
+        if it errors run:
+             sudo -u postgres psql -c 'CREATE DATABASE "imonasdb" OWNER "main-admin";' -- to create the db
+             sudo -u postgres psql -c "\l" -- to list the dbs
+
+
+0.5 copy on the server deploy_dotnet9_app.sh and reload.sh
+
+0.6 Install Certbot
+        sudo apt update
+        sudo apt install snapd
+        sudo snap install core
+        sudo snap install --classic certbot
+        sudo ln -s /snap/bin/certbot /usr/bin/certbot
+
+        certbot --version
+
+
+1.1 Copy the mykey.pem (private key) file from to the server to
+	C:\Users\<you>\.ssh\mykey.pem
+1.2 Add a SSH entry in the C:\Users\<you>\.ssh\config file
+Eg.
+	Host imonas-test
+	HostName host_name_or_ip
+  	User root
+  	IdentityFile ~/.ssh/mykey.pem
+  	IdentitiesOnly yes
+
+- Access via ssh imonas-test
+
+
+2.1 Generate artefact
+# Publish + zip
+.\deployment\publish-and-zip.ps1 -ProjectPath .\src\SmartAdmin.WebUI\SmartAdmin.WebUI.csproj
+
+2.2 Copy to the server
+.\deployment\copy-zip.ps1 -ZipPath "C:\git\Imonas\artifacts\publish\SmartAdmin.WebUI\20260211-092052.zip" -RemoteHost "52b27845-67e2-4ffd-82bc-b0bfa255dd7c.clouding.host" -User "root" -RemotePath "/temp/" -EnsureRemoteDir
+
+
+3.2 On the server
+    - cd /home
+    - rm -r /var/www/imonas
+    - mkdir /var/www/imonas
+    - unzip /temp/*.zip -d /var/www/imonas/
+    - rm ../temp/*.*
+    - change the connectionString
+        vim /var/www/imonas/appsettings.json
+        "DefaultConnection": "Host=localhost;Database=imonasdb;Username=main-admin;Password=h3iu1h312089790o12h3kjh",
+    - start the service
+        sudo ./deploy_dotnet9_app.sh imonas 5000 "" SmartAdmin.WebUI.dll
+    - use the subdomain_name, instead of test
+        sudo certbot --nginx -d test.imonas.com
+
+3.3 edit the /etc/nginx/sites-available/imonas so that the headers buffer is increased
+    location / {
+        proxy_pass http://127.0.0.1:5000;
+
+        proxy_http_version 1.1;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection $connection_upgrade;
+
+        # ---- Fix "upstream sent too big header" ----
+        proxy_buffer_size       128k;
+        proxy_buffers           4 256k;
+        proxy_busy_buffers_size 256k;
+
+        # (optional) if you also see large response bodies / streaming issues:
+        # proxy_buffering off;
+    }
+
+    sudo nginx -t
+    sudo systemctl reload nginx
+
+4.1 New subdomains
+ - for each new subdomain, in godaddy you need to Add A record:
+
+        Type: A
+        Name/Host: subdomain_name
+        Value/Points to: server_ip
+        TTL: Default
+
+ - test it with dig +short A subdomain_name.imonas.com and it should return the server_ip
+
+
+5.1 Install TLS via certbot
+    - the content of /etc/nginx/sites-available/imonas should look like
+
+        server {
+            listen 80;
+            server_name server_name.imonas.com;
+
+            location / {
+                proxy_pass         http://127.0.0.1:5000;
+                proxy_http_version 1.1;
+
+                proxy_set_header   Host              $host;
+                proxy_set_header   X-Real-IP         $remote_addr;
+                proxy_set_header   X-Forwarded-For   $proxy_add_x_forwarded_for;
+                proxy_set_header   X-Forwarded-Proto $scheme;
+
+                proxy_set_header   Upgrade           $http_upgrade;
+                proxy_set_header   Connection        $connection_upgrade;
+            }
+        }
+
+    - Attention
+        - change the server_name in the above config with the subdomain that will work on that machine
+        - the server_name can have multiple subdomains it handles, like
+                server_name a.b.com b.c.com;  -- no commas, just spaces
+        - imonas.com and www.imonas.com need to be resolved by only 1 server !!!
+        - all subdomain only setups will only have ONE server_name in the config file !!!
+
+    sudo nginx -t
+    sudo systemctl reload nginx
+
+    - only issue the certificate for the subdomain_name you are working on
+        - Eg. 1 sudo certbot --nginx -d subdomain_name.imonas.com
+        - Eg. 2 sudo certbot --nginx -d imonas.com -d www.imonas.com -d test.imonas.com
+
+6.1 Add .env content
+    sudo vim /etc/imonas/imonas.env
+        # Environment for imonas
+        ASPNETCORE_ENVIRONMENT=Production
+        ASPNETCORE_URLS=http://127.0.0.1:5000
+        ConnectionStrings__DefaultConnection=Host=127.0.0.1;Port=5432;Database=imonasdb;Username=main-admin;Password=h3iu1h312089790o12h3kjh
+
+7.1
+    - postgresql
+        ssh 1st
+        psql "postgresql://main-admin:h3iu1h312089790o12h3kjh@127.0.0.1:5432/imonasdb"
+
+            -- view all tables
+            --
+            SELECT schemaname, tablename
+                FROM pg_catalog.pg_tables
+                WHERE schemaname NOT IN ('pg_catalog', 'information_schema')
+                ORDER BY schemaname, tablename;
+
+    - service
+        sudo systemctl status imonas --no-pager
+        sudo journalctl -u imonas -f
+        sudo journalctl -u imonas -n 80 --no-pager
+        sudo systemctl show imonas --property=Environment --property=EnvironmentFiles
+
+    - app
+        tail -f /var/www/imonas/logs/*.txt
+
+
+    - hotdeploy
+        scp .\SmartAdmin.WebUI.dll root@52b27845-67e2-4ffd-82bc-b0bfa255dd7c.clouding.host:/var/www/imonas/SmartAdmin.WebUI.dll
+
+        Restart
+            sudo systemctl daemon-reload
+            sudo systemctl restart imonas
+            sudo journalctl -u imonas -n 80 --no-pager

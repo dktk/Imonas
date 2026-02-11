@@ -3,6 +3,7 @@ using Application.Features.Rules.Queries;
 
 namespace SmartAdmin.WebUI.Pages.Rules
 {
+    [Authorize]
     public class IndexModel(
         IStringLocalizer<IndexModel> localizer,
         ISender mediator) : PageModel

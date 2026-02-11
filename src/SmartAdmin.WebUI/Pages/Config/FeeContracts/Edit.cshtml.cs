@@ -1,11 +1,12 @@
 using System.ComponentModel.DataAnnotations;
+
 using Application.Features.Configuration.FeeContracts.Commands;
 using Application.Features.Configuration.FeeContracts.DTOs;
 using Application.Features.Configuration.FeeContracts.Queries;
-using Domain.Enums;
 
 namespace SmartAdmin.WebUI.Pages.Config.FeeContracts
 {
+    [Authorize]
     public class EditModel(
         IStringLocalizer<EditModel> localizer,
         ISender mediator) : PageModel

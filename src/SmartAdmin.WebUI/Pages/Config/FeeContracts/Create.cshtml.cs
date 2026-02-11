@@ -6,6 +6,7 @@ using Domain.Enums;
 
 namespace SmartAdmin.WebUI.Pages.Config.FeeContracts
 {
+    [Authorize]
     public class CreateModel(
         IStringLocalizer<CreateModel> localizer,
         ISender mediator) : PageModel

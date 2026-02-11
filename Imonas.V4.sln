@@ -67,6 +67,7 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "4.deployment", "4.deploymen
 	ProjectSection(SolutionItems) = preProject
 		deploy_dotnet9_app.sh = deploy_dotnet9_app.sh
 		install_postgres.sh = install_postgres.sh
+		reload.sh = reload.sh
 		steps.txt = steps.txt
 	EndProjectSection
 EndProject

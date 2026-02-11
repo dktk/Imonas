@@ -11,7 +11,8 @@
       "Bash(powershell -File -:*)",
       "Bash(powershell -Command:*)",
       "Bash(Select-String \"error|Build succeeded|Build FAILED\")",
-      "Bash(dotnet ef migrations:*)"
+      "Bash(dotnet ef migrations:*)",
+      "Bash(ls -la \"c:\\\\git\\\\Imonas\\\\src\\\\SmartAdmin.WebUI\\\\Pages\\\\Settlement\"\" 2>&1 || echo \"Directory does not exist \")"
     ]
   }
 }

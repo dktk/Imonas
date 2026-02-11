@@ -62,41 +62,47 @@ if (app.Environment.IsDevelopment())
     app.UseSwagger();
     app.UseSwaggerUI();
 
-    app.UseDeveloperExceptionPage();
-    using (var scope = app.Services.CreateScope())
-    {
-        var services = scope.ServiceProvider;
-        try
-        {
-            var context = services.GetRequiredService<ApplicationDbContext>();
-
-            if (context.Database.IsNpgsql())
-            {
-                context.Database.Migrate();
-            }
-
-            var userManager = services.GetRequiredService<UserManager<ApplicationUser>>();
-            var roleManager = services.GetRequiredService<RoleManager<ApplicationRole>>();
-            var dateTimeService = services.GetRequiredService<IDateTime>();
-
-            await ApplicationDbContextSeed.SeedDefaultUserAsync(userManager, roleManager, dateTimeService);
-            await ApplicationDbContextSeed.SeedSampleDataAsync(context, dateTimeService);
-
-            var currencyService = services.GetRequiredService<ICurrencyService>();
-            await currencyService.Initialize();
-        }
-        catch (Exception ex)
-        {
-            var logger = scope.ServiceProvider.GetRequiredService<ILogger<Program>>();
-            logger.LogError(ex, "An error occurred while migrating or seeding the database.");
-            throw;
-        }
-    }
+    app.UseDeveloperExceptionPage();    
 }
 else
 {
     app.UseHsts();
 }
 
+using (var scope = app.Services.CreateScope())
+{
+    var services = scope.ServiceProvider;
+    try
+    {
+        var context = services.GetRequiredService<ApplicationDbContext>();
+
+        if (context.Database.IsNpgsql())
+        {
+            var logger = scope.ServiceProvider.GetRequiredService<ILogger<Program>>();
+            logger.LogInformation("Trying to run migrations with the following ConnectionString: " + context.Database.GetConnectionString());
+
+            context.Database.Migrate();
+        }
+
+        var userManager = services.GetRequiredService<UserManager<ApplicationUser>>();
+        var roleManager = services.GetRequiredService<RoleManager<ApplicationRole>>();
+        var dateTimeService = services.GetRequiredService<IDateTime>();
+
+        await ApplicationDbContextSeed.SeedDefaultUserAsync(userManager, roleManager, dateTimeService);
+        await ApplicationDbContextSeed.SeedSampleDataAsync(context, dateTimeService);
+
+        var currencyService = services.GetRequiredService<ICurrencyService>();
+        await currencyService.Initialize();
+    }
+    catch (Exception ex)
+    {
+        var logger = scope.ServiceProvider.GetRequiredService<ILogger<Program>>();
+        logger.LogError(ex, "An error occurred while migrating or seeding the database.");
+        throw;
+    }
+}
+
 app.UseInfrastructure(builder.Configuration);
+
+
 await app.RunAsync();

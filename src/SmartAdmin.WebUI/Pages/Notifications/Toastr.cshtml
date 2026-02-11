@@ -1,4 +1,4 @@
-@page
+﻿@page
 @model ToastrModel
 @{ 
 	ViewData["Title"] = "Toastr";
@@ -8,7 +8,7 @@
 	ViewData["PageDescription"] = "Simple to use, lightweight notification plugin";
 }
 @section HeadBlock {
-<link rel="stylesheet" media="screen, print" href="~/css/notifications/toastr/toastr.css">
+<link rel="stylesheet" media="screen, print" href="~/lib/toastr/toastr.min.css">
 <link rel="stylesheet" media="screen, print" href="~/css/theme-demo.css">
 }
 <div class="alert alert-primary">
@@ -228,7 +228,7 @@
 	</div>
 </div>
 @section ScriptsBlock {
-<script src="~/js/notifications/toastr/toastr.js"></script>
+<script src="/lib/toastr/toastr.min.js"></script>
 <script>
 	$(document).ready(function () {
 		var i = -1;

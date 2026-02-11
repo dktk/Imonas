@@ -4,6 +4,7 @@ using SmartAdmin.WebUI.HttpHandlers;
 
 namespace SmartAdmin.WebUI.Pages.Psps
 {
+    [Authorize]
     public class CsvUploadModel(
         IStringLocalizer<CsvUploadModel> localizer,
         FileUploadHandlers fileUploadHandlers,

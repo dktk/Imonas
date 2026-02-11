@@ -1,4 +1,4 @@
-@page
+﻿@page
 @using Microsoft.AspNetCore.Mvc.Localization
 @model SmartAdmin.WebUI.Pages.Config.InternalSystemsModel
 @inject IStringLocalizer<InternalSystemsModel> _localizer
@@ -310,7 +310,7 @@
 </div>
 
 @section ScriptsBlock {
-    <script src="~/lib/axios/dist/axios.js"></script>
+    <script src="/lib/axios/dist/axios.min.js"></script>
     <script>
         $(function () {
             'use strict';

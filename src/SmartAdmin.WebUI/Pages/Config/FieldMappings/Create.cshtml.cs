@@ -1,14 +1,13 @@
+using System.ComponentModel.DataAnnotations;
+
 using Application.Features.Configuration.Commands;
 using Application.Features.Files.Queries;
 using Application.Features.Psps.DTOs;
 using Application.Features.Psps.Queries;
-using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Mvc.RazorPages;
-using Microsoft.Extensions.Localization;
-using System.ComponentModel.DataAnnotations;
 
 namespace SmartAdmin.WebUI.Pages.Config.FieldMappings
 {
+    [Authorize]
     public class CreateModel(
         IStringLocalizer<CreateModel> localizer,
         ISender mediator) : PageModel

@@ -2,10 +2,12 @@ using Application.Common.Interfaces;
 using Application.Features.Cases.Commands;
 using Application.Features.Cases.DTOs;
 using Application.Features.Cases.Queries;
+using Application.Features.Settlement.Commands;
 using Microsoft.EntityFrameworkCore;
 
 namespace SmartAdmin.WebUI.Pages.Cases
 {
+    [Authorize]
     public class DetailsModel(
         IStringLocalizer<DetailsModel> localizer,
         ISender mediator) : PageModel
@@ -100,6 +102,28 @@ namespace SmartAdmin.WebUI.Pages.Cases
                 return NotFound();
 
             return File(attachment.FileContent, attachment.ContentType, attachment.FileName);
+        }
+
+        public async Task<IActionResult> OnPostManualSettleAsync(int id, string description)
+        {
+            if (string.IsNullOrWhiteSpace(description))
+            {
+                TempData["ErrorMessage"] = "A description is required for manual settlement.";
+                return RedirectToPage(new { id });
+            }
+
+            var result = await mediator.Send(new CreateManualSettlementCommand
+            {
+                CaseId = id,
+                Description = description
+            });
+
+            if (result.Success)
+                TempData["SuccessMessage"] = "Manual settlement created and case closed successfully.";
+            else
+                TempData["ErrorMessage"] = result.Message ?? "Manual settlement failed.";
+
+            return RedirectToPage(new { id });
         }
     }
 }

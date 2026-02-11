@@ -18,7 +18,7 @@
     <link rel="stylesheet" media="screen, print" href="~/css/formplugins/bootstrap-daterangepicker/bootstrap-daterangepicker.css">
     <link rel="stylesheet" media="screen, print" href="~/css/fa-solid.css">
     <link rel="stylesheet" media="screen, print" href="~/css/theme-demo.css">
-    <link rel="stylesheet" media="screen,print" href="~/lib/easyui/themes/insdep/easyui.css">
+    <link rel="stylesheet" media="screen,print" href="/lib/easyui/themes/insdep/easyui.css">
     <style>
         .approval_dg_datagrid-cell-c1-_action {
             overflow: visible !important
@@ -62,15 +62,15 @@
 
 @section ScriptsBlock {
     <script src="~/js/formplugins/bootstrap-daterangepicker/bootstrap-daterangepicker.js"></script>
-    <script type="text/javascript" src="~/lib/easyui/jquery.easyui.min.js" asp-append-version="true"></script>
-    <script type="text/javascript" src="~/lib/easyui/plugins/datagrid-filter.js" asp-append-version="true"></script>
-<script type="text/javascript" src="~/lib/easyui/jquery.easyui.component.js" asp-append-version="true"></script>
+    <script type="text/javascript" src="/lib/easyui/jquery.easyui.min.js" asp-append-version="true"></script>
+    <script type="text/javascript" src="/lib/easyui/plugins/datagrid-filter.js" asp-append-version="true"></script>
+    <script type="text/javascript" src="/lib/easyui/jquery.easyui.component.js" asp-append-version="true"></script>
     
  
     <script src="~/lib/easyui/plugins/datagrid-detailview.js"></script>
     <script>jQuery.fn.tooltip = bootstrapTooltip;</script>
-    <script src="~/lib/axios/dist/axios.js"></script>
-    <script src="~/lib/jquery-form/jquery.jsonToForm.js"></script>
+    <script src="/lib/axios/dist/axios.min.js"></script>
+    <script src="/lib/jquery-form/jquery.jsonToForm.js"></script>
     <script type="text/javascript">
 	$('#searchbutton').click(function () {
 		reload();

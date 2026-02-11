@@ -6,6 +6,7 @@ using Application.Common.Interfaces;
 using Infrastructure.Constants.Permission;
 
 using Microsoft.AspNetCore.Identity;
+using Microsoft.EntityFrameworkCore;
 
 namespace Infrastructure.Persistence
 {
@@ -13,6 +14,13 @@ namespace Infrastructure.Persistence
     {
         public static async Task SeedDefaultUserAsync(UserManager<ApplicationUser> userManager, RoleManager<ApplicationRole> roleManager, IDateTime dateTimeService)
         {
+            var rolesCount = await roleManager.Roles.CountAsync();
+
+            if (rolesCount > 0)
+            {
+                return;
+            }
+
             var administratorRole = new ApplicationRole("Admin") { Description = "Admin Group" };
             var userRole = new ApplicationRole("Basic") { Description = "Basic Group" };
 
@@ -28,19 +36,31 @@ namespace Infrastructure.Persistence
             }
 
             var administrator = new ApplicationUser { UserName = "administrator", IsActive = true, Site = "Razor", DisplayName = "Administrator", Email = "new163@163.com", EmailConfirmed = true, ProfilePictureDataUrl = $"https://cn.gravatar.com/avatar/{"new163@163.com".ToMD5()}?s=120&d=retro" };
-            var demo = new ApplicationUser { UserName = "Demo", IsActive = true, Site = "Razor", DisplayName = "Demo", Email = "neozhu@126.com", EmailConfirmed = true, ProfilePictureDataUrl = $"https://cn.gravatar.com/avatar/{"neozhu@126.com".ToMD5()}?s=120&d=retro" };
+            var calin = new ApplicationUser { UserName = "calin", IsActive = true, Site = "Razor", DisplayName = "calin", Email = "new163@163.com", EmailConfirmed = true, ProfilePictureDataUrl = $"https://cn.gravatar.com/avatar/{"new163@163.com".ToMD5()}?s=120&d=retro" };
+            var daniela = new ApplicationUser { UserName = "daniela", IsActive = true, Site = "Razor", DisplayName = "Daniela", Email = "new163@163.com", EmailConfirmed = true, ProfilePictureDataUrl = $"https://cn.gravatar.com/avatar/{"new163@163.com".ToMD5()}?s=120&d=retro" };
+
+            var test1 = new ApplicationUser { UserName = "test1", IsActive = true, Site = "Razor", DisplayName = "test1", Email = "test1@126.com", EmailConfirmed = true, ProfilePictureDataUrl = $"https://cn.gravatar.com/avatar/{"neozhu@126.com".ToMD5()}?s=120&d=retro" };
+            var test2 = new ApplicationUser { UserName = "test2", IsActive = true, Site = "Razor", DisplayName = "test2", Email = "test1@126.com", EmailConfirmed = true, ProfilePictureDataUrl = $"https://cn.gravatar.com/avatar/{"neozhu@126.com".ToMD5()}?s=120&d=retro" };
 
             if (userManager.Users.All(u => u.UserName != administrator.UserName))
             {
                 await userManager.CreateAsync(administrator, "Password123!");
                 await userManager.AddToRolesAsync(administrator, new[] { administratorRole.Name });
-                await userManager.CreateAsync(demo, "Password123!");
-                await userManager.AddToRolesAsync(demo, new[] { userRole.Name });
 
+                await userManager.CreateAsync(calin, "Password123!");
+                await userManager.AddToRolesAsync(calin, new[] { administratorRole.Name });
 
+                await userManager.CreateAsync(daniela, "Password123!");
+                await userManager.AddToRolesAsync(daniela, new[] { administratorRole.Name });
+
+                await userManager.CreateAsync(test1, "Password123!");
+                await userManager.AddToRolesAsync(test1, new[] { userRole.Name });
+
+                await userManager.CreateAsync(test2, "Password123!");
+                await userManager.AddToRolesAsync(test2, new[] { userRole.Name });
             }
-
         }
+
         private static IEnumerable<string> GetAllPermissions()
         {
             var allPermissions = new List<string>();

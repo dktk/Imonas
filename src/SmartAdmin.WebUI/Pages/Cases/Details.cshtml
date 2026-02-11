@@ -406,6 +406,16 @@ else
                     <i class="@(Settings.Theme.IconPrefix) fa-align-center mr-2"></i>
                     @_localizer["Transactions"]
                 </h2>
+                <div class="panel-toolbar">
+                    @if (Model.Case.Status != CaseStatus.Closed
+                        && (_currentUserService.IsInRole("Finance Admin") || _currentUserService.IsInRole("Admin") || _currentUserService.IsInRole("System Admin")))
+                    {
+                        <button type="button" class="btn btn-sm btn-warning waves-effect waves-themed" data-toggle="modal" data-target="#manualSettleModal">
+                            <i class="@(Settings.Theme.IconPrefix) fa-handshake mr-1"></i>
+                            @_localizer["Manual Settle"]
+                        </button>
+                    }
+                </div>
             </div>
             <div class="panel-container show">
                 <div class="panel-content">
@@ -480,6 +490,119 @@ else
                             <button type="submit" class="btn btn-primary" id="confirmAssignBtn">
                                 <i class="@(Settings.Theme.IconPrefix) fa-check mr-1"></i>
                                 @_localizer["Assign"]
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    }
+
+    <!-- Manual Settlement Modal -->
+    @if (Model.Case.Status != CaseStatus.Closed
+        && (_currentUserService.IsInRole("Finance Admin") || _currentUserService.IsInRole("Admin") || _currentUserService.IsInRole("System Admin")))
+    {
+        <div class="modal fade" id="manualSettleModal" tabindex="-1" role="dialog" aria-labelledby="manualSettleModalLabel" aria-hidden="true">
+            <div class="modal-dialog modal-lg" role="document">
+                <div class="modal-content">
+                    <form method="post" asp-page-handler="ManualSettle">
+                        <div class="modal-header bg-warning-600">
+                            <h5 class="modal-title text-white" id="manualSettleModalLabel">
+                                <i class="@(Settings.Theme.IconPrefix) fa-handshake mr-2"></i>
+                                @_localizer["Confirm Manual Settlement"]
+                            </h5>
+                            <button type="button" class="close text-white" data-dismiss="modal" aria-label="Close">
+                                <span aria-hidden="true">&times;</span>
+                            </button>
+                        </div>
+                        <div class="modal-body">
+                            <div class="row mb-3">
+                                <div class="col-md-6">
+                                    <h6 class="text-primary fw-500">
+                                        <i class="@(Settings.Theme.IconPrefix) fa-arrow-right mr-1"></i>
+                                        @_localizer["Internal Transaction"]
+                                    </h6>
+                                    <table class="table table-sm table-bordered mb-0">
+                                        <tr>
+                                            <td class="fw-500">@_localizer["Source"]</td>
+                                            <td>@Model.Case.InternalTransaction?.Source</td>
+                                        </tr>
+                                        <tr>
+                                            <td class="fw-500">@_localizer["Amount"]</td>
+                                            <td>@Model.Case.InternalTransaction?.Amount.ToString("N2") @Model.Case.InternalTransaction?.CurrencyCode</td>
+                                        </tr>
+                                        <tr>
+                                            <td class="fw-500">@_localizer["Date"]</td>
+                                            <td>@Model.Case.InternalTransaction?.TransactionDate.ToString("yyyy-MM-dd")</td>
+                                        </tr>
+                                        <tr>
+                                            <td class="fw-500">@_localizer["Status"]</td>
+                                            <td>@Model.Case.InternalTransaction?.Status</td>
+                                        </tr>
+                                    </table>
+                                </div>
+                                <div class="col-md-6">
+                                    <h6 class="text-info fw-500">
+                                        <i class="@(Settings.Theme.IconPrefix) fa-arrow-left mr-1"></i>
+                                        @_localizer["External Transaction"]
+                                    </h6>
+                                    <table class="table table-sm table-bordered mb-0">
+                                        <tr>
+                                            <td class="fw-500">@_localizer["Source"]</td>
+                                            <td>@Model.Case.ExternalTransaction?.Source</td>
+                                        </tr>
+                                        <tr>
+                                            <td class="fw-500">@_localizer["Amount"]</td>
+                                            <td>@Model.Case.ExternalTransaction?.Amount.ToString("N2") @Model.Case.ExternalTransaction?.CurrencyCode</td>
+                                        </tr>
+                                        <tr>
+                                            <td class="fw-500">@_localizer["Date"]</td>
+                                            <td>@Model.Case.ExternalTransaction?.TransactionDate.ToString("yyyy-MM-dd")</td>
+                                        </tr>
+                                        <tr>
+                                            <td class="fw-500">@_localizer["Status"]</td>
+                                            <td>@Model.Case.ExternalTransaction?.Status</td>
+                                        </tr>
+                                    </table>
+                                </div>
+                            </div>
+
+                            @if (Model.Case.InternalTransaction != null && Model.Case.ExternalTransaction != null)
+                            {
+                                var amountDiff = Model.Case.InternalTransaction.Amount - Model.Case.ExternalTransaction.Amount;
+                                var dateDiff = (Model.Case.InternalTransaction.TransactionDate - Model.Case.ExternalTransaction.TransactionDate).Days;
+                                <div class="alert @(amountDiff == 0 ? "alert-success" : "alert-warning") py-2 mb-3">
+                                    <div class="d-flex justify-content-around">
+                                        <span>
+                                            <strong>@_localizer["Amount Variance"]:</strong>
+                                            @amountDiff.ToString("N2") @Model.Case.InternalTransaction.CurrencyCode
+                                        </span>
+                                        <span>
+                                            <strong>@_localizer["Date Variance"]:</strong>
+                                            @Math.Abs(dateDiff) @_localizer["day(s)"]
+                                        </span>
+                                    </div>
+                                </div>
+                            }
+
+                            <div class="form-group">
+                                <label class="form-label fw-500">
+                                    @_localizer["Description"] <span class="text-danger">*</span>
+                                </label>
+                                <textarea name="description" class="form-control" rows="3" required
+                                          placeholder="@_localizer["Explain why these transactions should be manually settled..."]"></textarea>
+                            </div>
+
+                            <div class="alert alert-info py-2 mb-0">
+                                <i class="@(Settings.Theme.IconPrefix) fa-info-circle mr-1"></i>
+                                @_localizer["This action will create a settlement record and close this case."]
+                            </div>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-dismiss="modal">@_localizer["Cancel"]</button>
+                            <button type="submit" class="btn btn-warning">
+                                <i class="@(Settings.Theme.IconPrefix) fa-handshake mr-1"></i>
+                                @_localizer["Confirm Settlement"]
                             </button>
                         </div>
                     </form>

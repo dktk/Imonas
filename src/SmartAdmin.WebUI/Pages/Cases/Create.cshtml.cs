@@ -7,6 +7,7 @@ using System.ComponentModel.DataAnnotations;
 
 namespace SmartAdmin.WebUI.Pages.Cases
 {
+    [Authorize]
     public class CreateModel(
         IStringLocalizer<CreateModel> localizer,
         ISender mediator) : PageModel

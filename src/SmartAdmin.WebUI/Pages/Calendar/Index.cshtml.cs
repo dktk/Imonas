@@ -8,6 +8,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace SmartAdmin.WebUI.Pages.Calendar
 {
+    [Authorize]
     public class IndexModel(
         IStringLocalizer<IndexModel> localizer,
         ISender mediator,

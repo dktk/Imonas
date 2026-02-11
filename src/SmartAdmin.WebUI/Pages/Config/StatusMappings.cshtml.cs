@@ -1,9 +1,8 @@
 using Application.Features.Configuration.Queries;
-using Microsoft.AspNetCore.Mvc.RazorPages;
-using Microsoft.Extensions.Localization;
 
 namespace SmartAdmin.WebUI.Pages.Config
 {
+    [Authorize]
     public class StatusMappingsModel(
         IStringLocalizer<StatusMappingsModel> localizer,
         ISender mediator) : PageModel

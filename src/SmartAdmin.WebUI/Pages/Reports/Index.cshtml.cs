@@ -8,6 +8,7 @@ using Microsoft.AspNetCore.Mvc.Rendering;
 
 namespace SmartAdmin.WebUI.Pages.Reports
 {
+    [Authorize]
     public class IndexModel(
         IStringLocalizer<IndexModel> localizer,
         IDateTime dateTime,

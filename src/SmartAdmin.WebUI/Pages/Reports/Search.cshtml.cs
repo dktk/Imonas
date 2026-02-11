@@ -1,10 +1,11 @@
-using Application.Common.Interfaces;
 using Application.Features.Psps.Queries;
 using Application.Features.Reports.Queries;
+
 using Microsoft.AspNetCore.Mvc.Rendering;
 
 namespace SmartAdmin.WebUI.Pages.Reports
 {
+    [Authorize]
     public class SearchModel(
         IStringLocalizer<SearchModel> localizer,
         IMediator mediator) : PageModel

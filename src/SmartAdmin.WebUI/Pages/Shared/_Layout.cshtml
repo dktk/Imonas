@@ -6,7 +6,7 @@
 <html lang="en">
 	<head>
 		<partial name="_Head"/>
-        <link rel="stylesheet" media="screen, print" href="~/css/formplugins/select2/select2.bundle.css">
+        <link rel="stylesheet" media="screen, print" href="/lib/select2/css/select2.min.css">
         @RenderSection("HeadBlock", required: false)
 	</head>
 	<body class="mod-bg-1 mod-nav-link mod-nav-link @ViewBag.PreemptiveClass">
@@ -38,8 +38,8 @@
 		<partial name="_GoogleAnalytics"/>
 		<partial name="_ScriptsBasePlugins"/>
 		<partial name="_SignalrScriptsPartial"/>
-
-        <script src="~/js/formplugins/select2/select2.bundle.js"></script>
+        <script src="/lib/axios/dist/axios.min.js"></script>
+        <script src="/lib/select2/js/select2.min.js"></script>
 
         @RenderSection("ScriptsBlock", required: false)
         

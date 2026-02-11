@@ -4,6 +4,7 @@ using Application.Features.Schedules.Queries;
 
 namespace SmartAdmin.WebUI.Pages.Schedules
 {
+    [Authorize]
     public class IndexModel(
         IStringLocalizer<IndexModel> localizer,
         ISender mediator) : PageModel

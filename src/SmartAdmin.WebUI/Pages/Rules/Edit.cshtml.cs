@@ -1,13 +1,11 @@
+using System.ComponentModel.DataAnnotations;
+
 using Application.Features.Rules.Commands;
 using Application.Features.Rules.Queries;
-using Domain.Enums;
-using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Mvc.RazorPages;
-using Microsoft.Extensions.Localization;
-using System.ComponentModel.DataAnnotations;
 
 namespace SmartAdmin.WebUI.Pages.Rules
 {
+    [Authorize]
     public class EditModel(
         IStringLocalizer<EditModel> localizer,
         ISender mediator) : PageModel

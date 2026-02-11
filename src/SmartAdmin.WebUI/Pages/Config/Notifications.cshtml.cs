@@ -7,6 +7,7 @@ using AutoMapper;
 
 namespace SmartAdmin.WebUI.Pages.Config
 {
+    [Authorize]
     public class NotificationsModel(
         ISender mediator,
         IMapper mapper,

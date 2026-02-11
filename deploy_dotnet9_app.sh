@@ -26,6 +26,7 @@ APP_NAME="${1:-}"
 PORT="${2:-5000}"
 PUBLISH_TARBALL="${3:-}"
 DLL_NAME="${4:-}"   # optional; if empty we'll try to auto-detect a single *.dll
+SERVER_NAMES="${5:-${APP_NAME}.imonas.com}"
 
 if [[ -z "$APP_NAME" ]]; then
   echo "ERROR: APP_NAME is required."
@@ -140,42 +141,48 @@ if ! grep -q "map \$http_upgrade \$connection_upgrade" "${NGINX_CONF}"; then
   sed -i '0,/http {/s/http {/&\n\n    map $http_upgrade $connection_upgrade {\n        default upgrade;\n        '\'''\''      close;\n    }\n/' "${NGINX_CONF}"
 fi
 
+
 SITE_AVAILABLE="/etc/nginx/sites-available/${APP_NAME}"
-cat > "${SITE_AVAILABLE}" <<EOF
-server {
-    listen 80;
-    server_name ${APP_NAME}.imonas.com;
+# cat > "${SITE_AVAILABLE}" <<EOF
+# server {
+#     listen 80;
+#     server_name test.imonas.com;
+# 
+#     location / {
+#         proxy_pass         http://127.0.0.1:${PORT};
+#         proxy_http_version 1.1;
+# 
+#         proxy_set_header   Host              \$host;
+#         proxy_set_header   X-Real-IP         \$remote_addr;
+#         proxy_set_header   X-Forwarded-For   \$proxy_add_x_forwarded_for;
+#         proxy_set_header   X-Forwarded-Proto \$scheme;
+# 
+#         proxy_set_header   Upgrade           \$http_upgrade;
+#         proxy_set_header   Connection        \$connection_upgrade;
+#     }
+# }
+# EOF
 
-    location / {
-        proxy_pass         http://127.0.0.1:${PORT};
-        proxy_http_version 1.1;
-
-        proxy_set_header   Host              \$host;
-        proxy_set_header   X-Real-IP         \$remote_addr;
-        proxy_set_header   X-Forwarded-For   \$proxy_add_x_forwarded_for;
-        proxy_set_header   X-Forwarded-Proto \$scheme;
-
-        proxy_set_header   Upgrade           \$http_upgrade;
-        proxy_set_header   Connection        \$connection_upgrade;
-    }
-}
-EOF
 
 ln -sf "${SITE_AVAILABLE}" "/etc/nginx/sites-enabled/${APP_NAME}"
 nginx -t
 systemctl reload nginx
+
 
 echo
 echo "DONE."
 echo "App:        ${APP_NAME}"
 echo "DLL:        ${DLL_NAME}"
 echo "Kestrel:    http://127.0.0.1:${PORT}"
-echo "Public:     http://147.79.102.219/"
+
+PUBLIC_IP="$(curl -fsS https://api.ipify.org || curl -fsS https://ifconfig.me || echo "<unknown>")"
+echo "Public:     http://${PUBLIC_IP}/"
+
 echo
 echo "Useful commands:"
 echo "  systemctl status ${APP_NAME} --no-pager"
 echo "  journalctl -u ${APP_NAME} -f"
 echo
 echo "Next steps (recommended):"
-echo "  - Point a domain to 147.79.102.219"
+echo "  - Point a domain to ${PUBLIC_IP}"
 echo "  - Install TLS via certbot (Nginx plugin)."

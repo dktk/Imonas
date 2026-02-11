@@ -6,13 +6,9 @@
     <UserSecretsId>aspnet-SmartAdmin.WebUI-E383D1D3-A583-4134-97C9-6DFEB2F1657F</UserSecretsId>
   </PropertyGroup>
   <ItemGroup>
-    <Compile Remove="Controllers\**" />
     <Compile Remove="Settings\**" />
-    <Content Remove="Controllers\**" />
     <Content Remove="Settings\**" />
-    <EmbeddedResource Remove="Controllers\**" />
     <EmbeddedResource Remove="Settings\**" />
-    <None Remove="Controllers\**" />
     <None Remove="Settings\**" />
   </ItemGroup>
   <ItemGroup>
@@ -40,5 +36,8 @@
   </ItemGroup>
   <Target Name="CreateFilesFolder" AfterTargets="AfterPublish">
     <MakeDir Directories="$(PublishUrl)Files" Condition="!Exists('$(PublishUrl)Files')" />
+  </Target>
+  <Target Name="LibManRestore" BeforeTargets="ComputeFilesToPublish">
+    <Exec Command="libman restore" WorkingDirectory="$(ProjectDir)" />
   </Target>
 </Project>

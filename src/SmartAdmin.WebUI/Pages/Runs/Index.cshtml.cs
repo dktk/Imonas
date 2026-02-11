@@ -1,11 +1,10 @@
 using Application.Features.ReconciliationRuns.Commands;
 using Application.Features.ReconciliationRuns.DTOs;
 using Application.Features.ReconciliationRuns.Queries;
-using Microsoft.AspNetCore.Mvc.RazorPages;
-using Microsoft.Extensions.Localization;
 
 namespace SmartAdmin.WebUI.Pages.Runs
 {
+    [Authorize]
     public class IndexModel(
         IStringLocalizer<IndexModel> localizer,
         ISender mediator) : PageModel

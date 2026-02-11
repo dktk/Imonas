@@ -4,6 +4,7 @@ using Application.Features.Configuration.Currencies.Queries;
 
 namespace SmartAdmin.WebUI.Pages.Config
 {
+    [Authorize]
     public class CurrenciesModel(
         IStringLocalizer<CurrenciesModel> localizer,
         IMediator mediator) : PageModel

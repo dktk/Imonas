@@ -3,6 +3,7 @@ using Application.Features.Configuration.FeeContracts.Queries;
 
 namespace SmartAdmin.WebUI.Pages.Config
 {
+    [Authorize]
     public class FeeContractsModel(
         IStringLocalizer<FeeContractsModel> localizer,
         ISender mediator) : PageModel

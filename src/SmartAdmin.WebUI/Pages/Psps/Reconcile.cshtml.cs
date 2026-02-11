@@ -3,6 +3,7 @@ using Application.Features.Psps.Queries;
 
 namespace SmartAdmin.WebUI.Pages.Psps
 {
+    [Authorize]
     public class ReconcileModel(IStringLocalizer<ReconcileModel> localizer, ISender mediator) : PageModel
     {
         public Dictionary<int, string> PspOptions { get; set; }
