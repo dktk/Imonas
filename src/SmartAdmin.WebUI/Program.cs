@@ -53,6 +53,7 @@ builder.Host.UseSerilog((context, configuration) =>
 Startup.RegisterServices(builder.Configuration, builder.Services);
 
 var app = builder.Build();
+app.Logger.LogWarning("ContentRoot: {ContentRoot} | WebRoot: {WebRoot}", app.Environment.ContentRootPath, app.Environment.WebRootPath);
 
 // Must be early in the pipeline so downstream middleware sees correct scheme/IP.
 app.UseForwardedHeaders();
@@ -68,6 +69,9 @@ else
 {
     app.UseHsts();
 }
+
+app.Logger.LogInformation("Adding infrastructure services.");
+app.UseInfrastructure(builder.Configuration);
 
 using (var scope = app.Services.CreateScope())
 {
@@ -101,8 +105,5 @@ using (var scope = app.Services.CreateScope())
         throw;
     }
 }
-
-app.UseInfrastructure(builder.Configuration);
-
 
 await app.RunAsync();

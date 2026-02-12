@@ -31,15 +31,6 @@ public static class ApplicationBuilderExtensions
 
         app.UseHttpsRedirection();
         app.UseStaticFiles();
-        if (!Directory.Exists(Path.Combine(Directory.GetCurrentDirectory(), @"Files")))
-        {
-            Directory.CreateDirectory(Path.Combine(Directory.GetCurrentDirectory(), @"Files"));
-        }
-        app.UseStaticFiles(new StaticFileOptions
-        {
-            FileProvider = new PhysicalFileProvider(Path.Combine(Directory.GetCurrentDirectory(), @"Files")),
-            RequestPath = new PathString("/Files")
-        });
 
         app.UseRequestLocalization();
         app.UseMiddlewares();

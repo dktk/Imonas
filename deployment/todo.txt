@@ -89,6 +89,12 @@ Eg.
     sudo nginx -t
     sudo systemctl reload nginx
 
+3.4 Grant the imonas service user permission to access the Linux filesystem so that it can serve static files
+    sudo chown -R imonas:imonas /var/www/imonas/wwwroot
+    sudo find /var/www/imonas/wwwroot -type d -exec chmod 755 {} \;
+    sudo find /var/www/imonas/wwwroot -type f -exec chmod 644 {} \;
+    sudo systemctl restart imonas
+
 4.1 New subdomains
  - for each new subdomain, in godaddy you need to Add A record:
 
