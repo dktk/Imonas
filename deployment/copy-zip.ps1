@@ -57,7 +57,32 @@ Write-Host ""
 
 $dest = "${User}@${RemoteHost}:${RemotePath}${zipName}"
 
-& scp @scpArgs $zipFull $dest
-if ($LASTEXITCODE -ne 0) { throw "SCP failed with exit code $LASTEXITCODE" }
+try {
+    & scp @scpArgs $zipFull $dest
+    if ($LASTEXITCODE -ne 0) { throw "SCP failed with exit code $LASTEXITCODE" }
 
-Write-Host "==> Done. Uploaded $zipName to $User@${RemoteHost}:$RemotePath"
+    Write-Host "==> Done. Uploaded $zipName to $User@${RemoteHost}:$RemotePath"
+}
+finally {
+    # Cleanup: delete the zip + delete sibling folder with same name as zip (minus .zip)
+    $zipDir = [IO.Path]::GetDirectoryName($zipFull)
+    $folderName = [IO.Path]::GetFileNameWithoutExtension($zipFull)
+    $folderPath = Join-Path $zipDir $folderName
+
+    Write-Host ""
+    Write-Host "==> Cleanup:"
+
+    if (Test-Path $zipFull -PathType Leaf) {
+        Write-Host "    Removing zip: $zipFull"
+        Remove-Item -LiteralPath $zipFull -Force -ErrorAction SilentlyContinue
+    } else {
+        Write-Host "    Zip not found (already removed?): $zipFull"
+    }
+
+    if (Test-Path $folderPath -PathType Container) {
+        Write-Host "    Removing folder: $folderPath"
+        Remove-Item -LiteralPath $folderPath -Recurse -Force -ErrorAction SilentlyContinue
+    } else {
+        Write-Host "    Folder not found (already removed?): $folderPath"
+    }
+}

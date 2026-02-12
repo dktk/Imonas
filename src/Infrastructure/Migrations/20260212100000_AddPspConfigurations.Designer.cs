@@ -3,6 +3,7 @@ using System;
 using Infrastructure.Persistence;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
@@ -11,9 +12,11 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace Infrastructure.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260212100000_AddPspConfigurations")]
+    partial class AddPspConfigurations
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -509,51 +512,6 @@ namespace Infrastructure.Migrations
                         .HasDatabaseName("ix_field_mappings_user_id");
 
                     b.ToTable("field_mappings", (string)null);
-                });
-
-            modelBuilder.Entity("Domain.Entities.Configuration.PspConfiguration", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("integer")
-                        .HasColumnName("id");
-
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
-
-                    b.Property<string>("ConfigJson")
-                        .HasColumnType("text")
-                        .HasColumnName("config_json");
-
-                    b.Property<DateTime>("Created")
-                        .HasColumnType("timestamp with time zone")
-                        .HasColumnName("created");
-
-                    b.Property<DateTime?>("LastModified")
-                        .HasColumnType("timestamp with time zone")
-                        .HasColumnName("last_modified");
-
-                    b.Property<string>("LastModifiedBy")
-                        .HasColumnType("text")
-                        .HasColumnName("last_modified_by");
-
-                    b.Property<int>("PspId")
-                        .HasColumnType("integer")
-                        .HasColumnName("psp_id");
-
-                    b.Property<string>("UserId")
-                        .HasColumnType("text")
-                        .HasColumnName("user_id");
-
-                    b.HasKey("Id")
-                        .HasName("pk_psp_configurations");
-
-                    b.HasIndex("PspId")
-                        .HasDatabaseName("ix_psp_configurations_psp_id");
-
-                    b.HasIndex("UserId")
-                        .HasDatabaseName("ix_psp_configurations_user_id");
-
-                    b.ToTable("psp_configurations", (string)null);
                 });
 
             modelBuilder.Entity("Domain.Entities.Configuration.ReconciliationSchedule", b =>
@@ -1256,10 +1214,6 @@ namespace Infrastructure.Migrations
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
-                    b.Property<string>("CorrelationId")
-                        .HasColumnType("text")
-                        .HasColumnName("correlation_id");
-
                     b.Property<string>("Exception")
                         .HasColumnType("text")
                         .HasColumnName("exception");
@@ -1290,9 +1244,6 @@ namespace Infrastructure.Migrations
 
                     b.HasKey("Id")
                         .HasName("pk_serilogs");
-
-                    b.HasIndex("CorrelationId")
-                        .HasDatabaseName("ix_serilogs_correlation_id");
 
                     b.ToTable("serilogs", (string)null);
                 });
@@ -1752,6 +1703,52 @@ namespace Infrastructure.Migrations
                         .HasDatabaseName("ix_notifications_user_id");
 
                     b.ToTable("notifications", (string)null);
+                });
+
+            modelBuilder.Entity("Domain.Entities.Configuration.PspConfiguration", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("integer")
+                        .HasColumnName("id");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("ConfigJson")
+                        .IsRequired()
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("text")
+                        .HasDefaultValue("{}")
+                        .HasColumnName("config_json");
+
+                    b.Property<DateTime>("Created")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created");
+
+                    b.Property<DateTime?>("LastModified")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("last_modified");
+
+                    b.Property<string>("LastModifiedBy")
+                        .HasColumnType("text")
+                        .HasColumnName("last_modified_by");
+
+                    b.Property<int>("PspId")
+                        .HasColumnType("integer")
+                        .HasColumnName("psp_id");
+
+                    b.Property<string>("UserId")
+                        .HasColumnType("text")
+                        .HasColumnName("user_id");
+
+                    b.HasKey("Id")
+                        .HasName("pk_psp_configurations");
+
+                    b.HasIndex("PspId")
+                        .IsUnique()
+                        .HasDatabaseName("ix_psp_configurations_psp_id");
+
+                    b.ToTable("psp_configurations", (string)null);
                 });
 
             modelBuilder.Entity("Domain.Entities.Psp", b =>
@@ -2664,25 +2661,6 @@ namespace Infrastructure.Migrations
                     b.Navigation("User");
                 });
 
-            modelBuilder.Entity("Domain.Entities.Configuration.PspConfiguration", b =>
-                {
-                    b.HasOne("Domain.Entities.Psp", "Psp")
-                        .WithMany()
-                        .HasForeignKey("PspId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired()
-                        .HasConstraintName("fk_psp_configurations_psps_psp_id");
-
-                    b.HasOne("Domain.Entities.Identity.User", "User")
-                        .WithMany()
-                        .HasForeignKey("UserId")
-                        .HasConstraintName("fk_psp_configurations_asp_net_users_user_id");
-
-                    b.Navigation("Psp");
-
-                    b.Navigation("User");
-                });
-
             modelBuilder.Entity("Domain.Entities.Configuration.ReconciliationSchedule", b =>
                 {
                     b.HasOne("Domain.Entities.Psp", "Psp")
@@ -2923,6 +2901,18 @@ namespace Infrastructure.Migrations
                         .HasConstraintName("fk_notifications_asp_net_users_user_id");
 
                     b.Navigation("User");
+                });
+
+            modelBuilder.Entity("Domain.Entities.Configuration.PspConfiguration", b =>
+                {
+                    b.HasOne("Domain.Entities.Psp", "Psp")
+                        .WithMany()
+                        .HasForeignKey("PspId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("fk_psp_configurations_psps_psp_id");
+
+                    b.Navigation("Psp");
                 });
 
             modelBuilder.Entity("Domain.Entities.Psp", b =>

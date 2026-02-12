@@ -1,0 +1,31 @@
+@model SmartAdmin.WebUI.Pages.Psps.ConfigModel
+
+<h5 class="mb-3">
+    <i class="@(Settings.Theme.IconPrefix) fa-bolt text-warning mr-1"></i>
+    UniWire Configuration
+</h5>
+<p class="text-muted mb-4">Configure API credentials for the UniWire payment gateway.</p>
+
+<div class="form-group">
+    <label class="config-field-label" for="cfgApiKey">API Key <span class="text-danger">*</span></label>
+    <input type="password" class="form-control" id="cfgApiKey"
+           value="@(Model.ConfigValues.GetValueOrDefault("ApiKey", ""))"
+           placeholder="Enter API Key..." autocomplete="off" />
+    <small class="field-hint">Your UniWire API key for authentication</small>
+</div>
+
+<div class="form-group">
+    <label class="config-field-label" for="cfgApiSecret">API Secret <span class="text-danger">*</span></label>
+    <input type="password" class="form-control" id="cfgApiSecret"
+           value="@(Model.ConfigValues.GetValueOrDefault("ApiSecret", ""))"
+           placeholder="Enter API Secret..." autocomplete="off" />
+    <small class="field-hint">Your UniWire API secret for signing requests</small>
+</div>
+
+<div class="form-group">
+    <label class="config-field-label" for="cfgBaseUrl">Base URL <span class="text-danger">*</span></label>
+    <input type="url" class="form-control" id="cfgBaseUrl"
+           value="@(Model.ConfigValues.GetValueOrDefault("BaseUrl", "https://api.uniwire.com"))"
+           placeholder="https://api.uniwire.com" />
+    <small class="field-hint">The base URL for UniWire API endpoints</small>
+</div>

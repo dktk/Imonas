@@ -115,7 +115,7 @@ namespace Application.Features.Psps.Commands
                     var rawPayment = await context.RawPayments.FirstOrDefaultAsync(x => x.Id == rawPaymentId.Value);
                     if (rawPayment != null)
                     {
-                        var status = unmatched.Count == 0 ? FileStatus.Processed : FileStatus.Failed;
+                        var status = unmatched.Count == 0 ? FileStatus.Uploaded : FileStatus.Failed;
                         rawPayment.Status = status;
 
                         await context.SaveChangesAsync(token);

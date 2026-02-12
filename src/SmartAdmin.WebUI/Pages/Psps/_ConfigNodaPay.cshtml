@@ -1,0 +1,23 @@
+@model SmartAdmin.WebUI.Pages.Psps.ConfigModel
+
+<h5 class="mb-3">
+    <i class="@(Settings.Theme.IconPrefix) fa-university text-primary mr-1"></i>
+    NodaPay Configuration
+</h5>
+<p class="text-muted mb-4">Configure API credentials for the NodaPay open banking gateway.</p>
+
+<div class="form-group">
+    <label class="config-field-label" for="cfgApiKey">API Key <span class="text-danger">*</span></label>
+    <input type="password" class="form-control" id="cfgApiKey"
+           value="@(Model.ConfigValues.GetValueOrDefault("ApiKey", ""))"
+           placeholder="Enter API Key..." autocomplete="off" />
+    <small class="field-hint">Your NodaPay API key (UUID format)</small>
+</div>
+
+<div class="form-group">
+    <label class="config-field-label" for="cfgSignKey">Sign Key <span class="text-danger">*</span></label>
+    <input type="password" class="form-control" id="cfgSignKey"
+           value="@(Model.ConfigValues.GetValueOrDefault("SignKey", ""))"
+           placeholder="Enter Sign Key..." autocomplete="off" />
+    <small class="field-hint">Your NodaPay signature key for verifying webhooks</small>
+</div>

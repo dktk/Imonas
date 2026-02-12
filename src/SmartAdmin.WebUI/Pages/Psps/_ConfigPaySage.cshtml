@@ -1,0 +1,93 @@
+@model SmartAdmin.WebUI.Pages.Psps.ConfigModel
+
+@{
+    var secrets = new List<(string ShopId, string Secret)>();
+    if (Model.ConfigValues.TryGetValue("Secrets", out var secretsJson))
+    {
+        try
+        {
+            using var doc = System.Text.Json.JsonDocument.Parse(secretsJson);
+            foreach (var item in doc.RootElement.EnumerateArray())
+            {
+                var shopId = item.TryGetProperty("ShopId", out var s) ? s.GetString() ?? "" : "";
+                var secret = item.TryGetProperty("Secret", out var k) ? k.GetString() ?? "" : "";
+                secrets.Add((shopId, secret));
+            }
+        }
+        catch { }
+    }
+}
+
+<h5 class="mb-3">
+    <i class="@(Settings.Theme.IconPrefix) fa-lock text-info mr-1"></i>
+    PaySage Configuration
+</h5>
+<p class="text-muted mb-4">Configure API settings and shop secrets for the PaySage payment gateway.</p>
+
+<div class="form-group">
+    <label class="config-field-label" for="cfgReportUrl">Report URL <span class="text-danger">*</span></label>
+    <input type="url" class="form-control" id="cfgReportUrl"
+           value="@(Model.ConfigValues.GetValueOrDefault("ReportUrl", "https://backoffice.paysage.io/api/reports"))"
+           placeholder="https://backoffice.paysage.io/api/reports" />
+    <small class="field-hint">The URL for PaySage reporting API</small>
+</div>
+
+<div class="form-group">
+    <label class="config-field-label" for="cfgApiVersion">API Version <span class="text-danger">*</span></label>
+    <input type="text" class="form-control" id="cfgApiVersion"
+           value="@(Model.ConfigValues.GetValueOrDefault("ApiVersion", "3"))"
+           placeholder="3" style="max-width: 120px;" />
+    <small class="field-hint">PaySage API version number</small>
+</div>
+
+<div class="form-group">
+    <label class="config-field-label">
+        Shop Secrets
+        <button type="button" class="btn btn-sm btn-outline-success ml-2" id="addSecretBtn">
+            <i class="@(Settings.Theme.IconPrefix) fa-plus mr-1"></i> Add
+        </button>
+    </label>
+    <small class="field-hint d-block mb-2">Each shop has a unique ID and secret key pair.</small>
+
+    <div id="secretsContainer">
+        @if (secrets.Any())
+        {
+            @foreach (var (shopId, secret) in secrets)
+            {
+                <div class="secret-row d-flex align-items-center">
+                    <div class="flex-grow-1 mr-2">
+                        <div class="form-row">
+                            <div class="col-md-6 mb-2">
+                                <input type="text" class="form-control secret-shopid" placeholder="Shop ID" value="@shopId" />
+                            </div>
+                            <div class="col-md-6 mb-2">
+                                <input type="text" class="form-control secret-key" placeholder="Secret Key" value="@secret" />
+                            </div>
+                        </div>
+                    </div>
+                    <button type="button" class="btn btn-sm btn-outline-danger remove-secret-btn" title="Remove">
+                        <i class="@(Settings.Theme.IconPrefix) fa-times"></i>
+                    </button>
+                </div>
+            }
+        }
+        else
+        {
+            <div class="secret-row d-flex align-items-center">
+                <div class="flex-grow-1 mr-2">
+                    <div class="form-row">
+                        <div class="col-md-6 mb-2">
+                            <input type="text" class="form-control secret-shopid" placeholder="Shop ID" />
+                        </div>
+                        <div class="col-md-6 mb-2">
+                            <input type="text" class="form-control secret-key" placeholder="Secret Key" />
+                        </div>
+                    </div>
+                </div>
+                <button type="button" class="btn btn-sm btn-outline-danger remove-secret-btn" title="Remove">
+                    <i class="@(Settings.Theme.IconPrefix) fa-times"></i>
+                </button>
+            </div>
+        }
+    </div>
+</div>

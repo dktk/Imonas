@@ -15,6 +15,7 @@ namespace Application.Features.Logs.DTOs
         public string Exception { get; set; }
         public string UserName { get; set; }
         public string Properties { get; set; }
-    
+        public string CorrelationId { get; set; }
+
     }
 }

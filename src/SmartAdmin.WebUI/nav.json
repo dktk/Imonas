@@ -24,6 +24,11 @@
         {
           "title": "Start New Run",
           "href": "/runs/create",
+          "roles": [ "Admin", "Basic" ]
+        },
+        {
+          "title": "Run Notifications",
+          "href": "/config/notifications",
           "roles": [ "Admin" ]
         }
       ]
@@ -117,12 +122,7 @@
           "href": "/config/fieldmappings",
           "roles": [ "Admin" ]
         },
-
-        {
-          "title": "Notifications",
-          "href": "/config/notifications",
-          "roles": [ "Admin" ]
-        },
+        
         {
           "title": "Fee Contracts",
           "href": "/config/feecontracts",
@@ -205,7 +205,7 @@
       "roles": [ "Admin", "Basic" ],
       "items": [
         {
-          "title": "Admin",
+          "title": "External Systems (PSPs)",
           "href": "/psps/admin",
           "roles": [ "Admin" ]
         },

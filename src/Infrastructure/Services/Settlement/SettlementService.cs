@@ -491,6 +491,20 @@ namespace Infrastructure.Services.Settlement
             return result;
         }
 
+        private Dictionary<int, Dictionary<string, object>> ruleDefinitions = new Dictionary<int, Dictionary<string, object>>();
+        private Dictionary<string, object> GetRuleDefinition(MatchingRule rule)
+        {
+            if (ruleDefinitions.ContainsKey(rule.Id))
+            {
+                return ruleDefinitions[rule.Id];
+            }
+
+            var definition = ParseRuleDefinition(rule.RuleDefinition);
+            ruleDefinitions[rule.Id] = definition;
+
+            return definition;
+        }
+
         private RuleMatchResult EvaluateCompositeRule(
             MatchingRule rule,
             InternalPayment internalPayment,
@@ -503,7 +517,8 @@ namespace Infrastructure.Services.Settlement
                 Value = RuleMatchResultType.NoMatch
             };
 
-            var definition = ParseRuleDefinition(rule.RuleDefinition);
+            var definition = GetRuleDefinition(rule);
+
             var conditions = new List<(string name, bool matched, decimal weight)>();
 
             // Check each field specified in the composite rule

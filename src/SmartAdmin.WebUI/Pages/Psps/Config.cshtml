@@ -1,0 +1,272 @@
+@page "{id:int}"
+@using Microsoft.AspNetCore.Mvc.Localization
+@model SmartAdmin.WebUI.Pages.Psps.ConfigModel
+@inject IStringLocalizer<ConfigModel> _localizer
+
+@{
+    ViewData["Title"] = $"Configure {Model.PspConfig?.PspName}";
+    ViewData["PageName"] = "psps_config";
+
+    var saveUrl = Url.Page("/Psps/Config", "Save", new { id = Model.PspConfig?.PspId });
+    var pspCode = Model.PspConfig?.PspCode?.ToUpperInvariant() ?? "";
+}
+
+@section HeadBlock {
+    <link rel="stylesheet" media="screen, print" href="~/css/fa-solid.css">
+    <style>
+        .config-field-label {
+            font-weight: 600;
+            font-size: 0.9rem;
+        }
+        .secret-row {
+            background: #f8f9fa;
+            border-radius: 4px;
+            padding: 10px;
+            margin-bottom: 8px;
+        }
+        .field-hint {
+            font-size: 0.8rem;
+            color: #6c757d;
+        }
+    </style>
+}
+
+<div class="row mb-3">
+    <div class="col-12 d-flex justify-content-between align-items-center">
+        <div>
+            <h1 class="subheader-title">
+                <i class="subheader-icon @(Settings.Theme.IconPrefix) fa-cog"></i>
+                @_localizer["Configure"] — @Model.PspConfig?.PspName
+            </h1>
+            <small class="text-muted">
+                <span class="badge badge-secondary mr-1" style="font-family: monospace;">@Model.PspConfig?.PspCode</span>
+                @if (Model.PspConfig?.IsCsvBased == true)
+                {
+                    <span class="badge badge-info mr-1">CSV-Based</span>
+                }
+                else
+                {
+                    <span class="badge badge-primary mr-1">API-Based</span>
+                }
+            </small>
+        </div>
+        <div>
+            <a asp-page="/Psps/Admin" class="btn btn-secondary waves-effect waves-themed">
+                <i class="@(Settings.Theme.IconPrefix) fa-arrow-left mr-1"></i>
+                @_localizer["Back to PSPs"]
+            </a>
+        </div>
+    </div>
+</div>
+
+@if (!Model.HasApiConfig)
+{
+    <!-- No API Config Required -->
+    <div class="row">
+        <div class="col-xl-8 col-lg-10">
+            <div class="panel">
+                <div class="panel-hdr">
+                    <h2><i class="@(Settings.Theme.IconPrefix) fa-info-circle mr-2"></i> @_localizer["Configuration"]</h2>
+                </div>
+                <div class="panel-container show">
+                    <div class="panel-content text-center py-5">
+                        <i class="@(Settings.Theme.IconPrefix) fa-file-csv fa-4x text-info mb-3 d-block opacity-50"></i>
+                        <h4 class="text-muted">@_localizer["No API configuration required"]</h4>
+                        <p class="text-muted">
+                            @_localizer["This PSP uses CSV file uploads for data import. No API credentials need to be configured."]
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+else
+{
+    <!-- API Configuration Form -->
+    <div class="row">
+        <div class="col-xl-8 col-lg-10">
+            <div class="panel">
+                <div class="panel-hdr">
+                    <h2>
+                        <i class="@(Settings.Theme.IconPrefix) fa-key mr-2"></i>
+                        @_localizer["API Configuration"]
+                    </h2>
+                    <div class="panel-toolbar">
+                        <button class="btn btn-panel waves-effect waves-themed" data-action="panel-collapse" data-toggle="tooltip" data-original-title="Collapse"></button>
+                    </div>
+                </div>
+                <div class="panel-container show">
+                    <div class="panel-content">
+                        <form id="configForm">
+                            @Html.AntiForgeryToken()
+
+                            @switch (pspCode)
+                            {
+                                case "UNIWIRE":
+                                    @await Html.PartialAsync("_ConfigUniWire", Model)
+                                    break;
+                                case "NODAPAY":
+                                    @await Html.PartialAsync("_ConfigNodaPay", Model)
+                                    break;
+                                case "NUMMUSPAY":
+                                    @await Html.PartialAsync("_ConfigNummuspay", Model)
+                                    break;
+                                case "RASTPAY":
+                                    @await Html.PartialAsync("_ConfigRastPay", Model)
+                                    break;
+                                case "PAYSAGE":
+                                    @await Html.PartialAsync("_ConfigPaySage", Model)
+                                    break;
+                                default:
+                                    <div class="alert alert-warning">
+                                        <i class="@(Settings.Theme.IconPrefix) fa-exclamation-triangle mr-1"></i>
+                                        @_localizer["No configuration template available for this PSP code."]
+                                    </div>
+                                    break;
+                            }
+
+                            <hr class="mt-4" />
+                            <div class="d-flex justify-content-end">
+                                <a asp-page="/Psps/Admin" class="btn btn-secondary mr-2">@_localizer["Cancel"]</a>
+                                <button type="submit" class="btn btn-primary" id="saveBtn">
+                                    <i class="@(Settings.Theme.IconPrefix) fa-save mr-1"></i>
+                                    @_localizer["Save Configuration"]
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Help Panel -->
+        <div class="col-xl-4 col-lg-2 d-none d-xl-block">
+            <div class="panel">
+                <div class="panel-hdr">
+                    <h2><i class="@(Settings.Theme.IconPrefix) fa-question-circle mr-2"></i> @_localizer["Help"]</h2>
+                </div>
+                <div class="panel-container show">
+                    <div class="panel-content">
+                        <p class="text-muted">
+                            @_localizer["Configure the API credentials and settings for this payment service provider."]
+                        </p>
+                        <p class="text-muted">
+                            <i class="@(Settings.Theme.IconPrefix) fa-shield-alt text-warning mr-1"></i>
+                            @_localizer["Credentials are stored securely in the database."]
+                        </p>
+                        <p class="text-muted mb-0">
+                            <i class="@(Settings.Theme.IconPrefix) fa-sync text-info mr-1"></i>
+                            @_localizer["Changes take effect on the next reconciliation run."]
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
+@section ScriptsBlock {
+    <script src="/lib/axios/dist/axios.min.js"></script>
+    <script>
+        $(function () {
+            'use strict';
+
+            // ---- PaySage: dynamic secret rows ----
+            var secretIndex = $('#secretsContainer .secret-row').length;
+
+            $(document).on('click', '#addSecretBtn', function () {
+                var html = '<div class="secret-row d-flex align-items-center">' +
+                    '<div class="flex-grow-1 mr-2">' +
+                    '<div class="form-row">' +
+                    '<div class="col-md-6 mb-2">' +
+                    '<input type="text" class="form-control secret-shopid" placeholder="Shop ID" />' +
+                    '</div>' +
+                    '<div class="col-md-6 mb-2">' +
+                    '<input type="text" class="form-control secret-key" placeholder="Secret Key" />' +
+                    '</div>' +
+                    '</div>' +
+                    '</div>' +
+                    '<button type="button" class="btn btn-sm btn-outline-danger remove-secret-btn" title="Remove">' +
+                    '<i class="@(Settings.Theme.IconPrefix) fa-times"></i>' +
+                    '</button>' +
+                    '</div>';
+                $('#secretsContainer').append(html);
+                secretIndex++;
+            });
+
+            $(document).on('click', '.remove-secret-btn', function () {
+                $(this).closest('.secret-row').remove();
+            });
+
+            // ---- Collect form data and submit ----
+            $('#configForm').on('submit', function (e) {
+                e.preventDefault();
+
+                var config = {};
+                var pspCode = '@pspCode';
+
+                switch (pspCode) {
+                    case 'UNIWIRE':
+                        config.ApiKey = $('#cfgApiKey').val().trim();
+                        config.ApiSecret = $('#cfgApiSecret').val().trim();
+                        config.BaseUrl = $('#cfgBaseUrl').val().trim();
+                        break;
+
+                    case 'NODAPAY':
+                        config.ApiKey = $('#cfgApiKey').val().trim();
+                        config.SignKey = $('#cfgSignKey').val().trim();
+                        break;
+
+                    case 'NUMMUSPAY':
+                        config.ApiKey = $('#cfgApiKey').val().trim();
+                        var projectIdsText = $('#cfgProjectIds').val().trim();
+                        config.ProjectIds = projectIdsText
+                            ? projectIdsText.split(/[\n,]+/).map(function (s) { return s.trim(); }).filter(function (s) { return s.length > 0; })
+                            : [];
+                        break;
+
+                    case 'RASTPAY':
+                        config.BaseUrl = $('#cfgBaseUrl').val().trim();
+                        config.AuthToken = $('#cfgAuthToken').val().trim();
+                        var secretKeysText = $('#cfgSecretKeys').val().trim();
+                        config.SecretKeys = secretKeysText
+                            ? secretKeysText.split(/[\n,]+/).map(function (s) { return s.trim(); }).filter(function (s) { return s.length > 0; })
+                            : [];
+                        break;
+
+                    case 'PAYSAGE':
+                        config.ReportUrl = $('#cfgReportUrl').val().trim();
+                        config.ApiVersion = $('#cfgApiVersion').val().trim();
+                        config.Secrets = [];
+                        $('#secretsContainer .secret-row').each(function () {
+                            var shopId = $(this).find('.secret-shopid').val().trim();
+                            var secret = $(this).find('.secret-key').val().trim();
+                            if (shopId || secret) {
+                                config.Secrets.push({ ShopId: shopId, Secret: secret });
+                            }
+                        });
+                        break;
+                }
+
+                var configJson = JSON.stringify(config);
+
+                $('#saveBtn').prop('disabled', true).html('<i class="fal fa-spinner fa-spin mr-1"></i> @_localizer["Saving..."]');
+
+                axios.post('@saveUrl', 'configJson=' + encodeURIComponent(configJson) + '&__RequestVerificationToken=' + $('input[name="__RequestVerificationToken"]').val(), {
+                    headers: { 'Content-Type': 'application/x-www-form-urlencoded' }
+                }).then(function (res) {
+                    if (res.data.succeeded) {
+                        toastr.success(res.data.message);
+                    } else {
+                        toastr.error(res.data.message);
+                    }
+                    $('#saveBtn').prop('disabled', false).html('<i class="fal fa-save mr-1"></i> @_localizer["Save Configuration"]');
+                }).catch(function () {
+                    toastr.error('@_localizer["An error occurred while saving the configuration."]');
+                    $('#saveBtn').prop('disabled', false).html('<i class="fal fa-save mr-1"></i> @_localizer["Save Configuration"]');
+                });
+            });
+        });
+    </script>
+}

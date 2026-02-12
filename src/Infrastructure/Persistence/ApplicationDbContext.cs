@@ -81,6 +81,7 @@ namespace Infrastructure.Persistence
         public DbSet<FieldMapping> FieldMappings { get; set; }
         public DbSet<ReconciliationSchedule> ReconciliationSchedules { get; set; }
         public DbSet<FeeContract> FeeContracts { get; set; }
+        public DbSet<PspConfiguration> PspConfigurations { get; set; }
 
         // Rules
         public DbSet<MatchingRule> MatchingRules { get; set; }

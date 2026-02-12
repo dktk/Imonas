@@ -139,7 +139,7 @@
                                     <th class="text-center" style="width: 100px;">@_localizer["Transactions"]</th>
                                     <th class="text-center" style="width: 100px;">@_localizer["Mappings"]</th>
                                     <th style="width: 140px;">@_localizer["Created"]</th>
-                                    <th class="text-center" style="width: 160px;">@_localizer["Actions"]</th>
+                                    <th class="text-center" style="width: 200px;">@_localizer["Actions"]</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -200,6 +200,14 @@
                                         </td>
                                         <td>@psp.Created.ToString("yyyy-MM-dd HH:mm")</td>
                                         <td class="text-center">
+                                            @{
+                                                var disabledClass = psp.IsCsvBased ? "disabled" : String.Empty;
+                                            }
+                                            <a class="btn btn-sm btn-outline-info waves-effect waves-themed @disabledClass"
+                                               asp-page="/Psps/Config" asp-route-id="@psp.Id"
+                                               title="@_localizer["Configure"]">
+                                                <i class="@(Settings.Theme.IconPrefix) fa-cog"></i>
+                                            </a>
                                             <button class="btn btn-sm btn-outline-primary waves-effect waves-themed edit-btn"
                                                     data-id="@psp.Id"
                                                     data-name="@psp.Name"
@@ -345,7 +353,7 @@
                     </div>
                     <div class="form-group">
                         <label class="form-label" for="editInternalSystemId">@_localizer["Internal System"] <span class="text-danger">*</span></label>
-                        <select class="form-control" id="editInternalSystemId" name="InternalSystemId" required>
+                        <select class="form-control select2" id="editInternalSystemId" name="InternalSystemId" required>
                             <option value="">@_localizer["-- Select Internal System --"]</option>
                             @foreach (var system in Model.InternalSystems)
                             {
@@ -437,6 +445,23 @@
                 });
             });
 
+            // Initialize Select2 inside modals with dropdownParent so options render above the modal
+            $('#createModal').on('shown.bs.modal', function () {
+                $('#createInternalSystemId').select2({
+                    dropdownParent: $('#createModal'),
+                    placeholder: '@_localizer["-- Select Internal System --"]',
+                    allowClear: true
+                });
+            });
+
+            $('#editModal').on('shown.bs.modal', function () {
+                $('#editInternalSystemId').select2({
+                    dropdownParent: $('#editModal'),
+                    placeholder: '@_localizer["-- Select Internal System --"]',
+                    allowClear: true
+                });
+            });
+
             // Create form submit
             $('#createForm').on('submit', function (e) {
                 e.preventDefault();
@@ -475,7 +500,7 @@
                 $('#editCode').val(code);
                 $('#editIsActive').prop('checked', active);
                 $('#editIsCsvBased').prop('checked', csvBased);
-                $('#editInternalSystemId').val(internalSystemId);
+                $('#editInternalSystemId').val(internalSystemId).trigger('change');
 
                 $('#editModal').modal('show');
             });

@@ -1,0 +1,39 @@
+@model SmartAdmin.WebUI.Pages.Psps.ConfigModel
+
+@{
+    var projectIds = "";
+    if (Model.ConfigValues.TryGetValue("ProjectIds", out var ids))
+    {
+        // Parse JSON array to newline-separated
+        try
+        {
+            var arr = System.Text.Json.JsonSerializer.Deserialize<string[]>(ids);
+            if (arr != null) projectIds = string.Join("\n", arr);
+        }
+        catch
+        {
+            projectIds = ids;
+        }
+    }
+}
+
+<h5 class="mb-3">
+    <i class="@(Settings.Theme.IconPrefix) fa-credit-card text-success mr-1"></i>
+    Nummuspay Configuration
+</h5>
+<p class="text-muted mb-4">Configure API credentials and project settings for Nummuspay.</p>
+
+<div class="form-group">
+    <label class="config-field-label" for="cfgApiKey">API Key <span class="text-danger">*</span></label>
+    <input type="password" class="form-control" id="cfgApiKey"
+           value="@(Model.ConfigValues.GetValueOrDefault("ApiKey", ""))"
+           placeholder="Enter API Key..." autocomplete="off" />
+    <small class="field-hint">Your Nummuspay API key (UUID format)</small>
+</div>
+
+<div class="form-group">
+    <label class="config-field-label" for="cfgProjectIds">Project IDs <span class="text-danger">*</span></label>
+    <textarea class="form-control" id="cfgProjectIds" rows="5"
+              placeholder="Enter one Project ID per line...">@projectIds</textarea>
+    <small class="field-hint">One project ID per line (e.g., 11722, 11857)</small>
+</div>

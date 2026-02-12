@@ -82,7 +82,7 @@ namespace Application.Features.Psps.Commands
                 }
 
                 var file = await context.RawPayments.FirstOrDefaultAsync(x => x.Id == request.RawPaymentId);
-                file.Status = FileStatus.Processed;
+                file.Status = FileStatus.Uploaded;
                 await context.SaveChangesAsync(cancellationToken);
 
                 return result;

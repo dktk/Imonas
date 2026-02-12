@@ -128,7 +128,7 @@ else
 
     <div class="row">
         <!-- Case Information -->
-        <div class="col-xl-6">
+        <div class="col-xl-5">
             <div id="panel-info" class="panel">
                 <div class="panel-hdr">
                     <h2>
@@ -261,8 +261,110 @@ else
             }
         </div>
 
-        <!-- Comments & Attachments -->
-        <div class="col-xl-6">
+        <div class="col-xl-7">
+            @* Transaction info *@
+
+            <div id="panel-transactions" class="panel">
+                <div class="panel-hdr">
+                    <h2>
+                        <i class="@(Settings.Theme.IconPrefix) fa-align-center mr-2"></i>
+                        @_localizer["Transactions"]
+                    </h2>
+                    <div class="panel-toolbar">
+                        @if (Model.Case.Status != CaseStatus.Closed
+                                            && (_currentUserService.IsInRole("Finance Admin") || _currentUserService.IsInRole("Admin") || _currentUserService.IsInRole("System Admin")))
+                        {
+                            <button type="button" class="btn btn-sm btn-warning waves-effect waves-themed" data-toggle="modal" data-target="#manualSettleModal">
+                                <i class="@(Settings.Theme.IconPrefix) fa-handshake mr-1"></i>
+                                @_localizer["Manual Settle"]
+                            </button>
+                        }
+                    </div>
+                </div>
+                <div class="panel-container show">
+                    <div class="panel-content">
+                        <table class="table table-bordered">
+                            <thead>
+                                <tr>
+                                    <th>@_localizer["Id"]</th>
+                                    <th>@_localizer["Source"]</th>
+                                    <th>@_localizer["Amount"]</th>
+                                    <th>@_localizer["Currency"]</th>
+                                    <th>@_localizer["Status"]</th>
+                                    <th>@_localizer["Date"]</th>
+                                    <th>@_localizer["ExternalPaymentId"]</th>
+                                    <th>@_localizer["Rule"]</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @{
+                                    var matchingRuleLink = "/rules/edit/#";
+                                    var alertClass = "alert-danger";
+                                    var amountClass = Model.Case.InternalTransaction.Amount != Model.Case.ExternalTransaction.Amount ? alertClass : string.Empty;
+                                    var currencyClass = Model.Case.InternalTransaction.CurrencyCode != Model.Case.ExternalTransaction.CurrencyCode ? alertClass : string.Empty;
+                                    var statusClass = Model.Case.InternalTransaction.Status != Model.Case.ExternalTransaction.Status ? alertClass : string.Empty;
+                                    var externalIdClass = Model.Case.InternalTransaction.ExternalPaymentId != Model.Case.ExternalTransaction.ExternalPaymentId ? alertClass : string.Empty;
+                                }
+                                <tr>
+                                    <td>
+                                        <small>@Model.Case.InternalTransaction.Id</small>
+                                    </td>
+                                    <td>
+                                        <strong>@Model.Case.InternalTransaction.Source</strong>
+                                    </td>
+                                    <td class="@amountClass">
+                                        <small>@Model.Case.InternalTransaction.Amount</small>
+                                    </td>
+                                    <td class="@currencyClass">
+                                        <small>@Model.Case.InternalTransaction.CurrencyCode</small>
+                                    </td>
+                                    <td class="@statusClass">
+                                        <small>@Model.Case.InternalTransaction.Status</small>
+                                    </td>
+                                    <td>
+                                        <small>@Model.Case.InternalTransaction.TransactionDate</small>
+                                    </td>
+                                    <td class="@externalIdClass">
+                                        <small>@Model.Case.InternalTransaction.ExternalPaymentId</small>
+                                    </td>
+                                    <td><a href="@matchingRuleLink">-</a></td>
+                                </tr>
+                                <tr>
+                                    <td>
+                                        <small>@Model.Case.ExternalTransaction.Id</small>
+                                    </td>
+                                    <td>
+                                        <strong>
+                                            @Model.Case.ExternalTransaction.Source
+                                        </strong>
+                                    </td>
+                                    <td class="@amountClass">
+                                        <small>@Model.Case.ExternalTransaction.Amount</small>
+                                    </td>
+                                    <td class="@currencyClass">
+                                        <small>@Model.Case.ExternalTransaction.CurrencyCode</small>
+                                    </td>
+                                    <td class="@statusClass">
+                                        <small>@Model.Case.ExternalTransaction.Status</small>
+                                    </td>
+                                    <td>
+                                        <small>@Model.Case.ExternalTransaction.TransactionDate</small>
+                                    </td>
+                                    <td class="@externalIdClass">
+                                        <small>@Model.Case.ExternalTransaction.ExternalPaymentId</small>
+                                    </td>
+                                    <td>
+                                        <a href="@matchingRuleLink">-</a>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+
+            <!-- Comments & Attachments -->
             <div id="panel-comments" class="panel">
                 <div class="panel-hdr">
                     <h2>
@@ -399,67 +501,7 @@ else
         </div>
     </div>
 
-    <div class="row">
-        <div id="panel-transactions" class="panel">
-            <div class="panel-hdr">
-                <h2>
-                    <i class="@(Settings.Theme.IconPrefix) fa-align-center mr-2"></i>
-                    @_localizer["Transactions"]
-                </h2>
-                <div class="panel-toolbar">
-                    @if (Model.Case.Status != CaseStatus.Closed
-                        && (_currentUserService.IsInRole("Finance Admin") || _currentUserService.IsInRole("Admin") || _currentUserService.IsInRole("System Admin")))
-                    {
-                        <button type="button" class="btn btn-sm btn-warning waves-effect waves-themed" data-toggle="modal" data-target="#manualSettleModal">
-                            <i class="@(Settings.Theme.IconPrefix) fa-handshake mr-1"></i>
-                            @_localizer["Manual Settle"]
-                        </button>
-                    }
-                </div>
-            </div>
-            <div class="panel-container show">
-                <div class="panel-content">
-                    <table class="table table-bordered">
-                        <thead>
-                            <tr>
-                                <th>@_localizer["Id"]</th>
-                                <th>@_localizer["Source"]</th>
-                                <th>@_localizer["Amount"]</th>
-                                <th>@_localizer["Currency"]</th>
-                                <th>@_localizer["Status"]</th>
-                                <th>@_localizer["Date"]</th>
-                                <th>@_localizer["ExternalPaymentId"]</th>
-                                <th>@_localizer["Rule"]</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            <tr>
-                                <td>@Model.Case.InternalTransaction.Id</td>
-                                <td><strong>@Model.Case.InternalTransaction.Source</strong></td>
-                                <td>@Model.Case.InternalTransaction.Amount</td>
-                                <td>@Model.Case.InternalTransaction.CurrencyCode</td>
-                                <td>@Model.Case.InternalTransaction.Status</td>
-                                <td>@Model.Case.InternalTransaction.TransactionDate</td>
-                                <td>@Model.Case.InternalTransaction.ExternalPaymentId</td>
-                                <td></td>
-                            </tr>
-                            <tr>
-                                <td>@Model.Case.ExternalTransaction.Id</td>
-                                <td><strong>@Model.Case.ExternalTransaction.Source</strong></td>
-                                <td>@Model.Case.ExternalTransaction.Amount</td>
-                                <td>@Model.Case.ExternalTransaction.CurrencyCode</td>
-                                <td>@Model.Case.ExternalTransaction.Status</td>
-                                <td>@Model.Case.ExternalTransaction.Amount</td>
-                                <td>@Model.Case.ExternalTransaction.TransactionDate</td>
-                                <td>@Model.Case.ExternalTransaction.ExternalPaymentId</td>
-                                <td></td>
-                            </tr>
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-        </div>
-    </div>
+
 
     <!-- Assign User Modal -->
     @if (Model.Case.Status != CaseStatus.Closed)
@@ -500,7 +542,7 @@ else
 
     <!-- Manual Settlement Modal -->
     @if (Model.Case.Status != CaseStatus.Closed
-        && (_currentUserService.IsInRole("Finance Admin") || _currentUserService.IsInRole("Admin") || _currentUserService.IsInRole("System Admin")))
+                    && (_currentUserService.IsInRole("Finance Admin") || _currentUserService.IsInRole("Admin") || _currentUserService.IsInRole("System Admin")))
     {
         <div class="modal fade" id="manualSettleModal" tabindex="-1" role="dialog" aria-labelledby="manualSettleModalLabel" aria-hidden="true">
             <div class="modal-dialog modal-lg" role="document">
@@ -590,7 +632,7 @@ else
                                     @_localizer["Description"] <span class="text-danger">*</span>
                                 </label>
                                 <textarea name="description" class="form-control" rows="3" required
-                                          placeholder="@_localizer["Explain why these transactions should be manually settled..."]"></textarea>
+                                  placeholder="@_localizer["Explain why these transactions should be manually settled..."]"></textarea>
                             </div>
 
                             <div class="alert alert-info py-2 mb-0">

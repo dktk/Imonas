@@ -1,0 +1,46 @@
+@model SmartAdmin.WebUI.Pages.Psps.ConfigModel
+
+@{
+    var secretKeys = "";
+    if (Model.ConfigValues.TryGetValue("SecretKeys", out var keys))
+    {
+        try
+        {
+            var arr = System.Text.Json.JsonSerializer.Deserialize<string[]>(keys);
+            if (arr != null) secretKeys = string.Join("\n", arr);
+        }
+        catch
+        {
+            secretKeys = keys;
+        }
+    }
+}
+
+<h5 class="mb-3">
+    <i class="@(Settings.Theme.IconPrefix) fa-shield-alt text-danger mr-1"></i>
+    RastPay Configuration
+</h5>
+<p class="text-muted mb-4">Configure API credentials for the RastPay payment gateway.</p>
+
+<div class="form-group">
+    <label class="config-field-label" for="cfgBaseUrl">Base URL <span class="text-danger">*</span></label>
+    <input type="url" class="form-control" id="cfgBaseUrl"
+           value="@(Model.ConfigValues.GetValueOrDefault("BaseUrl", "https://app.rastpay.com"))"
+           placeholder="https://app.rastpay.com" />
+    <small class="field-hint">The base URL for RastPay API</small>
+</div>
+
+<div class="form-group">
+    <label class="config-field-label" for="cfgAuthToken">Auth Token <span class="text-danger">*</span></label>
+    <input type="password" class="form-control" id="cfgAuthToken"
+           value="@(Model.ConfigValues.GetValueOrDefault("AuthToken", ""))"
+           placeholder="Enter Auth Token..." autocomplete="off" />
+    <small class="field-hint">Authentication token for API access</small>
+</div>
+
+<div class="form-group">
+    <label class="config-field-label" for="cfgSecretKeys">Secret Keys <span class="text-danger">*</span></label>
+    <textarea class="form-control" id="cfgSecretKeys" rows="5"
+              placeholder="Enter one secret key per line...">@secretKeys</textarea>
+    <small class="field-hint">One secret key per line. Generated from BO &rarr; Websites &rarr; Website apiKeys.</small>
+</div>

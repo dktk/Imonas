@@ -12,6 +12,8 @@ namespace Infrastructure.Services
 
     public class SerilogsService(ApplicationDbContext context) : ISerilogsService
     {
+        private readonly string _correlationId = Guid.NewGuid().ToString();
+
         private static readonly Dictionary<SerilogLevel, string> levels = new Dictionary<SerilogLevel, string>
         {
             { SerilogLevel.Information, nameof(SerilogLevel.Information) },
@@ -31,7 +33,8 @@ namespace Infrastructure.Services
                 Level = levels[level],
                 UserName = userName,
                 TimeStamp = DateTime.UtcNow,
-                Exception = exception?.Message + Environment.NewLine + exception?.StackTrace
+                Exception = exception?.Message + Environment.NewLine + exception?.StackTrace,
+                CorrelationId = _correlationId
             });
 
             await context.SaveChangesAsync();

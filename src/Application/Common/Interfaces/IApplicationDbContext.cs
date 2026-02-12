@@ -50,6 +50,7 @@ namespace Application.Common.Interfaces
         DbSet<FieldMapping> FieldMappings { get; set; }
         DbSet<ReconciliationSchedule> ReconciliationSchedules { get; set; }
         DbSet<FeeContract> FeeContracts { get; set; }
+        DbSet<PspConfiguration> PspConfigurations { get; set; }
 
         // Rules
         DbSet<MatchingRule> MatchingRules { get; set; }
