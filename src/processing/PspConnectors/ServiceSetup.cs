@@ -18,6 +18,7 @@ using PspConnectors.Methods.Nummuspay;
 using PspConnectors.Methods.Paysage;
 using PspConnectors.Methods.Rastpay;
 using PspConnectors.Methods.Skrill;
+using PspConnectors.Methods.Uniwire;
 using PspConnectors.Services;
 using PspConnectors.Sources.Omega;
 using PspConnectors.Sources.SquarePay;
@@ -33,6 +34,7 @@ namespace PspConnectors
              .Configure<RastPayConfig>(configuration.GetSection($"PspConfigs:{nameof(RastPayConfig)}"))
              .Configure<NummuspayConfig>(configuration.GetSection($"PspConfigs:{nameof(NummuspayConfig)}"))
              .Configure<NodaPayConfig>(configuration.GetSection($"PspConfigs:{nameof(NodaPayConfig)}"))
+             .Configure<UniWireConfig>(configuration.GetSection($"PspConfigs:{nameof(UniWireConfig)}"))
 
              .Configure<RunConfigs>(configuration.GetSection(nameof(RunConfigs)))
 
@@ -55,6 +57,7 @@ namespace PspConnectors
              .AddScoped<SkrillService>()
              .AddScoped<NummusPayService>()
              .AddScoped<NodaPayApiService>()
+             .AddScoped<UniWireService>()
 
              .AddScoped<ITargetThesaurus, ComparisonThesaurus>()
              .AddScoped<IComparisonThesaurus, ComparisonThesaurus>()
