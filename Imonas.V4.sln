@@ -65,10 +65,20 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "data", "data", "{5C47644E-C
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "4.deployment", "4.deployment", "{5DB4C606-D273-4F44-BBAD-31545303C07A}"
 	ProjectSection(SolutionItems) = preProject
+		deployment\steps.txt = deployment\steps.txt
+	EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "VPS", "VPS", "{83816138-6F44-4964-A70A-6640ACEBB78A}"
+	ProjectSection(SolutionItems) = preProject
 		deploy_dotnet9_app.sh = deploy_dotnet9_app.sh
 		install_postgres.sh = install_postgres.sh
 		reload.sh = reload.sh
-		deployment\steps.txt = deployment\steps.txt
+	EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Local", "Local", "{0B41A7A8-2E4C-486C-A06D-2B6164F5D293}"
+	ProjectSection(SolutionItems) = preProject
+		deployment\copy-zip.ps1 = deployment\copy-zip.ps1
+		deployment\publish-and-zip.ps1 = deployment\publish-and-zip.ps1
 	EndProjectSection
 EndProject
 Global
@@ -148,6 +158,8 @@ Global
 		{28389D1F-0129-D4EB-9CEE-393340F86EA4} = {D08FAA20-696E-4B8F-A8BE-D802FC1FCF16}
 		{02EA681E-C7D8-13C7-8484-4AC65E1B71E8} = {B11E2886-C37B-4C7A-9D35-5DAE201EE40E}
 		{5C47644E-CFFF-4669-897D-08C64159B4A4} = {B11E2886-C37B-4C7A-9D35-5DAE201EE40E}
+		{83816138-6F44-4964-A70A-6640ACEBB78A} = {5DB4C606-D273-4F44-BBAD-31545303C07A}
+		{0B41A7A8-2E4C-486C-A06D-2B6164F5D293} = {5DB4C606-D273-4F44-BBAD-31545303C07A}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {2C89141F-8981-46D5-8FB2-82ABDFF349AD}
