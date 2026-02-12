@@ -22,14 +22,14 @@ namespace SmartAdmin.WebUI.Pages.Rules
         {
             if (id <= 0)
             {
-                return new JsonResult(new { succeeded = false, message = localizer["Invalid rule ID."].Value });
+                return new CamelCaseJsonResult(new { succeeded = false, message = localizer["Invalid rule ID."].Value });
             }
 
             var result = await mediator.Send(new ToggleMatchingRuleCommand { Id = id });
 
             if (result.Success)
             {
-                return new JsonResult(new
+                return new CamelCaseJsonResult(new
                 {
                     succeeded = true,
                     message = result.Message,
@@ -37,28 +37,28 @@ namespace SmartAdmin.WebUI.Pages.Rules
                 });
             }
 
-            return new JsonResult(new { succeeded = false, message = result.Message ?? localizer["Failed to toggle rule status."] });
+            return new CamelCaseJsonResult(new { succeeded = false, message = result.Message ?? localizer["Failed to toggle rule status."] });
         }
 
         public async Task<IActionResult> OnPostDeleteAsync(int id)
         {
             if (id <= 0)
             {
-                return new JsonResult(new { succeeded = false, message = localizer["Invalid rule ID."].Value });
+                return new CamelCaseJsonResult(new { succeeded = false, message = localizer["Invalid rule ID."].Value });
             }
 
             var result = await mediator.Send(new DeleteMatchingRuleCommand { Id = id });
 
             if (result.Success)
             {
-                return new JsonResult(new
+                return new CamelCaseJsonResult(new
                 {
                     succeeded = true,
                     message = result.Message
                 });
             }
 
-            return new JsonResult(new { succeeded = false, message = result.Message ?? localizer["Failed to delete rule."] });
+            return new CamelCaseJsonResult(new { succeeded = false, message = result.Message ?? localizer["Failed to delete rule."] });
         }
     }
 }

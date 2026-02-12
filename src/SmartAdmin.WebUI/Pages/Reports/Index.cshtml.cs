@@ -92,7 +92,7 @@ namespace SmartAdmin.WebUI.Pages.Reports
 
             var result = await mediator.Send(query);
 
-            return new JsonResult(new
+            return new CamelCaseJsonResult(new
             {
                 succeeded = true,
                 data = result,

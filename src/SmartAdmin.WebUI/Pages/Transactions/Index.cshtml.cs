@@ -38,7 +38,7 @@ namespace SmartAdmin.WebUI.Pages.Transactions
         public async Task<IActionResult> OnGetDataAsync([FromQuery] PaymentsWithPaginationQuery query)
         {
             var result = await mediator.Send(query);
-            return new JsonResult(result);
+            return new CamelCaseJsonResult(result);
         }
 
 
@@ -69,14 +69,14 @@ namespace SmartAdmin.WebUI.Pages.Transactions
                                 return result;
                             }, this, $"Unable to reconcile {SelectedPspId}");
 
-            return new JsonResult(result);
+            return new CamelCaseJsonResult(result);
         }
 
         public async Task<IActionResult> OnPostDataAsync()
         {
             if (string.IsNullOrWhiteSpace(Sort) && string.IsNullOrWhiteSpace(Order))
             {
-                return new JsonResult(new
+                return new CamelCaseJsonResult(new
                 {
                     succeeded = true,
                     data = new PaginatedData<PaymentDto>(Enumerable.Empty<PaymentDto>(), 0),
@@ -99,7 +99,7 @@ namespace SmartAdmin.WebUI.Pages.Transactions
             var result = await mediator.Send(query);
 
             var message = result.total == 0 ? localizer["No results found."] : string.Format(localizer["Found {0} results."], result.total);
-            return new JsonResult(new
+            return new CamelCaseJsonResult(new
             {
                 succeeded = true,
                 data = result,

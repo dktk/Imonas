@@ -11,14 +11,14 @@ namespace SmartAdmin.WebUI.EndPoints
         public async Task<IActionResult> Get([FromQuery] int take = 20)
         {
             var notifications = await mediator.Send(new GetMyNotificationsQuery { Take = take });
-            return Ok(notifications);
+            return new CamelCaseJsonResult(notifications);
         }
 
         [HttpGet("unread-count")]
         public async Task<IActionResult> GetUnreadCount()
         {
             var count = await mediator.Send(new GetUnreadNotificationCountQuery());
-            return Ok(new { count });
+            return new CamelCaseJsonResult(new { count });
         }
 
         [HttpPost("{id}/mark-read")]

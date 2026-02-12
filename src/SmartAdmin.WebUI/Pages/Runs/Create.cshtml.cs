@@ -96,7 +96,7 @@ namespace SmartAdmin.WebUI.Pages.Runs
             {
                 if (request.CandidateRuleIds == null || !request.CandidateRuleIds.Any())
                 {
-                    return new JsonResult(new
+                    return new CamelCaseJsonResult(new
                     {
                         succeeded = false,
                         message = localizer["Please select at least one candidate rule."].Value
@@ -118,7 +118,7 @@ namespace SmartAdmin.WebUI.Pages.Runs
 
                 if (result.Success)
                 {
-                    return new JsonResult(new
+                    return new CamelCaseJsonResult(new
                     {
                         succeeded = true,
                         message = result.Message,
@@ -126,7 +126,7 @@ namespace SmartAdmin.WebUI.Pages.Runs
                     });
                 }
 
-                return new JsonResult(new
+                return new CamelCaseJsonResult(new
                 {
                     succeeded = false,
                     message = result.Message
@@ -134,7 +134,7 @@ namespace SmartAdmin.WebUI.Pages.Runs
             }
             catch (Exception ex)
             {
-                return new JsonResult(new
+                return new CamelCaseJsonResult(new
                 {
                     succeeded = false,
                     message = $"Simulation failed: {ex.Message}"

@@ -1,11 +1,7 @@
-using MediatR;
-using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Mvc.RazorPages;
-using Microsoft.Extensions.Localization;
-using Microsoft.AspNetCore.Authorization;
-using Infrastructure.Constants.Permission;
 using Application.AuditTrails.Queries.PaginationQuery;
 using Application.Features.AuditTrails.Queries.Export;
+
+using Infrastructure.Constants.Permission;
 
 namespace SmartAdmin.WebUI.Pages.AuditTrails
 {
@@ -22,23 +18,19 @@ namespace SmartAdmin.WebUI.Pages.AuditTrails
             _mediator = mediator;
             _localizer = localizer;
         }
-        public  Task OnGetAsync()
+        public Task OnGetAsync()
         {
             return Task.CompletedTask;
         }
         public async Task<IActionResult> OnGetDataAsync([FromQuery] AuditTrailsWithPaginationQuery command)
         {
             var result = await _mediator.Send(command);
-            return new JsonResult(result);
+            return new CamelCaseJsonResult(result);
         }
         public async Task<FileResult> OnPostExportAsync([FromBody] ExportAuditTrailsQuery command)
         {
             var result = await _mediator.Send(command);
             return File(result, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", _localizer["AuditTrails"] + ".xlsx");
         }
-
-
-
-
     }
 }

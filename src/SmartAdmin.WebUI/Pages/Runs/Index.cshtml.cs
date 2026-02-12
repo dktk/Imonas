@@ -22,12 +22,12 @@ namespace SmartAdmin.WebUI.Pages.Runs
         {
             if (id <= 0)
             {
-                return new JsonResult(new { succeeded = false, message = localizer["Invalid run ID."].Value });
+                return new CamelCaseJsonResult(new { succeeded = false, message = localizer["Invalid run ID."].Value });
             }
 
             if (string.IsNullOrWhiteSpace(comment))
             {
-                return new JsonResult(new { succeeded = false, message = localizer["Archive comment is required."].Value });
+                return new CamelCaseJsonResult(new { succeeded = false, message = localizer["Archive comment is required."].Value });
             }
 
             var command = new ArchiveRunCommand
@@ -40,14 +40,14 @@ namespace SmartAdmin.WebUI.Pages.Runs
 
             if (result.Success)
             {
-                return new JsonResult(new
+                return new CamelCaseJsonResult(new
                 {
                     succeeded = true,
                     message = localizer["Run archived successfully."].Value
                 });
             }
 
-            return new JsonResult(new { succeeded = false, message = result.Message ?? "Failed to archive run." });
+            return new CamelCaseJsonResult(new { succeeded = false, message = result.Message ?? "Failed to archive run." });
         }
     }
 }

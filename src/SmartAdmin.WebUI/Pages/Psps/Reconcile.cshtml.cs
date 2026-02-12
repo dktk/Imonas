@@ -26,7 +26,7 @@ namespace SmartAdmin.WebUI.Pages.Psps
 
             var result = await mediator.Send(Input);
 
-            return new JsonResult(result);
+            return new CamelCaseJsonResult(result);
         }
     }
 }

@@ -122,7 +122,7 @@ namespace SmartAdmin.WebUI.Pages.Calendar
                 }
             });
 
-            return new JsonResult(fullCalendarEvents);
+            return new CamelCaseJsonResult(fullCalendarEvents);
         }
     }
 }

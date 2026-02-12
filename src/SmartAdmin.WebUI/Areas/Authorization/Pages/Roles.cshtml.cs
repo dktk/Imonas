@@ -94,7 +94,7 @@ namespace SmartAdmin.WebUI.Areas.Authorization.Pages
                     role.Name=Input.Name;
                     role.Description=Input.Description;
                     var result= await _roleManager.UpdateAsync(role);
-                    return new JsonResult(result.ToApplicationResult());
+                    return new CamelCaseJsonResult(result.ToApplicationResult());
                 }
                 else
                 {
@@ -102,7 +102,7 @@ namespace SmartAdmin.WebUI.Areas.Authorization.Pages
                     role.Name = Input.Name;
                     role.Description = Input.Description;
                     var result = await _roleManager.CreateAsync(role);
-                    return new JsonResult(result.ToApplicationResult());
+                    return new CamelCaseJsonResult(result.ToApplicationResult());
                 }
                 
             }
@@ -117,7 +117,7 @@ namespace SmartAdmin.WebUI.Areas.Authorization.Pages
             var data = await _roleManager.Roles.Where(filters)
                    .OrderBy($"{sort} {order}")
                    .PaginatedDataAsync(page, rows);
-            return new JsonResult(data);
+            return new CamelCaseJsonResult(data);
         }
 
         public async Task<IActionResult> OnGetDeleteAsync(string id)
@@ -129,7 +129,7 @@ namespace SmartAdmin.WebUI.Areas.Authorization.Pages
             }
 
             var result = await _roleManager.DeleteAsync(role);
-            return new JsonResult(result.ToApplicationResult());
+            return new CamelCaseJsonResult(result.ToApplicationResult());
         }
 
         public async Task<IActionResult> OnGetDeleteCheckedAsync([FromQuery] string[] id)
@@ -143,7 +143,7 @@ namespace SmartAdmin.WebUI.Areas.Authorization.Pages
                 }
                 var result = await _roleManager.DeleteAsync(role);
             }
-            return new JsonResult(Result<bool>.CreateSuccess(true));
+            return new CamelCaseJsonResult(Result<bool>.CreateSuccess(true));
         }
         public async Task<FileResult> OnPostExportAsync(string sort = "Name", string order = "asc", string filterRules = "")
         {
@@ -199,7 +199,7 @@ namespace SmartAdmin.WebUI.Areas.Authorization.Pages
                         }
                     }
                 }
-                return new JsonResult(Result<bool>.CreateSuccess(true));
+                return new CamelCaseJsonResult(Result<bool>.CreateSuccess(true));
             }
             catch (Exception e)
             {
@@ -211,7 +211,7 @@ namespace SmartAdmin.WebUI.Areas.Authorization.Pages
         {
             var role = await _roleManager.FindByIdAsync(id);
             var claims = await _roleManager.GetClaimsAsync(role);
-            return new JsonResult(claims.Select(x=>x.Value));
+            return new CamelCaseJsonResult(claims.Select(x=>x.Value));
         }
         public async Task<IActionResult> OnPostAssignPermissionsAsync()
         {
@@ -226,7 +226,7 @@ namespace SmartAdmin.WebUI.Areas.Authorization.Pages
                 await _roleManager.AddClaimAsync(role, new System.Security.Claims.Claim(ApplicationClaimTypes.Permission, name));
             }
            
-            return new JsonResult(Result<bool>.CreateSuccess(true));
+            return new CamelCaseJsonResult(Result<bool>.CreateSuccess(true));
         }
 
         private IEnumerable<PermissionModel> GetAllPermissions()

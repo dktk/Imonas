@@ -65,7 +65,7 @@ namespace SmartAdmin.WebUI.Areas.Authorization.Pages
             var data=await _userManager.Users.Where(filters)
                    .OrderBy($"{sort} {order}")
                    .PaginatedDataAsync(page, rows);
-            return new JsonResult(data);
+            return new CamelCaseJsonResult(data);
         }
 
         public async Task<IActionResult> OnPostRegisterAsync()
@@ -81,7 +81,7 @@ namespace SmartAdmin.WebUI.Areas.Authorization.Pages
                 ProfilePictureDataUrl = $"https://www.gravatar.com/avatar/{ RegisterFormModel.Email.ToMD5() }?s=120&d=retro"
             };
             var result = await _userManager.CreateAsync(user, RegisterFormModel.Password);
-            return new JsonResult(result.ToApplicationResult());
+            return new CamelCaseJsonResult(result.ToApplicationResult());
         }
         public async Task<IActionResult> OnPostEditAsync()
         {
@@ -91,7 +91,7 @@ namespace SmartAdmin.WebUI.Areas.Authorization.Pages
             user.Email=EditFormModel.Email;
             user.Site=EditFormModel.Site;
             var result = await _userManager.UpdateAsync(user);
-            return new JsonResult(result.ToApplicationResult());
+            return new CamelCaseJsonResult(result.ToApplicationResult());
         }
         public async Task<IActionResult> OnPostResetPasswordAsync()
         {
@@ -100,19 +100,19 @@ namespace SmartAdmin.WebUI.Areas.Authorization.Pages
             var code = await _userManager.GeneratePasswordResetTokenAsync(user);
             var result = await _userManager.ResetPasswordAsync(user, code, ResetFormModel.Password);
             
-            return new JsonResult(result.ToApplicationResult());
+            return new CamelCaseJsonResult(result.ToApplicationResult());
         }
         public async Task<IActionResult> OnGetLockAsync(string id)
         {
             var user = await _userManager.FindByIdAsync(id);
             var result = await _userManager.SetLockoutEndDateAsync(user, System.DateTimeOffset.MaxValue);
-            return new JsonResult(result.ToApplicationResult());
+            return new CamelCaseJsonResult(result.ToApplicationResult());
         }
         public async Task<IActionResult> OnGetUnlockAsync(string id)
         {
             var user = await _userManager.FindByIdAsync(id);
             var result = await _userManager.SetLockoutEndDateAsync(user, System.DateTimeOffset.Now.AddMinutes(-1));
-            return new JsonResult(result.ToApplicationResult());
+            return new CamelCaseJsonResult(result.ToApplicationResult());
         }
         public async Task<IActionResult> OnGetDeleteAsync(string id)
         {
@@ -122,7 +122,7 @@ namespace SmartAdmin.WebUI.Areas.Authorization.Pages
                 return BadRequest(Result<bool>.CreateFailure(new string[] { "Please do not delete the default user." }));
             }
             var result = await _userManager.DeleteAsync(user);
-            return new JsonResult(result.ToApplicationResult());
+            return new CamelCaseJsonResult(result.ToApplicationResult());
         }
         public async Task<IActionResult> OnGetActiveCheckedAsync([FromQuery] string[] id)
         {
@@ -132,7 +132,7 @@ namespace SmartAdmin.WebUI.Areas.Authorization.Pages
                 user.IsActive = true;
                 var result = await _userManager.UpdateAsync(user);
             }
-            return new JsonResult(Result<bool>.CreateSuccess(true));
+            return new CamelCaseJsonResult(Result<bool>.CreateSuccess(true));
         }
         public async Task<IActionResult> OnGetDeleteCheckedAsync([FromQuery] string[] id)
         {
@@ -145,7 +145,7 @@ namespace SmartAdmin.WebUI.Areas.Authorization.Pages
                 }
                 var result = await _userManager.DeleteAsync(user);
             }
-            return new JsonResult(Result<bool>.CreateSuccess(true));
+            return new CamelCaseJsonResult(Result<bool>.CreateSuccess(true));
         }
         public async Task<FileResult> OnPostExportAsync(string sort = "UserName", string order = "asc", string filterRules = "")
         {
@@ -218,7 +218,7 @@ namespace SmartAdmin.WebUI.Areas.Authorization.Pages
 
                     }
                 }
-                return new JsonResult(Result<bool>.CreateSuccess(true));
+                return new CamelCaseJsonResult(Result<bool>.CreateSuccess(true));
             }
             catch (Exception e)
             {
@@ -230,7 +230,7 @@ namespace SmartAdmin.WebUI.Areas.Authorization.Pages
         {
             var user=await _userManager.FindByIdAsync(id);
             var roles=await _userManager.GetRolesAsync(user);
-            return new JsonResult(roles);
+            return new CamelCaseJsonResult(roles);
         }
         public async Task<IActionResult> OnPostAssignRolesAsync()
         {
@@ -238,7 +238,7 @@ namespace SmartAdmin.WebUI.Areas.Authorization.Pages
             var roles = await _userManager.GetRolesAsync(user);
             await _userManager.RemoveFromRolesAsync(user, roles);
             var result = await _userManager.AddToRolesAsync(user, Roles);
-            return new JsonResult(result.ToApplicationResult());
+            return new CamelCaseJsonResult(result.ToApplicationResult());
         }
         public class RegisterModel
         {

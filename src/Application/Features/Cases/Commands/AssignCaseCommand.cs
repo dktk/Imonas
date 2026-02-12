@@ -2,7 +2,7 @@ using SG.Common;
 
 namespace Application.Features.Cases.Commands
 {
-    public class AssignCaseCommand : IRequest<Result<bool>>
+    public class AssignCaseCommand : IRequest<Result<string>>
     {
         public int CaseId { get; set; }
         public string? AssignedTo { get; set; }
@@ -12,25 +12,45 @@ namespace Application.Features.Cases.Commands
         IApplicationDbContext context,
         ICurrentUserService currentUserService,
         IDateTime dateTime) :
-        IRequestHandler<AssignCaseCommand, Result<bool>>
+        IRequestHandler<AssignCaseCommand, Result<string>>
     {
-        public async Task<Result<bool>> Handle(AssignCaseCommand request, CancellationToken cancellationToken)
+        public async Task<Result<string>> Handle(AssignCaseCommand request, CancellationToken cancellationToken)
         {
             var caseEntity = await context.ExceptionCases.FindAsync(new object[] { request.CaseId }, cancellationToken);
 
             if (caseEntity == null)
-                return Result<bool>.CreateFailure(new[] { "Case not found." });
+            {
+                return Result<string>.CreateFailure(new[] { "Case not found." });
+            }
 
-            caseEntity.AssignedToId = !string.IsNullOrEmpty(request.AssignedTo)
-                ? request.AssignedTo
-                : currentUserService.DisplayName ?? currentUserService.UserId;
+            var assignedToId = await context.AspNetUsers
+                                        .Where(x => x.DisplayName == request.AssignedTo)
+                                        .Select(x => x.Id)
+                                        .FirstOrDefaultAsync(cancellationToken);
+
+            if (assignedToId.IsNullOrWhiteSpace())
+            {
+                return Result<string>.CreateFailure(new[] { $"User '{request.AssignedTo}' can not be found." });
+            }
+
+            caseEntity.AssignedToId = assignedToId;
+
             caseEntity.Status = CaseStatus.InProgress;
             caseEntity.LastModified = dateTime.Now;
             caseEntity.LastModifiedBy = currentUserService.UserId;
 
+            context.UserNotifications.Add(new UserNotification
+            {
+                RecipientUserId = assignedToId,               
+                SenderUserId = currentUserService.UserId,
+                SenderDisplayName = currentUserService.DisplayName,
+                LinkUrl = "/cases/details/" + request.CaseId,
+                Message = $"You have been assigned a new case"
+            });
+
             await context.SaveChangesAsync(cancellationToken);
 
-            return Result<bool>.CreateSuccess(true, $"Case assigned to {caseEntity.AssignedTo}.");
+            return Result<string>.CreateSuccess(assignedToId, $"Case assigned to {request.AssignedTo}.");
         }
     }
 }

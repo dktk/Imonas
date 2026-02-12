@@ -43,17 +43,17 @@ namespace SmartAdmin.WebUI.Pages.Psps
         {
             if (string.IsNullOrWhiteSpace(Name))
             {
-                return new JsonResult(new { succeeded = false, message = localizer["Name is required."].Value });
+                return new CamelCaseJsonResult(new { succeeded = false, message = localizer["Name is required."].Value });
             }
 
             if (string.IsNullOrWhiteSpace(Code))
             {
-                return new JsonResult(new { succeeded = false, message = localizer["Code is required."].Value });
+                return new CamelCaseJsonResult(new { succeeded = false, message = localizer["Code is required."].Value });
             }
 
             if (InternalSystemId <= 0)
             {
-                return new JsonResult(new { succeeded = false, message = localizer["Please select an Internal System."].Value });
+                return new CamelCaseJsonResult(new { succeeded = false, message = localizer["Please select an Internal System."].Value });
             }
 
             var command = new AddEditPspCommand
@@ -70,7 +70,7 @@ namespace SmartAdmin.WebUI.Pages.Psps
 
             if (result.Success)
             {
-                return new JsonResult(new
+                return new CamelCaseJsonResult(new
                 {
                     succeeded = true,
                     message = localizer["PSP created successfully."].Value,
@@ -78,29 +78,29 @@ namespace SmartAdmin.WebUI.Pages.Psps
                 });
             }
 
-            return new JsonResult(new { succeeded = false, message = result.Message ?? "Failed to create PSP." });
+            return new CamelCaseJsonResult(new { succeeded = false, message = result.Message ?? "Failed to create PSP." });
         }
 
         public async Task<IActionResult> OnPostUpdateAsync()
         {
             if (EditId <= 0)
             {
-                return new JsonResult(new { succeeded = false, message = localizer["Invalid PSP ID."].Value });
+                return new CamelCaseJsonResult(new { succeeded = false, message = localizer["Invalid PSP ID."].Value });
             }
 
             if (string.IsNullOrWhiteSpace(Name))
             {
-                return new JsonResult(new { succeeded = false, message = localizer["Name is required."].Value });
+                return new CamelCaseJsonResult(new { succeeded = false, message = localizer["Name is required."].Value });
             }
 
             if (string.IsNullOrWhiteSpace(Code))
             {
-                return new JsonResult(new { succeeded = false, message = localizer["Code is required."].Value });
+                return new CamelCaseJsonResult(new { succeeded = false, message = localizer["Code is required."].Value });
             }
 
             if (InternalSystemId <= 0)
             {
-                return new JsonResult(new { succeeded = false, message = localizer["Please select an Internal System."].Value });
+                return new CamelCaseJsonResult(new { succeeded = false, message = localizer["Please select an Internal System."].Value });
             }
 
             var command = new AddEditPspCommand
@@ -117,21 +117,21 @@ namespace SmartAdmin.WebUI.Pages.Psps
 
             if (result.Success)
             {
-                return new JsonResult(new
+                return new CamelCaseJsonResult(new
                 {
                     succeeded = true,
                     message = localizer["PSP updated successfully."].Value
                 });
             }
 
-            return new JsonResult(new { succeeded = false, message = result.Message ?? "Failed to update PSP." });
+            return new CamelCaseJsonResult(new { succeeded = false, message = result.Message ?? "Failed to update PSP." });
         }
 
         public async Task<IActionResult> OnPostDeleteAsync(int id)
         {
             if (id <= 0)
             {
-                return new JsonResult(new { succeeded = false, message = localizer["Invalid PSP ID."].Value });
+                return new CamelCaseJsonResult(new { succeeded = false, message = localizer["Invalid PSP ID."].Value });
             }
 
             var command = new DeletePspCommand { Id = id };
@@ -139,21 +139,21 @@ namespace SmartAdmin.WebUI.Pages.Psps
 
             if (result.Success)
             {
-                return new JsonResult(new
+                return new CamelCaseJsonResult(new
                 {
                     succeeded = true,
                     message = localizer["PSP deleted successfully."].Value
                 });
             }
 
-            return new JsonResult(new { succeeded = false, message = result.Message ?? "Failed to delete PSP." });
+            return new CamelCaseJsonResult(new { succeeded = false, message = result.Message ?? "Failed to delete PSP." });
         }
 
         public async Task<IActionResult> OnPostToggleActiveAsync(int id)
         {
             if (id <= 0)
             {
-                return new JsonResult(new { succeeded = false, message = localizer["Invalid PSP ID."].Value });
+                return new CamelCaseJsonResult(new { succeeded = false, message = localizer["Invalid PSP ID."].Value });
             }
 
             var psps = await mediator.Send(new GetPspsWithDetailsQuery());
@@ -161,7 +161,7 @@ namespace SmartAdmin.WebUI.Pages.Psps
 
             if (psp == null)
             {
-                return new JsonResult(new { succeeded = false, message = "PSP not found." });
+                return new CamelCaseJsonResult(new { succeeded = false, message = "PSP not found." });
             }
 
             var command = new AddEditPspCommand
@@ -178,7 +178,7 @@ namespace SmartAdmin.WebUI.Pages.Psps
 
             if (result.Success)
             {
-                return new JsonResult(new
+                return new CamelCaseJsonResult(new
                 {
                     succeeded = true,
                     message = psp.IsActive
@@ -188,13 +188,13 @@ namespace SmartAdmin.WebUI.Pages.Psps
                 });
             }
 
-            return new JsonResult(new { succeeded = false, message = result.Message ?? "Failed to toggle PSP status." });
+            return new CamelCaseJsonResult(new { succeeded = false, message = result.Message ?? "Failed to toggle PSP status." });
         }
 
         public async Task<IActionResult> OnGetSeedAsync()
         {
             var result = await mediator.Send(new SeedPspsCommand());
-            return new JsonResult(result);
+            return new CamelCaseJsonResult(result);
         }
     }
 }

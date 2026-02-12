@@ -78,24 +78,7 @@
           "roles": [ "Admin" ]
         }
       ]
-    },
-    {
-      "title": "Rules",
-      "icon": "fal fa-code-branch",
-      "roles": [ "Admin", "Basic" ],
-      "items": [
-        {
-          "title": "Matching Rules",
-          "href": "/rules",
-          "roles": [ "Admin", "Basic" ]
-        },
-        {
-          "title": "Create Rule",
-          "href": "/rules/create",
-          "roles": [ "Admin" ]
-        }
-      ]
-    },
+    },    
     {
       "title": "Schedules",
       "icon": "fal fa-scrubber",
@@ -128,21 +111,13 @@
           "href": "/config/statusmappings",
           "roles": [ "Admin" ]
         },
-        {
-          "title": "Add Status Mapping",
-          "href": "/config/statusmappings/create",
-          "roles": [ "Admin" ]
-        },
+
         {
           "title": "Field Mappings",
           "href": "/config/fieldmappings",
           "roles": [ "Admin" ]
         },
-        {
-          "title": "Add Field Mapping",
-          "href": "/config/fieldmappings/create",
-          "roles": [ "Admin" ]
-        },
+
         {
           "title": "Notifications",
           "href": "/config/notifications",
@@ -153,15 +128,11 @@
           "href": "/config/feecontracts",
           "roles": [ "Admin" ]
         },
+
         {
-          "title": "Add Fee Contract",
-          "href": "/config/feecontracts/create",
-          "roles": [ "Admin" ]
-        },
-        {
-          "title": "Internal Systems",
-          "href": "/config/internalsystems",
-          "roles": [ "Admin" ]
+          "title": "Matching Rules",
+          "href": "/rules",
+          "roles": [ "Admin", "Basic" ]
         }
       ]
     },
@@ -236,6 +207,11 @@
         {
           "title": "Admin",
           "href": "/psps/admin",
+          "roles": [ "Admin" ]
+        },
+        {
+          "title": "Internal Systems",
+          "href": "/config/internalsystems",
           "roles": [ "Admin" ]
         },
         {

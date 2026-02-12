@@ -33,22 +33,22 @@ namespace SmartAdmin.WebUI.Pages.Psps
         {
             if (UploadedFile == null)
             {
-                return new JsonResult(new { succeeded = false, message = localizer["Please select a file to upload."] });
+                return new CamelCaseJsonResult(new { succeeded = false, message = localizer["Please select a file to upload."] });
             }
 
             if (UploadedFile.Length > MaxFileSize)
             {
-                return new JsonResult(new { succeeded = false, message = localizer["File size exceeds the 5MB limit."] });
+                return new CamelCaseJsonResult(new { succeeded = false, message = localizer["File size exceeds the 5MB limit."] });
             }
 
             if (!UploadedFile.FileName.EndsWith(".csv", StringComparison.OrdinalIgnoreCase))
             {
-                return new JsonResult(new { succeeded = false, message = localizer["Only CSV files are allowed."] });
+                return new CamelCaseJsonResult(new { succeeded = false, message = localizer["Only CSV files are allowed."] });
             }
 
             if (SelectedPspId <= 0)
             {
-                return new JsonResult(new { succeeded = false, message = localizer["Please select a PSP."] });
+                return new CamelCaseJsonResult(new { succeeded = false, message = localizer["Please select a PSP."] });
             }
 
             using var stream = new MemoryStream();
@@ -58,10 +58,10 @@ namespace SmartAdmin.WebUI.Pages.Psps
 
             if (result.Failed)
             {
-                return new JsonResult(result);
+                return new CamelCaseJsonResult(result);
             }
 
-            return new JsonResult(result);
+            return new CamelCaseJsonResult(result);
         }
     }
 }

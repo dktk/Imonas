@@ -33,12 +33,12 @@ namespace SmartAdmin.WebUI.Pages.Config
         {
             if (string.IsNullOrWhiteSpace(Name))
             {
-                return new JsonResult(new { succeeded = false, message = localizer["Name is required."].Value });
+                return new CamelCaseJsonResult(new { succeeded = false, message = localizer["Name is required."].Value });
             }
 
             if (string.IsNullOrWhiteSpace(Code))
             {
-                return new JsonResult(new { succeeded = false, message = localizer["Code is required."].Value });
+                return new CamelCaseJsonResult(new { succeeded = false, message = localizer["Code is required."].Value });
             }
 
             var command = new CreateCurrencyCommand
@@ -52,7 +52,7 @@ namespace SmartAdmin.WebUI.Pages.Config
 
             if (result.Success)
             {
-                return new JsonResult(new
+                return new CamelCaseJsonResult(new
                 {
                     succeeded = true,
                     message = localizer["Currency created successfully."].Value,
@@ -60,24 +60,24 @@ namespace SmartAdmin.WebUI.Pages.Config
                 });
             }
 
-            return new JsonResult(new { succeeded = false, message = result.Message ?? "Failed to create currency." });
+            return new CamelCaseJsonResult(new { succeeded = false, message = result.Message ?? "Failed to create currency." });
         }
 
         public async Task<IActionResult> OnPostUpdateAsync()
         {
             if (EditId <= 0)
             {
-                return new JsonResult(new { succeeded = false, message = localizer["Invalid currency ID."].Value });
+                return new CamelCaseJsonResult(new { succeeded = false, message = localizer["Invalid currency ID."].Value });
             }
 
             if (string.IsNullOrWhiteSpace(Name))
             {
-                return new JsonResult(new { succeeded = false, message = localizer["Name is required."].Value });
+                return new CamelCaseJsonResult(new { succeeded = false, message = localizer["Name is required."].Value });
             }
 
             if (string.IsNullOrWhiteSpace(Code))
             {
-                return new JsonResult(new { succeeded = false, message = localizer["Code is required."].Value });
+                return new CamelCaseJsonResult(new { succeeded = false, message = localizer["Code is required."].Value });
             }
 
             var command = new UpdateCurrencyCommand
@@ -92,21 +92,21 @@ namespace SmartAdmin.WebUI.Pages.Config
 
             if (result.Success)
             {
-                return new JsonResult(new
+                return new CamelCaseJsonResult(new
                 {
                     succeeded = true,
                     message = localizer["Currency updated successfully."].Value
                 });
             }
 
-            return new JsonResult(new { succeeded = false, message = result.Message ?? "Failed to update currency." });
+            return new CamelCaseJsonResult(new { succeeded = false, message = result.Message ?? "Failed to update currency." });
         }
 
         public async Task<IActionResult> OnPostDeleteAsync(int id)
         {
             if (id <= 0)
             {
-                return new JsonResult(new { succeeded = false, message = localizer["Invalid currency ID."].Value });
+                return new CamelCaseJsonResult(new { succeeded = false, message = localizer["Invalid currency ID."].Value });
             }
 
             var command = new DeleteCurrencyCommand { Id = id };
@@ -114,14 +114,14 @@ namespace SmartAdmin.WebUI.Pages.Config
 
             if (result.Success)
             {
-                return new JsonResult(new
+                return new CamelCaseJsonResult(new
                 {
                     succeeded = true,
                     message = localizer["Currency deleted successfully."].Value
                 });
             }
 
-            return new JsonResult(new { succeeded = false, message = result.Message ?? "Failed to delete currency." });
+            return new CamelCaseJsonResult(new { succeeded = false, message = result.Message ?? "Failed to delete currency." });
         }
     }
 }

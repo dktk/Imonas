@@ -202,9 +202,9 @@
                                             }
                                         </td>
                                         <td class="text-center">
-                                            <button class="btn btn-sm btn-outline-success waves-effect waves-themed" title="@_localizer["Edit"]">
+                                            <a asp-page="/Config/FieldMappings/Edit" asp-route-id="@mapping.Id" class="btn btn-sm btn-outline-success waves-effect waves-themed" title="@_localizer["Edit"]">
                                                 <i class="@(Settings.Theme.IconPrefix) fa-edit"></i>
-                                            </button>
+                                            </a>
                                         </td>
                                     </tr>
                                 }

@@ -85,7 +85,7 @@ namespace SmartAdmin.WebUI.Pages.Reports
 
             var result = await mediator.Send(query);
 
-            return new JsonResult(new
+            return new CamelCaseJsonResult(new
             {
                 succeeded = true,
                 data = result,
@@ -113,7 +113,7 @@ namespace SmartAdmin.WebUI.Pages.Reports
                 return NotFound(new { error = "Transaction not found" });
             }
 
-            return new JsonResult(new
+            return new CamelCaseJsonResult(new
             {
                 succeeded = true,
                 data = transaction

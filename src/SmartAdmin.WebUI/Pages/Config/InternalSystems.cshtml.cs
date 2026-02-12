@@ -28,7 +28,7 @@ namespace SmartAdmin.WebUI.Pages.Config
         {
             if (string.IsNullOrWhiteSpace(Name))
             {
-                return new JsonResult(new { succeeded = false, message = localizer["Name is required."].Value });
+                return new CamelCaseJsonResult(new { succeeded = false, message = localizer["Name is required."].Value });
             }
 
             var command = new CreateInternalSystemCommand
@@ -41,7 +41,7 @@ namespace SmartAdmin.WebUI.Pages.Config
 
             if (result.Success)
             {
-                return new JsonResult(new
+                return new CamelCaseJsonResult(new
                 {
                     succeeded = true,
                     message = localizer["Internal system created successfully."].Value,
@@ -49,19 +49,19 @@ namespace SmartAdmin.WebUI.Pages.Config
                 });
             }
 
-            return new JsonResult(new { succeeded = false, message = result.Message ?? "Failed to create internal system." });
+            return new CamelCaseJsonResult(new { succeeded = false, message = result.Message ?? "Failed to create internal system." });
         }
 
         public async Task<IActionResult> OnPostUpdateAsync()
         {
             if (EditId <= 0)
             {
-                return new JsonResult(new { succeeded = false, message = localizer["Invalid system ID."].Value });
+                return new CamelCaseJsonResult(new { succeeded = false, message = localizer["Invalid system ID."].Value });
             }
 
             if (string.IsNullOrWhiteSpace(Name))
             {
-                return new JsonResult(new { succeeded = false, message = localizer["Name is required."].Value });
+                return new CamelCaseJsonResult(new { succeeded = false, message = localizer["Name is required."].Value });
             }
 
             var command = new UpdateInternalSystemCommand
@@ -75,21 +75,21 @@ namespace SmartAdmin.WebUI.Pages.Config
 
             if (result.Success)
             {
-                return new JsonResult(new
+                return new CamelCaseJsonResult(new
                 {
                     succeeded = true,
                     message = localizer["Internal system updated successfully."].Value
                 });
             }
 
-            return new JsonResult(new { succeeded = false, message = result.Message ?? "Failed to update internal system." });
+            return new CamelCaseJsonResult(new { succeeded = false, message = result.Message ?? "Failed to update internal system." });
         }
 
         public async Task<IActionResult> OnPostDeleteAsync(int id)
         {
             if (id <= 0)
             {
-                return new JsonResult(new { succeeded = false, message = localizer["Invalid system ID."].Value });
+                return new CamelCaseJsonResult(new { succeeded = false, message = localizer["Invalid system ID."].Value });
             }
 
             var command = new DeleteInternalSystemCommand { Id = id };
@@ -97,14 +97,14 @@ namespace SmartAdmin.WebUI.Pages.Config
 
             if (result.Success)
             {
-                return new JsonResult(new
+                return new CamelCaseJsonResult(new
                 {
                     succeeded = true,
                     message = localizer["Internal system deleted successfully."].Value
                 });
             }
 
-            return new JsonResult(new { succeeded = false, message = result.Message ?? "Failed to delete internal system." });
+            return new CamelCaseJsonResult(new { succeeded = false, message = result.Message ?? "Failed to delete internal system." });
         }
 
         public async Task<IActionResult> OnGetSystemAsync(int id)
@@ -113,10 +113,10 @@ namespace SmartAdmin.WebUI.Pages.Config
 
             if (system == null)
             {
-                return new JsonResult(new { succeeded = false, message = "System not found." });
+                return new CamelCaseJsonResult(new { succeeded = false, message = "System not found." });
             }
 
-            return new JsonResult(new { succeeded = true, data = system });
+            return new CamelCaseJsonResult(new { succeeded = true, data = system });
         }
     }
 }

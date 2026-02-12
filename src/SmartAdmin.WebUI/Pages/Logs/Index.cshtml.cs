@@ -31,7 +31,7 @@ namespace SmartAdmin.WebUI.Pages.Logs
         public async Task<IActionResult> OnGetDataAsync([FromQuery] LogsWithPaginationQuery command)
         {
             var result = await _mediator.Send(command);
-            return new JsonResult(result);
+            return new CamelCaseJsonResult(result);
         }
         public async Task<FileResult> OnPostExportAsync([FromBody] ExportLogsQuery command)
         {
@@ -42,12 +42,12 @@ namespace SmartAdmin.WebUI.Pages.Logs
         public async Task<IActionResult> OnGetLogsTimeLineDataAsync([FromQuery] LogsTimeLineChatDataQuery command)
         {
             var result = await _mediator.Send(command);
-            return new JsonResult(result);
+            return new CamelCaseJsonResult(result);
         }
         public async Task<IActionResult> OnGetLogsLevelDataAsync([FromQuery] LogsLevelChatDataQuery command)
         {
             var result = await _mediator.Send(command);
-            return new JsonResult(result);
+            return new CamelCaseJsonResult(result);
         }
 
     }

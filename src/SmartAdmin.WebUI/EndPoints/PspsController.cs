@@ -9,7 +9,7 @@ namespace SmartAdmin.WebUI.EndPoints
         {
             var psps = await mediator.Send(new GetAllPspsQuery(), cancellationToken);
 
-            return Ok(psps);
+            return new CamelCaseJsonResult(psps);
         }
     }
 }

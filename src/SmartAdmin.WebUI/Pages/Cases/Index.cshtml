@@ -416,7 +416,7 @@
                 <p>@_localizer["Assign"] <strong id="assignCaseNumber"></strong> @_localizer["to"]:</p>
                 <div class="form-group">
                     <label class="form-label">@_localizer["Select User"]</label>
-                    <select id="assignCaseUserSelect" class="form-control">
+                    <select id="assignCaseUserSelect" class="form-control select2">
                         <option value="">-- @_localizer["Loading users..."] --</option>
                     </select>
                 </div>
@@ -454,6 +454,15 @@
                     usersLoaded = true;
                 });
             }
+
+            // select2 FIX
+            $('#assignCaseModal').on('shown.bs.modal', function () {
+                $('#assignCaseUserSelect').select2({
+                    dropdownParent: $('#assignCaseModal'),
+                    placeholder: '-- @_localizer["Select a user"] --',
+                    allowClear: true
+                });
+            });
 
             $('.assign-btn').on('click', function () {
                 assignCaseId = $(this).data('id');

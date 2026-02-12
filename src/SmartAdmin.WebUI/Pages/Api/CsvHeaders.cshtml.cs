@@ -31,7 +31,7 @@ namespace SmartAdmin.WebUI.Pages.Api
                     return BadRequest(new { error = "CSV file is empty" });
 
                 var headers = ParseCsvLine(firstLine);
-                return new JsonResult(new { headers, fileName = file.FileName });
+                return new CamelCaseJsonResult(new { headers, fileName = file.FileName });
             }
             catch (Exception ex)
             {
@@ -61,7 +61,7 @@ namespace SmartAdmin.WebUI.Pages.Api
                     return BadRequest(new { error = "CSV file is empty" });
 
                 var headers = ParseCsvLine(firstLine.TrimEnd('\r'));
-                return new JsonResult(new { headers, fileName = rawPayment.FileName });
+                return new CamelCaseJsonResult(new { headers, fileName = rawPayment.FileName });
             }
             catch (Exception ex)
             {

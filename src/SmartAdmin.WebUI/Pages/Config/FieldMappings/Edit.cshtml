@@ -1,0 +1,189 @@
+@page "{id:int}"
+@using Microsoft.AspNetCore.Mvc.Localization
+@model SmartAdmin.WebUI.Pages.Config.FieldMappings.EditModel
+@inject IStringLocalizer<EditModel> _localizer
+
+@{
+    ViewData["Title"] = "Edit Field Mapping";
+    ViewData["PageName"] = "config_fieldmappings_edit";
+}
+
+@section HeadBlock {
+    <link rel="stylesheet" media="screen, print" href="~/css/fa-solid.css">
+}
+
+@if (Model.Mapping == null)
+{
+    <div class="alert alert-danger">@_localizer["Field mapping not found."]</div>
+    <a asp-page="/Config/FieldMappings" class="btn btn-secondary">@_localizer["Back to Mappings"]</a>
+}
+else
+{
+    <div class="row mb-3">
+        <div class="col-12 d-flex justify-content-between align-items-center">
+            <div>
+                <h1 class="subheader-title">
+                    <i class="subheader-icon @(Settings.Theme.IconPrefix) fa-edit"></i> @_localizer["Edit Field Mapping"]
+                </h1>
+                <small class="text-muted">
+                    <span class="badge badge-secondary">@Model.Mapping.PspName</span>
+                    <code>@Model.Mapping.SourceField</code>
+                    <i class="@(Settings.Theme.IconPrefix) fa-arrow-right mx-1"></i>
+                    <code>@Model.Mapping.TargetField</code>
+                </small>
+            </div>
+            <a asp-page="/Config/FieldMappings" class="btn btn-secondary waves-effect waves-themed">
+                <i class="@(Settings.Theme.IconPrefix) fa-arrow-left mr-1"></i>
+                @_localizer["Cancel"]
+            </a>
+        </div>
+    </div>
+
+    @if (!string.IsNullOrEmpty(Model.ErrorMessage))
+    {
+        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+            <i class="@(Settings.Theme.IconPrefix) fa-exclamation-triangle mr-2"></i>
+            @Model.ErrorMessage
+            <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                <span aria-hidden="true">&times;</span>
+            </button>
+        </div>
+    }
+
+    <form method="post" class="needs-validation" novalidate>
+        @Html.AntiForgeryToken()
+        <input type="hidden" asp-for="Input.Id" />
+
+        <div class="row">
+            <div class="col-xl-6">
+                <div id="panel-mapping" class="panel">
+                    <div class="panel-hdr">
+                        <h2>
+                            <i class="@(Settings.Theme.IconPrefix) fa-cog mr-2"></i>
+                            @_localizer["Mapping Configuration"]
+                        </h2>
+                    </div>
+                    <div class="panel-container show">
+                        <div class="panel-content">
+                            <div class="form-group">
+                                <label class="form-label">@_localizer["PSP"]</label>
+                                <input type="text" class="form-control" value="@Model.Mapping.PspName" readonly disabled />
+                                <small class="form-text text-muted">@_localizer["PSP cannot be changed after creation"]</small>
+                            </div>
+
+                            <div class="form-group">
+                                <label class="form-label" asp-for="Input.SourceField">@_localizer["Source Field"] <span class="text-danger">*</span></label>
+                                <input asp-for="Input.SourceField" class="form-control" required placeholder="e.g., transaction_id" />
+                                <small class="form-text text-muted">@_localizer["The field name as it appears in the source file"]</small>
+                                <span asp-validation-for="Input.SourceField" class="invalid-feedback"></span>
+                            </div>
+
+                            <div class="form-group">
+                                <label class="form-label" asp-for="Input.TargetField">@_localizer["Target Field"] <span class="text-danger">*</span></label>
+                                <select asp-for="Input.TargetField" class="form-control select2" required>
+                                    <option value="">-- @_localizer["Select Target Field"] --</option>
+                                    <optgroup label="@_localizer["Transaction Identifiers"]">
+                                        <option value="TransactionId">TransactionId</option>
+                                        <option value="ExternalTransactionId">ExternalTransactionId</option>
+                                        <option value="Reference">Reference</option>
+                                        <option value="AuthCode">AuthCode</option>
+                                    </optgroup>
+                                    <optgroup label="@_localizer["Amounts & Currency"]">
+                                        <option value="Amount">Amount</option>
+                                        <option value="Currency">Currency</option>
+                                        <option value="FeeAmount">FeeAmount</option>
+                                        <option value="NetAmount">NetAmount</option>
+                                    </optgroup>
+                                    <optgroup label="@_localizer["Dates & Times"]">
+                                        <option value="TransactionDate">TransactionDate</option>
+                                        <option value="SettlementDate">SettlementDate</option>
+                                        <option value="ProcessedDate">ProcessedDate</option>
+                                    </optgroup>
+                                    <optgroup label="@_localizer["Status & Type"]">
+                                        <option value="Status">Status</option>
+                                        <option value="PaymentMethod">PaymentMethod</option>
+                                        <option value="TransactionType">TransactionType</option>
+                                    </optgroup>
+                                    <optgroup label="@_localizer["Other"]">
+                                        <option value="CustomerId">CustomerId</option>
+                                        <option value="MerchantId">MerchantId</option>
+                                        <option value="Description">Description</option>
+                                    </optgroup>
+                                </select>
+                                <span asp-validation-for="Input.TargetField" class="invalid-feedback"></span>
+                            </div>
+
+                            <div class="form-row">
+                                <div class="col-md-4 mb-3">
+                                    <label class="form-label" asp-for="Input.Version">@_localizer["Version"] <span class="text-danger">*</span></label>
+                                    <input asp-for="Input.Version" class="form-control" required placeholder="1.0.0" />
+                                    <small class="form-text text-muted">@_localizer["Use semantic versioning"]</small>
+                                </div>
+                                <div class="col-md-4 mb-3">
+                                    <label class="form-label" asp-for="Input.EffectiveFrom">@_localizer["Effective From"] <span class="text-danger">*</span></label>
+                                    <input asp-for="Input.EffectiveFrom" type="date" class="form-control" required />
+                                </div>
+                                <div class="col-md-4 mb-3">
+                                    <label class="form-label" asp-for="Input.EffectiveTo">@_localizer["Effective To"]</label>
+                                    <input asp-for="Input.EffectiveTo" type="date" class="form-control" />
+                                    <small class="form-text text-muted">@_localizer["Leave empty for no end date"]</small>
+                                </div>
+                            </div>
+
+                            <div class="custom-control custom-checkbox">
+                                <input asp-for="Input.IsActive" type="checkbox" class="custom-control-input" id="isActiveCheck" />
+                                <label class="custom-control-label" for="isActiveCheck">@_localizer["Active - Use this mapping during processing"]</label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-xl-6">
+                <div id="panel-transform" class="panel">
+                    <div class="panel-hdr">
+                        <h2>
+                            <i class="@(Settings.Theme.IconPrefix) fa-code mr-2"></i>
+                            @_localizer["Transform Expression"] <small class="text-muted">(@_localizer["Optional"])</small>
+                        </h2>
+                    </div>
+                    <div class="panel-container show">
+                        <div class="panel-content">
+                            <div class="form-group">
+                                <textarea asp-for="Input.TransformExpression" class="form-control" rows="6" placeholder="@_localizer["Leave empty for direct mapping"]" style="font-family: 'Courier New', monospace;"></textarea>
+                                <small class="form-text text-muted">@_localizer["C# expression for complex transformations"]</small>
+                            </div>
+                            <div class="alert alert-light border">
+                                <strong>@_localizer["Examples:"]</strong>
+                                <ul class="mb-0 mt-2" style="font-family: 'Courier New', monospace; font-size: 0.85rem;">
+                                    <li>DateTime.ParseExact(value, "dd/MM/yyyy", null)</li>
+                                    <li>decimal.Parse(value) / 100</li>
+                                    <li>value.ToUpper().Trim()</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="col-12">
+                <div class="float-right">
+                    <button type="submit" class="btn btn-success waves-effect waves-themed">
+                        <i class="@(Settings.Theme.IconPrefix) fa-save mr-1"></i>
+                        @_localizer["Save Changes"]
+                    </button>
+                    <a asp-page="/Config/FieldMappings" class="btn btn-secondary waves-effect waves-themed ml-1">
+                        <i class="@(Settings.Theme.IconPrefix) fa-times mr-1"></i>
+                        @_localizer["Cancel"]
+                    </a>
+                </div>
+            </div>
+        </div>
+    </form>
+}
+
+@section ScriptsBlock {
+    <partial name="_ValidationScriptsPartial" />
+}

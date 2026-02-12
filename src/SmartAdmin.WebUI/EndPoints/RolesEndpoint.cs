@@ -1,7 +1,6 @@
-using Infrastructure.Identity;
 using Microsoft.AspNetCore.Identity;
-using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+
 using SmartAdmin.WebUI.Models;
 
 namespace SmartAdmin.WebUI.EndPoints
@@ -25,16 +24,16 @@ namespace SmartAdmin.WebUI.EndPoints
         {
             var roles = await _manager.Roles.AsNoTracking().ToListAsync();
 
-            return Ok(new { data = roles, recordsTotal = roles.Count, recordsFiltered = roles.Count });
+            return new CamelCaseJsonResult(new { data = roles, recordsTotal = roles.Count, recordsFiltered = roles.Count });
         }
 
         [HttpGet("{id}")]
         [ProducesResponseType(StatusCodes.Status200OK)]
-        public async Task<ActionResult<ApplicationRole>> Get([FromRoute]string id) => Ok(await _manager.FindByIdAsync(id));
+        public async Task<ActionResult<ApplicationRole>> Get([FromRoute] string id) => Ok(await _manager.FindByIdAsync(id));
 
         [HttpPost]
         [ProducesResponseType(StatusCodes.Status201Created)]
-        public async Task<IActionResult> Create([FromForm]ApplicationRole model)
+        public async Task<IActionResult> Create([FromForm] ApplicationRole model)
         {
             model.Id = Guid.NewGuid().ToString();
             model.ConcurrencyStamp = Guid.NewGuid().ToString();
@@ -51,9 +50,9 @@ namespace SmartAdmin.WebUI.EndPoints
 
         [HttpPut]
         [ProducesResponseType(StatusCodes.Status204NoContent)]
-        public async Task<IActionResult> Update([FromForm]ApplicationRole model)
+        public async Task<IActionResult> Update([FromForm] ApplicationRole model)
         {
-            var role= await _manager.FindByIdAsync(model.Id);
+            var role = await _manager.FindByIdAsync(model.Id);
             if (role != null)
             {
                 role.Name = model.Name;
@@ -70,14 +69,14 @@ namespace SmartAdmin.WebUI.EndPoints
                     return BadRequest(result);
                 }
             }
-            
+
 
             return BadRequest(IdentityResult.Failed());
         }
 
         [HttpDelete]
         [ProducesResponseType(StatusCodes.Status204NoContent)]
-        public async Task<IActionResult> Delete([FromForm]ApplicationRole model)
+        public async Task<IActionResult> Delete([FromForm] ApplicationRole model)
         {
             // HACK: The code below is just for demonstration purposes!
             // Please use a different method of preventing the default role from being removed

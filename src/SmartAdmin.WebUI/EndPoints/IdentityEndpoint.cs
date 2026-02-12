@@ -28,7 +28,7 @@ namespace SmartAdmin.WebUI.EndPoints
         public async Task<ActionResult> Login([FromBody]TokenRequestDto model)
         {
             var response = await _identityService.LoginAsync(model);
-            return Ok(response);
+            return new CamelCaseJsonResult(response);
         }
         /// <summary>
         /// Refresh Token
@@ -39,8 +39,7 @@ namespace SmartAdmin.WebUI.EndPoints
         public async Task<ActionResult> Refresh([FromBody] RefreshTokenRequestDto model)
         {
             var response = await _identityService.RefreshTokenAsync(model);
-            return Ok(response);
+            return new CamelCaseJsonResult(response);
         }
-
     }
 }

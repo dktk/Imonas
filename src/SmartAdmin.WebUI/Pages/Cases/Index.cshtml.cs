@@ -46,17 +46,17 @@ namespace SmartAdmin.WebUI.Pages.Cases
         {
             if (id <= 0 || string.IsNullOrEmpty(assignedTo))
             {
-                return new JsonResult(new { succeeded = false, message = localizer["Invalid parameters."].Value });
+                return new CamelCaseJsonResult(new { succeeded = false, message = localizer["Invalid parameters."].Value });
             }
 
             var result = await mediator.Send(new AssignCaseCommand { CaseId = id, AssignedTo = assignedTo });
 
             if (result.Success)
             {
-                return new JsonResult(new { succeeded = true, message = result.Message });
+                return new CamelCaseJsonResult(new { succeeded = true, message = result.Message });
             }
 
-            return new JsonResult(new { succeeded = false, message = result.Message ?? localizer["Failed to assign case."].Value });
+            return new CamelCaseJsonResult(new { succeeded = false, message = result.Message ?? localizer["Failed to assign case."].Value });
         }
     }
 }
