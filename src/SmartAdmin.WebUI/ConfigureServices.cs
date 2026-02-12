@@ -15,7 +15,7 @@ public static class ConfigureServices
         services.AddControllers();
         services.AddRazorPages(options =>
         {
-            options.Conventions.AddPageRoute("/AspNetCore/Welcome", "");
+            options.Conventions.AddPageRoute("/Dashboard/Index", "");
         })
      .AddMvcOptions(options =>
      {

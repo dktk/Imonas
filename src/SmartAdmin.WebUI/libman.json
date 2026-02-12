@@ -104,9 +104,14 @@
         "css/select2.min.css",
         "js/select2.min.js"
       ]
+    },
+    {
+      "provider": "jsdelivr",
+      "library": "chart.js@4.4.7",
+      "destination": "wwwroot/lib/chart.js/",
+      "files": [
+        "dist/chart.umd.js"
+      ]
     }
-
-
-
   ]
 }

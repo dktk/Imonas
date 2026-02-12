@@ -60,14 +60,14 @@
                     </a>
                 </div>
             }
-            <div>
+          @*   <div>
                 <a href="#" class="header-icon" data-toggle="dropdown" title="My Apps">
                     <i class="@(Settings.Theme.IconPrefix) fa-cube"></i>
                 </a>
                 <div class="dropdown-menu dropdown-menu-animated w-auto h-auto">
                     <partial name="_DropdownApp" />
                 </div>
-            </div>
+            </div> *@
             @if (User.Identity.IsAuthenticated)
             {
                 @if (Settings.Features.ChatInterface)

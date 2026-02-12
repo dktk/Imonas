@@ -1,0 +1,481 @@
+@page
+@using Microsoft.AspNetCore.Mvc.Localization
+@using Domain.Enums
+@model SmartAdmin.WebUI.Pages.Dashboard.IndexModel
+@inject IStringLocalizer<IndexModel> _localizer
+
+@{
+    ViewData["Title"] = "Dashboard";
+    ViewData["PageName"] = "dashboard_index";
+}
+
+@section HeadBlock {
+    <link rel="stylesheet" media="screen, print" href="~/css/fa-solid.css">
+}
+
+<!-- Page Header -->
+<div class="row mb-3">
+    <div class="col-12">
+        <h1 class="subheader-title">
+            <i class="subheader-icon @(Settings.Theme.IconPrefix) fa-tachometer-alt"></i> @_localizer["Dashboard"]
+        </h1>
+        <small class="text-muted">@_localizer["System overview and key metrics"]</small>
+    </div>
+</div>
+
+<!-- Row 1: KPI Cards -->
+<div class="row mb-4">
+    <div class="col-sm-6 col-xl-3">
+        <a href="/runs" class="text-decoration-none">
+            <div class="p-3 bg-primary-300 rounded overflow-hidden position-relative text-white mb-g">
+                <div>
+                    <h3 class="display-4 d-block l-h-n m-0 fw-500">
+                        @Model.RunStats.TotalRuns
+                    </h3>
+                    <span class="opacity-70">@_localizer["Reconciliation Runs"]</span>
+                </div>
+                <i class="@(Settings.Theme.IconPrefix) fa-play-circle position-absolute pos-right pos-bottom opacity-15 mb-n1 mr-n1" style="font-size:6rem"></i>
+            </div>
+        </a>
+    </div>
+    <div class="col-sm-6 col-xl-3">
+        <a href="/cases" class="text-decoration-none">
+            <div class="p-3 bg-warning-400 rounded overflow-hidden position-relative text-white mb-g">
+                <div>
+                    <h3 class="display-4 d-block l-h-n m-0 fw-500">
+                        @Model.CaseStats.OpenCases
+                    </h3>
+                    <span class="opacity-70">@_localizer["Open Cases"]</span>
+                </div>
+                <i class="@(Settings.Theme.IconPrefix) fa-folder-open position-absolute pos-right pos-bottom opacity-15 mb-n1 mr-n1" style="font-size:6rem"></i>
+            </div>
+        </a>
+    </div>
+    <div class="col-sm-6 col-xl-3">
+        <a href="/schedules" class="text-decoration-none">
+            <div class="p-3 bg-success-500 rounded overflow-hidden position-relative text-white mb-g">
+                <div>
+                    <h3 class="display-4 d-block l-h-n m-0 fw-500">
+                        @Model.ScheduleStats.ActiveSchedules
+                    </h3>
+                    <span class="opacity-70">@_localizer["Active Schedules"]</span>
+                </div>
+                <i class="@(Settings.Theme.IconPrefix) fa-calendar-check position-absolute pos-right pos-bottom opacity-15 mb-n1 mr-n1" style="font-size:6rem"></i>
+            </div>
+        </a>
+    </div>
+    <div class="col-sm-6 col-xl-3">
+        <div class="p-3 bg-info-500 rounded overflow-hidden position-relative text-white mb-g">
+            <div>
+                <h3 class="display-4 d-block l-h-n m-0 fw-500">
+                    @Model.UserStats.ActiveUsers
+                </h3>
+                <span class="opacity-70">@_localizer["Active Users"]</span>
+            </div>
+            <i class="@(Settings.Theme.IconPrefix) fa-users position-absolute pos-right pos-bottom opacity-15 mb-n1 mr-n1" style="font-size:6rem"></i>
+        </div>
+    </div>
+</div>
+
+<!-- Row 2: Reconciliation Health + Case Severity -->
+<div class="row mb-4">
+    <!-- Reconciliation Health -->
+    <div class="col-xl-6">
+        <div id="panel-recon" class="panel">
+            <div class="panel-hdr">
+                <h2>
+                    <i class="@(Settings.Theme.IconPrefix) fa-balance-scale mr-2"></i>
+                    @_localizer["Reconciliation Health"]
+                </h2>
+                <div class="panel-toolbar">
+                    <a href="/runs" class="btn btn-xs btn-primary waves-effect waves-themed">
+                        @_localizer["View All"]
+                    </a>
+                </div>
+            </div>
+            <div class="panel-container show">
+                <div class="panel-content">
+                    <div class="row">
+                        <div class="col-md-5 d-flex align-items-center justify-content-center">
+                            <div style="position:relative; width:180px; height:180px;">
+                                <canvas id="runStatusChart"></canvas>
+                                <div style="position:absolute; top:50%; left:50%; transform:translate(-50%,-50%); text-align:center;">
+                                    @{
+                                        var avgBadgeClass = Model.RunStats.AverageMatchRate >= 95 ? "text-success" :
+                                                            Model.RunStats.AverageMatchRate >= 80 ? "text-info" : "text-warning";
+                                    }
+                                    <span class="fw-700 fs-xl @avgBadgeClass">@Model.RunStats.AverageMatchRate.ToString("F1")%</span>
+                                    <br />
+                                    <small class="text-muted">@_localizer["Match Rate"]</small>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-7">
+                            <div class="d-flex justify-content-between align-items-center py-2 border-bottom">
+                                <span><i class="fas fa-check-circle text-success mr-2"></i>@_localizer["Completed"]</span>
+                                <span class="fw-500">@Model.RunStats.CompletedRuns</span>
+                            </div>
+                            <div class="d-flex justify-content-between align-items-center py-2 border-bottom">
+                                <span><i class="fas fa-sync-alt text-info mr-2"></i>@_localizer["Running"]</span>
+                                <span class="fw-500">@Model.RunStats.RunningRuns</span>
+                            </div>
+                            <div class="d-flex justify-content-between align-items-center py-2 border-bottom">
+                                <span><i class="fas fa-times-circle text-danger mr-2"></i>@_localizer["Failed"]</span>
+                                <span class="fw-500">@Model.RunStats.FailedRuns</span>
+                            </div>
+                            <div class="d-flex justify-content-between align-items-center py-2 border-bottom">
+                                <span><i class="fas fa-link text-success mr-2"></i>@_localizer["Matched Records"]</span>
+                                <span class="fw-500 text-success">@Model.RunStats.TotalMatchedCount.ToString("N0")</span>
+                            </div>
+                            <div class="d-flex justify-content-between align-items-center py-2">
+                                <span><i class="fas fa-unlink text-danger mr-2"></i>@_localizer["Unmatched Records"]</span>
+                                <span class="fw-500 text-danger">@Model.RunStats.TotalUnmatchedCount.ToString("N0")</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Case Severity Overview -->
+    <div class="col-xl-6">
+        <div id="panel-cases" class="panel">
+            <div class="panel-hdr">
+                <h2>
+                    <i class="@(Settings.Theme.IconPrefix) fa-exclamation-triangle mr-2"></i>
+                    @_localizer["Case Overview"]
+                </h2>
+                <div class="panel-toolbar">
+                    <a href="/cases" class="btn btn-xs btn-primary waves-effect waves-themed">
+                        @_localizer["View All"]
+                    </a>
+                </div>
+            </div>
+            <div class="panel-container show">
+                <div class="panel-content">
+                    <div class="row mb-3">
+                        <div class="col-6 col-md-3">
+                            <div class="card border-left border-danger mb-3" style="border-left-width: 4px !important;">
+                                <div class="card-body py-2 px-3">
+                                    <h2 class="text-danger mb-0">@Model.CaseStats.CriticalCases</h2>
+                                    <small class="text-muted">@_localizer["Critical"]</small>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-6 col-md-3">
+                            <div class="card border-left border-warning mb-3" style="border-left-width: 4px !important;">
+                                <div class="card-body py-2 px-3">
+                                    <h2 class="text-warning mb-0">@Model.CaseStats.HighCases</h2>
+                                    <small class="text-muted">@_localizer["High"]</small>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-6 col-md-3">
+                            <div class="card border-left border-info mb-3" style="border-left-width: 4px !important;">
+                                <div class="card-body py-2 px-3">
+                                    <h2 class="text-info mb-0">@Model.CaseStats.MediumCases</h2>
+                                    <small class="text-muted">@_localizer["Medium"]</small>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-6 col-md-3">
+                            <div class="card border-left border-secondary mb-3" style="border-left-width: 4px !important;">
+                                <div class="card-body py-2 px-3">
+                                    <h2 class="text-secondary mb-0">@Model.CaseStats.LowCases</h2>
+                                    <small class="text-muted">@_localizer["Low"]</small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-5 d-flex align-items-center justify-content-center mb-3 mb-md-0">
+                            <div style="position:relative; width:180px; height:180px;">
+                                <canvas id="caseStatusChart"></canvas>
+                                <div style="position:absolute; top:50%; left:50%; transform:translate(-50%,-50%); text-align:center;">
+                                    <span class="fw-700 fs-xl">@Model.CaseStats.TotalCases</span>
+                                    <br />
+                                    <small class="text-muted">@_localizer["Total"]</small>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-7">
+                            <div class="d-flex justify-content-between align-items-center py-2 border-bottom">
+                                <span><i class="fas fa-folder-open text-warning mr-2"></i>@_localizer["Open"]</span>
+                                <span class="fw-500">@Model.CaseStats.OpenCases</span>
+                            </div>
+                            <div class="d-flex justify-content-between align-items-center py-2 border-bottom">
+                                <span><i class="fas fa-spinner text-info mr-2"></i>@_localizer["In Progress"]</span>
+                                <span class="fw-500">@Model.CaseStats.InProgressCases</span>
+                            </div>
+                            <div class="d-flex justify-content-between align-items-center py-2 border-bottom">
+                                <span><i class="fas fa-clock text-primary mr-2"></i>@_localizer["Pending Review"]</span>
+                                <span class="fw-500">@Model.CaseStats.PendingReviewCases</span>
+                            </div>
+                            <div class="d-flex justify-content-between align-items-center py-2">
+                                <span><i class="fas fa-check-circle text-success mr-2"></i>@_localizer["Closed"]</span>
+                                <span class="fw-500">@Model.CaseStats.ClosedCases</span>
+                            </div>
+                        </div>
+                    </div>
+                    @if (Model.CaseStats.OverdueCases > 0)
+                    {
+                        <div class="alert alert-danger mb-0 mt-3">
+                            <i class="@(Settings.Theme.IconPrefix) fa-clock mr-2"></i>
+                            <strong>@Model.CaseStats.OverdueCases</strong> @_localizer["case(s) are overdue and require immediate attention."]
+                        </div>
+                    }
+                    @if (Model.CaseStats.TotalVarianceAmount != 0)
+                    {
+                        <div class="alert alert-info mb-0 mt-2">
+                            <i class="@(Settings.Theme.IconPrefix) fa-dollar-sign mr-2"></i>
+                            @_localizer["Open Variance Amount"]: <strong>@Model.CaseStats.TotalVarianceAmount.ToString("C")</strong>
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Row 3: Recent Runs + Schedule Status -->
+<div class="row">
+    <!-- Recent Runs -->
+    <div class="col-xl-7">
+        <div id="panel-recent-runs" class="panel">
+            <div class="panel-hdr">
+                <h2>
+                    <i class="@(Settings.Theme.IconPrefix) fa-history mr-2"></i>
+                    @_localizer["Recent Runs"]
+                </h2>
+                <div class="panel-toolbar">
+                    <a href="/runs" class="btn btn-xs btn-primary waves-effect waves-themed">
+                        @_localizer["View All"]
+                    </a>
+                </div>
+            </div>
+            <div class="panel-container show">
+                <div class="panel-content p-0">
+                    <div class="table-responsive">
+                        <table class="table table-hover table-striped m-0">
+                            <thead class="bg-fusion-50">
+                                <tr>
+                                    <th>@_localizer["Run Name"]</th>
+                                    <th>@_localizer["Status"]</th>
+                                    <th>@_localizer["Started"]</th>
+                                    <th class="text-center">@_localizer["Match %"]</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var run in Model.RecentRuns)
+                                {
+                                    <tr>
+                                        <td>
+                                            <a asp-page="/Runs/Details" asp-route-id="@run.Id" class="fw-500 text-primary">
+                                                @run.RunName
+                                            </a>
+                                        </td>
+                                        <td>
+                                            @if (run.Status == RunStatus.Completed)
+                                            {
+                                                <span class="badge badge-success">
+                                                    <i class="@(Settings.Theme.IconPrefix) fa-check mr-1"></i>@_localizer["Completed"]
+                                                </span>
+                                            }
+                                            else if (run.Status == RunStatus.Running)
+                                            {
+                                                <span class="badge badge-info">
+                                                    <i class="@(Settings.Theme.IconPrefix) fa-sync fa-spin mr-1"></i>@_localizer["Running"]
+                                                </span>
+                                            }
+                                            else if (run.Status == RunStatus.Failed)
+                                            {
+                                                <span class="badge badge-danger">
+                                                    <i class="@(Settings.Theme.IconPrefix) fa-times mr-1"></i>@_localizer["Failed"]
+                                                </span>
+                                            }
+                                            else
+                                            {
+                                                <span class="badge badge-secondary">
+                                                    <i class="@(Settings.Theme.IconPrefix) fa-clock mr-1"></i>@run.Status
+                                                </span>
+                                            }
+                                        </td>
+                                        <td>@run.StartedAt.ToString("yyyy-MM-dd HH:mm")</td>
+                                        <td class="text-center">
+                                            @{
+                                                var badgeClass = run.MatchPercentage >= 95 ? "badge-success" :
+                                                                 run.MatchPercentage >= 80 ? "badge-info" : "badge-warning";
+                                            }
+                                            <span class="badge @badgeClass">
+                                                @run.MatchPercentage.ToString("F1")%
+                                            </span>
+                                        </td>
+                                    </tr>
+                                }
+                                @if (!Model.RecentRuns.Any())
+                                {
+                                    <tr>
+                                        <td colspan="4" class="text-center text-muted py-4">
+                                            <i class="@(Settings.Theme.IconPrefix) fa-inbox fa-2x mb-2 d-block"></i>
+                                            @_localizer["No reconciliation runs yet."]
+                                        </td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Schedule & User Status -->
+    <div class="col-xl-5">
+        <div id="panel-schedules" class="panel">
+            <div class="panel-hdr">
+                <h2>
+                    <i class="@(Settings.Theme.IconPrefix) fa-calendar-alt mr-2"></i>
+                    @_localizer["Schedule Status"]
+                </h2>
+                <div class="panel-toolbar">
+                    <a href="/schedules" class="btn btn-xs btn-primary waves-effect waves-themed">
+                        @_localizer["View All"]
+                    </a>
+                </div>
+            </div>
+            <div class="panel-container show">
+                <div class="panel-content">
+                    <div class="d-flex justify-content-between align-items-center py-2 border-bottom">
+                        <span><i class="@(Settings.Theme.IconPrefix) fa-list text-muted mr-2"></i>@_localizer["Total Schedules"]</span>
+                        <span class="fw-500">@Model.ScheduleStats.TotalSchedules</span>
+                    </div>
+                    <div class="d-flex justify-content-between align-items-center py-2 border-bottom">
+                        <span><i class="fas fa-check-circle text-success mr-2"></i>@_localizer["Active"]</span>
+                        <span class="fw-500 text-success">@Model.ScheduleStats.ActiveSchedules</span>
+                    </div>
+                    <div class="d-flex justify-content-between align-items-center py-2 border-bottom">
+                        <span><i class="fas fa-pause-circle text-secondary mr-2"></i>@_localizer["Inactive"]</span>
+                        <span class="fw-500 text-secondary">@Model.ScheduleStats.InactiveSchedules</span>
+                    </div>
+                    @if (Model.ScheduleStats.SchedulesDueToday > 0)
+                    {
+                        <div class="alert alert-warning mb-0 mt-3">
+                            <i class="@(Settings.Theme.IconPrefix) fa-bell mr-2"></i>
+                            <strong>@Model.ScheduleStats.SchedulesDueToday</strong> @_localizer["schedule(s) due today"]
+                        </div>
+                    }
+                    @if (Model.ScheduleStats.SchedulesDueThisWeek > 0)
+                    {
+                        <div class="alert alert-info mb-0 mt-2">
+                            <i class="@(Settings.Theme.IconPrefix) fa-calendar-week mr-2"></i>
+                            <strong>@Model.ScheduleStats.SchedulesDueThisWeek</strong> @_localizer["schedule(s) due this week"]
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+
+        <div id="panel-users" class="panel">
+            <div class="panel-hdr">
+                <h2>
+                    <i class="@(Settings.Theme.IconPrefix) fa-users mr-2"></i>
+                    @_localizer["Users"]
+                </h2>
+            </div>
+            <div class="panel-container show">
+                <div class="panel-content">
+                    <div class="d-flex justify-content-between align-items-center py-2 border-bottom">
+                        <span><i class="@(Settings.Theme.IconPrefix) fa-users text-muted mr-2"></i>@_localizer["Total Users"]</span>
+                        <span class="fw-500">@Model.UserStats.TotalUsers</span>
+                    </div>
+                    <div class="d-flex justify-content-between align-items-center py-2 border-bottom">
+                        <span><i class="fas fa-user-check text-success mr-2"></i>@_localizer["Active"]</span>
+                        <span class="fw-500 text-success">@Model.UserStats.ActiveUsers</span>
+                    </div>
+                    <div class="d-flex justify-content-between align-items-center py-2 border-bottom">
+                        <span><i class="fas fa-user-slash text-secondary mr-2"></i>@_localizer["Inactive"]</span>
+                        <span class="fw-500 text-secondary">@Model.UserStats.InactiveUsers</span>
+                    </div>
+                    @if (Model.UserStats.LockedOutUsers > 0)
+                    {
+                        <div class="d-flex justify-content-between align-items-center py-2 border-bottom">
+                            <span><i class="fas fa-user-lock text-danger mr-2"></i>@_localizer["Locked Out"]</span>
+                            <span class="fw-500 text-danger">@Model.UserStats.LockedOutUsers</span>
+                        </div>
+                    }
+                    @if (Model.UserStats.UsersByRole.Any())
+                    {
+                        <div class="mt-3">
+                            <small class="text-muted fw-500 text-uppercase">@_localizer["By Role"]</small>
+                            @foreach (var role in Model.UserStats.UsersByRole)
+                            {
+                                <div class="d-flex justify-content-between align-items-center py-1">
+                                    <span class="text-muted">@role.Key</span>
+                                    <span class="badge badge-primary">@role.Value</span>
+                                </div>
+                            }
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section ScriptsBlock {
+    <script src="~/lib/chart.js/dist/chart.umd.js"></script>
+    <script>
+        $(function () {
+            'use strict';
+
+            // Run Status Donut Chart
+            var runCtx = document.getElementById('runStatusChart');
+            if (runCtx) {
+                new Chart(runCtx, {
+                    type: 'doughnut',
+                    data: {
+                        labels: ['@_localizer["Completed"]', '@_localizer["Running"]', '@_localizer["Failed"]'],
+                        datasets: [{
+                            data: [@Model.RunStats.CompletedRuns, @Model.RunStats.RunningRuns, @Model.RunStats.FailedRuns],
+                            backgroundColor: ['#1dc9b7', '#2196F3', '#fd3995'],
+                            borderWidth: 0
+                        }]
+                    },
+                    options: {
+                        cutout: '70%',
+                        responsive: true,
+                        maintainAspectRatio: true,
+                        plugins: {
+                            legend: { display: false }
+                        }
+                    }
+                });
+            }
+
+            // Case Status Donut Chart
+            var caseCtx = document.getElementById('caseStatusChart');
+            if (caseCtx) {
+                new Chart(caseCtx, {
+                    type: 'doughnut',
+                    data: {
+                        labels: ['@_localizer["Open"]', '@_localizer["In Progress"]', '@_localizer["Pending Review"]', '@_localizer["Closed"]'],
+                        datasets: [{
+                            data: [@Model.CaseStats.OpenCases, @Model.CaseStats.InProgressCases, @Model.CaseStats.PendingReviewCases, @Model.CaseStats.ClosedCases],
+                            backgroundColor: ['#ffc241', '#2196F3', '#886ab5', '#1dc9b7'],
+                            borderWidth: 0
+                        }]
+                    },
+                    options: {
+                        cutout: '70%',
+                        responsive: true,
+                        maintainAspectRatio: true,
+                        plugins: {
+                            legend: { display: false }
+                        }
+                    }
+                });
+            }
+        });
+    </script>
+}

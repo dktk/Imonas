@@ -35,12 +35,12 @@ namespace Infrastructure.Persistence
                 }
             }
 
-            var administrator = new ApplicationUser { UserName = "administrator", IsActive = true, Site = "Razor", DisplayName = "Administrator", Email = "new163@163.com", EmailConfirmed = true, ProfilePictureDataUrl = $"https://cn.gravatar.com/avatar/{"new163@163.com".ToMD5()}?s=120&d=retro" };
-            var calin = new ApplicationUser { UserName = "calin", IsActive = true, Site = "Razor", DisplayName = "calin", Email = "new163@163.com", EmailConfirmed = true, ProfilePictureDataUrl = $"https://cn.gravatar.com/avatar/{"new163@163.com".ToMD5()}?s=120&d=retro" };
-            var daniela = new ApplicationUser { UserName = "daniela", IsActive = true, Site = "Razor", DisplayName = "Daniela", Email = "new163@163.com", EmailConfirmed = true, ProfilePictureDataUrl = $"https://cn.gravatar.com/avatar/{"new163@163.com".ToMD5()}?s=120&d=retro" };
+            var administrator = new ApplicationUser { UserName = "administrator", IsActive = true, Site = "Razor", DisplayName = "Administrator", Email = "new163@163.com", EmailConfirmed = true, ProfilePictureDataUrl = $"https://avatars.githubusercontent.com/u/5129897?v=4&size=64" };
+            var calin = new ApplicationUser { UserName = "calin", IsActive = true, Site = "Razor", DisplayName = "calin", Email = "new163@163.com", EmailConfirmed = true, ProfilePictureDataUrl = $"https://avatars.githubusercontent.com/u/5129897?v=4&size=64" };
+            var daniela = new ApplicationUser { UserName = "daniela", IsActive = true, Site = "Razor", DisplayName = "Daniela", Email = "new163@163.com", EmailConfirmed = true, ProfilePictureDataUrl = $"https://avatars.githubusercontent.com/u/5129897?v=4&size=64" };
 
-            var test1 = new ApplicationUser { UserName = "test1", IsActive = true, Site = "Razor", DisplayName = "test1", Email = "test1@126.com", EmailConfirmed = true, ProfilePictureDataUrl = $"https://cn.gravatar.com/avatar/{"neozhu@126.com".ToMD5()}?s=120&d=retro" };
-            var test2 = new ApplicationUser { UserName = "test2", IsActive = true, Site = "Razor", DisplayName = "test2", Email = "test1@126.com", EmailConfirmed = true, ProfilePictureDataUrl = $"https://cn.gravatar.com/avatar/{"neozhu@126.com".ToMD5()}?s=120&d=retro" };
+            var test1 = new ApplicationUser { UserName = "test1", IsActive = true, Site = "Razor", DisplayName = "test1", Email = "test1@126.com", EmailConfirmed = true, ProfilePictureDataUrl = $"https://avatars.githubusercontent.com/u/5129897?v=4&size=64" };
+            var test2 = new ApplicationUser { UserName = "test2", IsActive = true, Site = "Razor", DisplayName = "test2", Email = "test1@126.com", EmailConfirmed = true, ProfilePictureDataUrl = $"https://avatars.githubusercontent.com/u/5129897?v=4&size=64" };
 
             if (userManager.Users.All(u => u.UserName != administrator.UserName))
             {
